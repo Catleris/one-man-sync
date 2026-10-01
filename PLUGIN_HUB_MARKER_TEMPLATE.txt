@@ -1,0 +1,5 @@
+# Copy these values into runelite/plugin-hub/plugins/one-man-sync after choosing the reviewed plugin commit.
+repository=https://github.com/Catleris/one-man-sync.git
+commit=<FULL_40_CHARACTER_COMMIT_SHA>
+authors=Catleris
+warning=This plugin submits your IP address, RuneScape display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log data, pet/personal-best/loot events, and bank item IDs/names/quantities to oneman.lt, a 3rd-party server not controlled or verified by RuneLite developers.

@@ -1,0 +1,46 @@
+package lt.oneman.sync;
+
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Range;
+
+@ConfigGroup("one-man-sync")
+public interface OneManSyncConfig extends Config
+{
+    @ConfigItem(
+        keyName = "enabled",
+        name = "Enable OneMan Sync",
+        description = "Sends your OSRS display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log events, pet/personal-best/loot events, and bank item IDs/names/quantities when you open your bank to oneman.lt.",
+        warning = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers",
+        position = 0
+    )
+    default boolean enabled()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+        keyName = "syncKey",
+        name = "Sync Key",
+        description = "Generate this in oneman.lt -> Account -> RuneLite Sync. This is a OneMan API token, not a Jagex credential.",
+        secret = true,
+        position = 2
+    )
+    default String syncKey()
+    {
+        return "";
+    }
+
+    @Range(min = 2, max = 30)
+    @ConfigItem(
+        keyName = "intervalMinutes",
+        name = "Full sync every",
+        description = "Periodic full sync interval in minutes.",
+        position = 3
+    )
+    default int intervalMinutes()
+    {
+        return 5;
+    }
+}
