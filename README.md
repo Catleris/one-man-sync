@@ -19,6 +19,7 @@ The plugin can send the following to `https://oneman.lt/runelite_sync.php`:
 - Collection Log observations and new unlock events
 - Pet events, personal-best messages, and recent tracked boss loot
 - A bank snapshot when the bank is opened: item ID, item name, and quantity
+- Clue Scroll STASH states: STASH key/object ID and whether each STASH is built and filled
 - The user's OneMan Sync Key as a bearer token for authenticating the request
 
 As with any connection to a third-party server, the server also receives the user's IP address as part of the HTTPS request.
