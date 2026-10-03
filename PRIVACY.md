@@ -22,6 +22,7 @@ When enabled, the plugin may transmit:
 - Personal-best chat messages
 - Recent tracked boss loot
 - Bank item IDs, names, and quantities when the bank is opened
+- Clue Scroll STASH built/filled state for each STASH unit
 - OneMan Sync Key used to authenticate the request
 
 ## Not collected by this plugin
