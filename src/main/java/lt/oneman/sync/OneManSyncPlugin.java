@@ -49,6 +49,7 @@ import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.game.ItemManager;
@@ -117,6 +118,7 @@ public class OneManSyncPlugin extends Plugin
     @Inject private Gson gson;
     @Inject private ItemManager itemManager;
     @Inject private ConfigManager configManager;
+    @Inject private ClientThread clientThread;
 
     private int loginCountdown = -1;
     private int lastFullSyncTick = -100000;
@@ -142,6 +144,8 @@ public class OneManSyncPlugin extends Plugin
     private final Set<String> storageComplete = ConcurrentHashMap.newKeySet();
     private final Set<String> latestPohFeatures = ConcurrentHashMap.newKeySet();
     private volatile long pohSnapshotEpochMs = 0L;
+    private volatile JsonObject slayerStateCache = null;
+    private volatile int lastSlayerRefreshTick = -100000;
 
     private volatile long pendingPetSignalAt = 0L;
     private volatile int pendingPetSignalTick = -1;
@@ -157,7 +161,11 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void startUp()
     {
-        if (client.getGameState() == GameState.LOGGED_IN) loginCountdown = 10;
+        if (client.getGameState() == GameState.LOGGED_IN)
+        {
+            loginCountdown = 10;
+            clientThread.invokeLater(this::refreshSlayerStateCache);
+        }
     }
 
     @Override
@@ -182,6 +190,8 @@ public class OneManSyncPlugin extends Plugin
         storageComplete.clear();
         latestPohFeatures.clear();
         pohSnapshotEpochMs=0L;
+        slayerStateCache=null;
+        lastSlayerRefreshTick=-100000;
         pendingPetSignalAt=0L;
         pendingPetSignalTick=-1;
         lastLootSource="";
@@ -194,6 +204,7 @@ public class OneManSyncPlugin extends Plugin
         if(event.getGameState()==GameState.LOGGED_IN){
             loginCountdown=10;
             progressDirty=true;
+            clientThread.invokeLater(this::refreshSlayerStateCache);
         } else if(event.getGameState()==GameState.LOGIN_SCREEN){
             loginCountdown=-1;
             progressDirty=false;
@@ -213,7 +224,34 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        if(config.enabled() && client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
+        {
+            // Match RuneLite's Slayer plugin behaviour: read the assignment after
+            // the var/DB update has settled on the client thread.
+            clientThread.invokeLater(() -> {
+                refreshSlayerStateCache();
+                syncSoon();
+            });
+        }
         if(ready()) progressDirty=true;
+    }
+
+    private boolean isSlayerSignal(VarbitChanged event)
+    {
+        int varpId=event.getVarpId();
+        int varbitId=event.getVarbitId();
+        return varpId==VarPlayerID.SLAYER_COUNT
+            || varpId==VarPlayerID.SLAYER_AREA
+            || varpId==VarPlayerID.SLAYER_TARGET
+            || varpId==VarPlayerID.SLAYER_COUNT_ORIGINAL
+            || varpId==VarPlayerID.SLAYER_MORTIMER_TASKS_COMPLETED
+            || varbitId==VarbitID.SLAYER_TARGET_BOSSID
+            || varbitId==VarbitID.SLAYER_MODIFIER_ID
+            || varbitId==VarbitID.SLAYER_MODIFIER_VALUE
+            || varbitId==VarbitID.SLAYER_MODIFIER_NEGATIVE
+            || varbitId==VarbitID.SLAYER_POINTS
+            || varbitId==VarbitID.SLAYER_TASKS_COMPLETED
+            || varbitId==VarbitID.SLAYER_WILDERNESS_TASKS_COMPLETED;
     }
 
     @Subscribe
@@ -424,6 +462,14 @@ public class OneManSyncPlugin extends Plugin
         }
 
         int tick=client.getTickCount();
+
+        // Periodic fallback: catches assignments when this plugin was enabled
+        // after login or when RuneLite did not emit a fresh Slayer var event.
+        if(tick-lastSlayerRefreshTick>=50)
+        {
+            refreshSlayerStateCache();
+        }
+
         int intervalTicks=Math.max(2,config.intervalMinutes())*TICKS_PER_MINUTE;
         if(tick-lastFullSyncTick>=intervalTicks) syncSnapshot();
         else if(progressDirty && tick-lastFullSyncTick>=200) syncSnapshot();
@@ -954,6 +1000,31 @@ public class OneManSyncPlugin extends Plugin
     }
 
     private JsonObject buildSlayerState()
+    {
+        JsonObject cached=slayerStateCache;
+        if(cached==null)
+        {
+            refreshSlayerStateCache();
+            cached=slayerStateCache;
+        }
+        return cached!=null?cached.deepCopy():readSlayerStateDirect();
+    }
+
+    private void refreshSlayerStateCache()
+    {
+        if(client.getGameState()!=GameState.LOGGED_IN || client.getLocalPlayer()==null) return;
+        try
+        {
+            slayerStateCache=readSlayerStateDirect();
+            lastSlayerRefreshTick=client.getTickCount();
+        }
+        catch(Exception ex)
+        {
+            log.fine("Slayer state refresh failed: "+ex.getMessage());
+        }
+    }
+
+    private JsonObject readSlayerStateDirect()
     {
         JsonObject o=new JsonObject();
 
