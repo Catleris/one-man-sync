@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
 import net.runelite.api.GameState;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.Item;
@@ -33,11 +34,14 @@ import net.runelite.api.ScriptID;
 import net.runelite.api.Skill;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameObjectSpawned;
+import net.runelite.api.events.DecorativeObjectSpawned;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.EnumID;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
@@ -50,6 +54,9 @@ import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.cluescrolls.clues.emote.STASHUnit;
+import net.runelite.client.plugins.poh.PohIcons;
+import net.runelite.client.plugins.slayer.SlayerConfig;
+import net.runelite.client.plugins.timetracking.TimeTrackingConfig;
 import net.runelite.client.util.Text;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -62,7 +69,7 @@ import okhttp3.Response;
 @PluginDescriptor(
     name = "OneMan Sync",
     description = "Syncs OSRS progress and memories to oneman.lt",
-    tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash"},
+    tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash", "slayer", "storage", "poh"},
     internalName = "one-man-sync"
 )
 public class OneManSyncPlugin extends Plugin
@@ -107,6 +114,7 @@ public class OneManSyncPlugin extends Plugin
     @Inject private OkHttpClient http;
     @Inject private Gson gson;
     @Inject private ItemManager itemManager;
+    @Inject private ConfigManager configManager;
 
     private int loginCountdown = -1;
     private int lastFullSyncTick = -100000;
@@ -125,6 +133,13 @@ public class OneManSyncPlugin extends Plugin
     private final Map<Integer, BankItemData> latestBankItems = new ConcurrentHashMap<>();
     private volatile boolean bankSnapshotComplete = false;
     private volatile long bankSnapshotEpochMs = 0L;
+
+    private final Map<String,Map<Integer,StorageItemData>> latestStorageItems = new ConcurrentHashMap<>();
+    private final Map<String,Long> storageSnapshotEpochMs = new ConcurrentHashMap<>();
+    private final Map<String,String> storageLabels = new ConcurrentHashMap<>();
+    private final Set<String> storageComplete = ConcurrentHashMap.newKeySet();
+    private final Set<String> latestPohFeatures = ConcurrentHashMap.newKeySet();
+    private volatile long pohSnapshotEpochMs = 0L;
 
     private volatile long pendingPetSignalAt = 0L;
     private volatile int pendingPetSignalTick = -1;
@@ -159,6 +174,12 @@ public class OneManSyncPlugin extends Plugin
         latestBankItems.clear();
         bankSnapshotComplete=false;
         bankSnapshotEpochMs=0L;
+        latestStorageItems.clear();
+        storageSnapshotEpochMs.clear();
+        storageLabels.clear();
+        storageComplete.clear();
+        latestPohFeatures.clear();
+        pohSnapshotEpochMs=0L;
         pendingPetSignalAt=0L;
         pendingPetSignalTick=-1;
         lastLootSource="";
@@ -228,38 +249,49 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
-        if(!ready() || event.getContainerId()!=InventoryID.BANK) return;
+        if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
-        ItemContainer bank=event.getItemContainer();
-        if(bank==null || bank.getItems()==null) return;
+        ItemContainer container=event.getItemContainer();
+        if(container==null || container.getItems()==null) return;
 
-        Map<Integer,BankItemData> snapshot=new LinkedHashMap<>();
-        for(Item item:bank.getItems())
+        if(event.getContainerId()==InventoryID.BANK)
         {
-            if(item==null || item.getId()<=0 || item.getQuantity()<=0) continue;
-
-            String name;
-            try
+            Map<Integer,BankItemData> snapshot=new LinkedHashMap<>();
+            for(Item item:container.getItems())
             {
-                name=itemManager.getItemComposition(item.getId()).getName();
-            }
-            catch(Exception ex)
-            {
-                name="Item #"+item.getId();
+                if(item==null || item.getId()<=0 || item.getQuantity()<=0) continue;
+                String name=itemName(item.getId());
+                if(name.isEmpty()) continue;
+                BankItemData old=snapshot.get(item.getId());
+                int qty=item.getQuantity()+(old!=null?old.quantity:0);
+                snapshot.put(item.getId(),new BankItemData(item.getId(),name,qty));
             }
 
-            if(name==null || name.trim().isEmpty() || "null".equalsIgnoreCase(name)) continue;
-
-            BankItemData old=snapshot.get(item.getId());
-            int qty=item.getQuantity()+(old!=null?old.quantity:0);
-            snapshot.put(item.getId(),new BankItemData(item.getId(),name.trim(),qty));
+            latestBankItems.clear();
+            latestBankItems.putAll(snapshot);
+            bankSnapshotComplete=true;
+            bankSnapshotEpochMs=System.currentTimeMillis();
+            syncSoon();
+            return;
         }
 
-        latestBankItems.clear();
-        latestBankItems.putAll(snapshot);
-        bankSnapshotComplete=true;
-        bankSnapshotEpochMs=System.currentTimeMillis();
-        syncSoon();
+        String key=storageKeyForContainer(event.getContainerId());
+        if(key!=null)
+        {
+            captureStorage(key,storageLabel(key),container);
+        }
+    }
+
+    @Subscribe
+    public void onGameObjectSpawned(GameObjectSpawned event)
+    {
+        capturePohObject(event.getGameObject().getId());
+    }
+
+    @Subscribe
+    public void onDecorativeObjectSpawned(DecorativeObjectSpawned event)
+    {
+        capturePohObject(event.getDecorativeObject().getId());
     }
 
     @Subscribe
@@ -557,6 +589,11 @@ public class OneManSyncPlugin extends Plugin
         root.addProperty("bankSnapshotEpochMs",bankSnapshotEpochMs);
         root.add("stashUnits",buildStashUnits());
         root.addProperty("stashSnapshotEpochMs",System.currentTimeMillis());
+        root.add("storageSnapshots",buildStorageSnapshots());
+        root.add("slayer",buildSlayerState());
+        root.add("poh",buildPohState());
+        root.add("currencies",buildCurrencies());
+        root.add("daily",buildDailyState());
         return root;
     }
 
@@ -698,6 +735,274 @@ public class OneManSyncPlugin extends Plugin
         return out;
     }
 
+    private String itemName(int itemId)
+    {
+        try
+        {
+            String name=itemManager.getItemComposition(itemId).getName();
+            if(name==null || name.trim().isEmpty() || "null".equalsIgnoreCase(name)) return "";
+            return name.trim();
+        }
+        catch(Exception ex)
+        {
+            return "Item #"+itemId;
+        }
+    }
+
+    private String storageKeyForContainer(int id)
+    {
+        switch(id)
+        {
+            case InventoryID.SEED_VAULT:return "seed_vault";
+            case InventoryID.LOOTING_BAG:return "looting_bag";
+            case InventoryID.INV_GROUP_TEMP:return "group_storage";
+            case InventoryID.POH_COSTUME_ROOM_MAGIC_WARDROBE_INV:return "poh_magic_wardrobe";
+            case InventoryID.POH_COSTUME_ROOM_ARMOUR_INV:return "poh_armour_case";
+            case InventoryID.POH_COSTUME_ROOM_AME_INV:return "poh_fancy_dress";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_0_INV:return "poh_treasure_chest_0";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_1_INV:return "poh_treasure_chest_1";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_1A_INV:return "poh_treasure_chest_1a";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_2_INV:return "poh_treasure_chest_2";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_2A_INV:return "poh_treasure_chest_2a";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_3_INV:return "poh_treasure_chest_3";
+            case InventoryID.POH_COSTUME_ROOM_TREASURE_TRAIL_3A_INV:return "poh_treasure_chest_3a";
+            case InventoryID.POH_COSTUME_ROOM_CAPES_INV:return "poh_cape_rack";
+            case InventoryID.POH_COSTUME_ROOM_CAPES_INV_PAGE2:return "poh_cape_rack_2";
+            case InventoryID.POH_COSTUME_ROOM_HOLIDAY_ITEMS_INV:return "poh_toy_box";
+            default:return null;
+        }
+    }
+
+    private String storageLabel(String key)
+    {
+        switch(key)
+        {
+            case "seed_vault":return "Seed Vault";
+            case "looting_bag":return "Looting Bag";
+            case "group_storage":return "Group Storage";
+            case "poh_magic_wardrobe":return "POH Magic Wardrobe";
+            case "poh_armour_case":return "POH Armour Case";
+            case "poh_fancy_dress":return "POH Fancy Dress Box";
+            case "poh_cape_rack":case "poh_cape_rack_2":return "POH Cape Rack";
+            case "poh_toy_box":return "POH Toy Box";
+            default:return key.startsWith("poh_treasure_chest")?"POH Treasure Chest":key;
+        }
+    }
+
+    private void captureStorage(String key,String label,ItemContainer container)
+    {
+        Map<Integer,StorageItemData> snapshot=new LinkedHashMap<>();
+        for(Item item:container.getItems())
+        {
+            if(item==null || item.getId()<=0 || item.getQuantity()<=0) continue;
+            String name=itemName(item.getId());
+            if(name.isEmpty()) continue;
+            StorageItemData old=snapshot.get(item.getId());
+            int qty=item.getQuantity()+(old!=null?old.quantity:0);
+            snapshot.put(item.getId(),new StorageItemData(item.getId(),name,qty));
+        }
+        latestStorageItems.put(key,snapshot);
+        storageLabels.put(key,label);
+        storageSnapshotEpochMs.put(key,System.currentTimeMillis());
+        storageComplete.add(key);
+        syncSoon();
+    }
+
+    private void capturePohObject(int objectId)
+    {
+        if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
+        PohIcons icon=PohIcons.getIcon(objectId);
+        if(icon==null) return;
+        if(latestPohFeatures.add(icon.name()))
+        {
+            pohSnapshotEpochMs=System.currentTimeMillis();
+            syncSoon();
+        }
+    }
+
+    private JsonArray buildStorageSnapshots()
+    {
+        JsonArray out=new JsonArray();
+
+        for(Map.Entry<String,Map<Integer,StorageItemData>> e:latestStorageItems.entrySet())
+        {
+            JsonObject s=new JsonObject();
+            s.addProperty("key",e.getKey());
+            s.addProperty("label",storageLabels.getOrDefault(e.getKey(),e.getKey()));
+            s.addProperty("complete",storageComplete.contains(e.getKey()));
+            s.addProperty("lastSeenEpochMs",storageSnapshotEpochMs.getOrDefault(e.getKey(),0L));
+            JsonArray items=new JsonArray();
+            for(StorageItemData item:e.getValue().values())
+            {
+                JsonObject o=new JsonObject();
+                o.addProperty("id",item.id);
+                o.addProperty("name",item.name);
+                o.addProperty("quantity",item.quantity);
+                items.add(o);
+            }
+            s.add("items",items);
+            out.add(s);
+        }
+
+        JsonObject runePouch=new JsonObject();
+        runePouch.addProperty("key","rune_pouch");
+        runePouch.addProperty("label","Rune Pouch");
+        runePouch.addProperty("complete",true);
+        runePouch.addProperty("lastSeenEpochMs",System.currentTimeMillis());
+        runePouch.add("items",buildRunePouchItems());
+        out.add(runePouch);
+
+        return out;
+    }
+
+    private JsonArray buildRunePouchItems()
+    {
+        int[] typeVarbits={
+            VarbitID.RUNE_POUCH_TYPE_1,VarbitID.RUNE_POUCH_TYPE_2,VarbitID.RUNE_POUCH_TYPE_3,
+            VarbitID.RUNE_POUCH_TYPE_4,VarbitID.RUNE_POUCH_TYPE_5,VarbitID.RUNE_POUCH_TYPE_6
+        };
+        int[] quantityVarbits={
+            VarbitID.RUNE_POUCH_QUANTITY_1,VarbitID.RUNE_POUCH_QUANTITY_2,VarbitID.RUNE_POUCH_QUANTITY_3,
+            VarbitID.RUNE_POUCH_QUANTITY_4,VarbitID.RUNE_POUCH_QUANTITY_5,VarbitID.RUNE_POUCH_QUANTITY_6
+        };
+        JsonArray out=new JsonArray();
+        EnumComposition runeEnum=client.getEnum(EnumID.RUNEPOUCH_RUNE);
+        for(int i=0;i<typeVarbits.length;i++)
+        {
+            int qty=client.getVarbitValue(quantityVarbits[i]);
+            int type=client.getVarbitValue(typeVarbits[i]);
+            if(qty<=0 || type<=0) continue;
+            int itemId=runeEnum.getIntValue(type);
+            JsonObject o=new JsonObject();
+            o.addProperty("id",itemId);
+            o.addProperty("name",itemName(itemId));
+            o.addProperty("quantity",qty);
+            out.add(o);
+        }
+        return out;
+    }
+
+    private JsonObject buildSlayerState()
+    {
+        JsonObject o=new JsonObject();
+        o.addProperty("level",client.getRealSkillLevel(Skill.SLAYER));
+        o.addProperty("points",Math.max(0,client.getVarbitValue(VarbitID.SLAYER_POINTS)));
+        o.addProperty("streak",Math.max(0,client.getVarbitValue(VarbitID.SLAYER_TASKS_COMPLETED)));
+        o.addProperty("taskCountVarp",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
+        o.addProperty("taskTargetVarp",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_TARGET)));
+
+        String task=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_NAME_KEY);
+        String amount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.AMOUNT_KEY);
+        String initial=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
+        String location=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_LOC_KEY);
+        o.addProperty("taskName",task==null?"":task);
+        o.addProperty("amount",safeInt(amount,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
+        o.addProperty("initialAmount",safeInt(initial,0));
+        o.addProperty("location",location==null?"":location);
+
+        JsonArray unlocks=new JsonArray();
+        unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS));
+        unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS1));
+        unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS2));
+        o.add("unlockBits",unlocks);
+
+        JsonArray blocked=new JsonArray();
+        int[] blockedVarps={
+            VarPlayerID.SLAYER_REWARDS_BLOCKED,VarPlayerID.SLAYER_REWARDS_BLOCKED_2,VarPlayerID.SLAYER_REWARDS_BLOCKED_3,
+            VarPlayerID.SLAYER_REWARDS_BLOCKED_4,VarPlayerID.SLAYER_REWARDS_BLOCKED_5,VarPlayerID.SLAYER_REWARDS_BLOCKED_6,
+            VarPlayerID.SLAYER_REWARDS_BLOCKED_7,VarPlayerID.SLAYER_REWARDS_BLOCKED_8,VarPlayerID.SLAYER_REWARDS_BLOCKED_9,
+            VarPlayerID.SLAYER_REWARDS_BLOCKED_10,VarPlayerID.SLAYER_REWARDS_BLOCKED_11,VarPlayerID.SLAYER_REWARDS_BLOCKED_12,
+            VarPlayerID.SLAYER_REWARDS_BLOCKED_13,VarPlayerID.SLAYER_REWARDS_BLOCKED_14
+        };
+        for(int v:blockedVarps) blocked.add(client.getVarpValue(v));
+        o.add("blockedRaw",blocked);
+        return o;
+    }
+
+    private JsonObject buildPohState()
+    {
+        JsonObject o=new JsonObject();
+        JsonArray features=new JsonArray();
+        for(String f:latestPohFeatures) features.add(f);
+        o.add("features",features);
+        o.addProperty("lastSeenEpochMs",pohSnapshotEpochMs);
+        return o;
+    }
+
+    private JsonObject buildCurrencies()
+    {
+        JsonObject o=new JsonObject();
+        o.addProperty("slayerPoints",Math.max(0,client.getVarbitValue(VarbitID.SLAYER_POINTS)));
+        o.addProperty("nmzPoints",Math.max(0,client.getVarbitValue(VarbitID.NZONE_CURRENTPOINTS)));
+        o.addProperty("tithePoints",Math.max(0,client.getVarbitValue(VarbitID.HOSIDIUS_TITHE_REWARDPOINTS)));
+        o.addProperty("soulWarsZeal",Math.max(0,client.getVarpValue(VarPlayerID.SOUL_WARS_ZEAL_TOKENS)));
+        o.addProperty("pvpArenaPoints",Math.max(0,client.getVarbitValue(VarbitID.PVPA_POINTS_CURRENCY)));
+        o.addProperty("kingdomCoffer",Math.max(0,client.getVarbitValue(VarbitID.MISC_COFFERS)));
+        return o;
+    }
+
+    private JsonObject buildDailyState()
+    {
+        JsonObject root=new JsonObject();
+        long now=System.currentTimeMillis()/1000L;
+
+        JsonArray birdhouses=new JsonArray();
+        int[] birdVarps={VarPlayerID.BIRDHOUSE_TRANSMIT_A,VarPlayerID.BIRDHOUSE_TRANSMIT_B,VarPlayerID.BIRDHOUSE_TRANSMIT_C,VarPlayerID.BIRDHOUSE_TRANSMIT_D};
+        String[] birdNames={"Mushroom Meadow North","Mushroom Meadow South","Verdant Valley Northeast","Verdant Valley Southwest"};
+        for(int i=0;i<birdVarps.length;i++)
+        {
+            JsonObject b=new JsonObject();
+            String stored=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,TimeTrackingConfig.BIRD_HOUSE+"."+birdVarps[i]);
+            int varp=0;long seen=0L;
+            if(stored!=null)
+            {
+                String[] p=stored.split(":");
+                if(p.length==2)
+                {
+                    varp=safeInt(p[0],0);
+                    seen=safeLong(p[1],0L);
+                }
+            }
+            long readyAt=varp>0 && seen>0?seen+3000L:0L;
+            b.addProperty("name",birdNames[i]);
+            b.addProperty("varp",varp);
+            b.addProperty("seenEpochSec",seen);
+            b.addProperty("readyEpochSec",readyAt);
+            b.addProperty("ready",readyAt>0 && now>=readyAt);
+            b.addProperty("empty",varp<=0);
+            birdhouses.add(b);
+        }
+        root.add("birdHouses",birdhouses);
+
+        JsonObject contract=new JsonObject();
+        String contractId=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,"contract");
+        int itemId=safeInt(contractId,0);
+        contract.addProperty("itemId",itemId);
+        contract.addProperty("name",itemId>0?itemName(itemId):"");
+        contract.addProperty("complete",client.getVarbitValue(VarbitID.FARMGUILD_CONTRACT_COMPLETE)>0);
+        root.add("farmingContract",contract);
+
+        JsonObject kingdom=new JsonObject();
+        int approval=client.getVarbitValue(VarbitID.MISC_APPROVAL);
+        kingdom.addProperty("approvalRaw",approval);
+        kingdom.addProperty("approvalPercent",Math.max(0,Math.min(100,Math.round(approval*100f/127f))));
+        kingdom.addProperty("coffer",Math.max(0,client.getVarbitValue(VarbitID.MISC_COFFERS)));
+        root.add("kingdom",kingdom);
+        return root;
+    }
+
+    private static int safeInt(String value,int fallback)
+    {
+        try{return value==null?fallback:Integer.parseInt(value.trim());}
+        catch(Exception ex){return fallback;}
+    }
+
+    private static long safeLong(String value,long fallback)
+    {
+        try{return value==null?fallback:Long.parseLong(value.trim());}
+        catch(Exception ex){return fallback;}
+    }
+
     private JsonArray buildBankItems()
     {
         JsonArray out=new JsonArray();
@@ -801,6 +1106,11 @@ public class OneManSyncPlugin extends Plugin
     private static final class BankItemData{
         final int id;final String name;final int quantity;
         BankItemData(int id,String name,int quantity){this.id=id;this.name=name;this.quantity=quantity;}
+    }
+
+    private static final class StorageItemData{
+        final int id;final String name;final int quantity;
+        StorageItemData(int id,String name,int quantity){this.id=id;this.name=name;this.quantity=quantity;}
     }
 
     private static final class PersonalBestData{
