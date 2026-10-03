@@ -20,6 +20,10 @@ The plugin can send the following to `https://oneman.lt/runelite_sync.php`:
 - Pet events, personal-best messages, and recent tracked boss loot
 - A bank snapshot when the bank is opened: item ID, item name, and quantity
 - Clue Scroll STASH states: STASH key/object ID and whether each STASH is built and filled
+- Selected storage snapshots when viewed/available: Seed Vault, Looting Bag, Rune Pouch, Group Storage and POH Costume Room categories
+- Slayer state: current stored task, remaining amount, points, streak and unlock/block bitfields
+- POH feature observations when house objects are loaded (teleports, pools, altar, jewellery box and similar facilities)
+- Selected account currencies and daily-state data such as NMZ/Tithe/Slayer points, Kingdom approval/coffer, Bird House tracker timestamps and Farming Contract state
 - The user's OneMan Sync Key as a bearer token for authenticating the request
 
 As with any connection to a third-party server, the server also receives the user's IP address as part of the HTTPS request.
