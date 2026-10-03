@@ -11,7 +11,7 @@ public interface OneManSyncConfig extends Config
     @ConfigItem(
         keyName = "enabled",
         name = "Enable OneMan Sync",
-        description = "Sends your OSRS display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log events, pet/personal-best/loot events, bank item IDs/names/quantities when you open your bank, Clue Scroll STASH built/filled states, selected storage snapshots, Slayer state, POH feature observations, currencies and daily-account timers to oneman.lt.",
+        description = "Sends your OSRS display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log events, pet/personal-best/loot events, bank item IDs/names/quantities when you open your bank, Clue Scroll STASH built/filled states, current inventory/equipment and selected storage snapshots, Slayer state, POH feature observations, currencies and daily-account timers to oneman.lt.",
         warning = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers",
         position = 0
     )
