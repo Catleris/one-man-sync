@@ -43,6 +43,7 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.EnumID;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
@@ -816,11 +817,41 @@ public class OneManSyncPlugin extends Plugin
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
         PohIcons icon=PohIcons.getIcon(objectId);
         if(icon==null) return;
-        if(latestPohFeatures.add(icon.name()))
+        String feature=pohFeatureKey(objectId,icon);
+        if(latestPohFeatures.add(feature))
         {
             pohSnapshotEpochMs=System.currentTimeMillis();
             syncSoon();
         }
+    }
+
+    private String pohFeatureKey(int objectId,PohIcons icon)
+    {
+        if(objectId==ObjectID.POH_FAIRY_RING) return "FAIRY_RING";
+        if(objectId==ObjectID.POH_SPIRIT_TREE) return "SPIRIT_TREE";
+        if(objectId==ObjectID.POH_SPIRIT_RING) return "SPIRIT_TREE_FAIRY_RING";
+        if(objectId==ObjectID.POH_WILDERNESS_OBELISK) return "WILDERNESS_OBELISK";
+
+        if(objectId==ObjectID.POH_POOL_RESTORATION) return "POOL_RESTORATION";
+        if(objectId==ObjectID.POH_POOL_REVITALISATION) return "POOL_REVITALISATION";
+        if(objectId==ObjectID.POH_POOL_REJUVENATION) return "POOL_REJUVENATION";
+        if(objectId==ObjectID.POH_POOL_RECOVERY) return "POOL_RECOVERY";
+        if(objectId==ObjectID.POH_POOL_REGENERATION) return "POOL_REGENERATION";
+
+        if(objectId==ObjectID.POH_JEWELLERY_BOX_1) return "JEWELLERY_BOX_BASIC";
+        if(objectId==ObjectID.POH_JEWELLERY_BOX_2) return "JEWELLERY_BOX_FANCY";
+        if(objectId==ObjectID.POH_JEWELLERY_BOX_3) return "JEWELLERY_BOX_ORNATE";
+
+        if(objectId==ObjectID.POH_ALTAR_ANCIENT) return "ALTAR_ANCIENT";
+        if(objectId==ObjectID.POH_ALTAR_LUNAR) return "ALTAR_LUNAR";
+        if(objectId==ObjectID.ARCHEUS_ALTAR_DARK) return "ALTAR_ARCEUUS";
+        if(objectId==ObjectID.POH_ALTAR_OCCULT) return "ALTAR_OCCULT";
+
+        if(objectId==ObjectID.POH_NEXUS_PORTAL_1) return "PORTAL_NEXUS";
+        if(objectId==ObjectID.POH_NEXUS_PORTAL_2) return "PORTAL_NEXUS_GILDED";
+        if(objectId==ObjectID.POH_NEXUS_PORTAL_3) return "PORTAL_NEXUS_CRYSTALLINE";
+
+        return icon.name();
     }
 
     private JsonArray buildStorageSnapshots()
