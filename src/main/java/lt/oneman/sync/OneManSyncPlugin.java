@@ -49,6 +49,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.cluescrolls.clues.emote.STASHUnit;
 import net.runelite.client.util.Text;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -61,7 +62,7 @@ import okhttp3.Response;
 @PluginDescriptor(
     name = "OneMan Sync",
     description = "Syncs OSRS progress and memories to oneman.lt",
-    tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot"},
+    tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash"},
     internalName = "one-man-sync"
 )
 public class OneManSyncPlugin extends Plugin
@@ -554,6 +555,8 @@ public class OneManSyncPlugin extends Plugin
         root.add("bankItems",buildBankItems());
         root.addProperty("bankSnapshotComplete",bankSnapshotComplete);
         root.addProperty("bankSnapshotEpochMs",bankSnapshotEpochMs);
+        root.add("stashUnits",buildStashUnits());
+        root.addProperty("stashSnapshotEpochMs",System.currentTimeMillis());
         return root;
     }
 
@@ -704,6 +707,37 @@ public class OneManSyncPlugin extends Plugin
             o.addProperty("id",item.id);
             o.addProperty("name",item.name);
             o.addProperty("quantity",item.quantity);
+            out.add(o);
+        }
+        return out;
+    }
+
+    private JsonArray buildStashUnits()
+    {
+        JsonArray out=new JsonArray();
+        for(STASHUnit stash:STASHUnit.values())
+        {
+            JsonObject o=new JsonObject();
+            o.addProperty("key",stash.name());
+            o.addProperty("objectId",stash.getObjectId());
+
+            boolean built=false;
+            boolean filled=false;
+            try
+            {
+                client.runScript(ScriptID.WATSON_STASH_UNIT_CHECK,stash.getObjectId(),0,0,0);
+                int[] stack=client.getIntStack();
+                built=stack!=null && stack.length>0 && stack[0]==1;
+                filled=stack!=null && stack.length>1 && stack[1]==1;
+                if(filled) built=true;
+            }
+            catch(Exception ex)
+            {
+                log.fine("STASH state failed for "+stash.name()+": "+ex.getMessage());
+            }
+
+            o.addProperty("built",built);
+            o.addProperty("filled",filled);
             out.add(o);
         }
         return out;
