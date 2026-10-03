@@ -20,6 +20,7 @@ The plugin can send the following to `https://oneman.lt/runelite_sync.php`:
 - Pet events, personal-best messages, and recent tracked boss loot
 - A bank snapshot when the bank is opened: item ID, item name, and quantity
 - Clue Scroll STASH states: STASH key/object ID and whether each STASH is built and filled
+- Current inventory and worn equipment snapshot
 - Selected storage snapshots when viewed/available: Seed Vault, Looting Bag, Rune Pouch, Group Storage and POH Costume Room categories
 - Slayer state: current stored task, remaining amount, points, streak and unlock/block bitfields
 - POH feature observations when house objects are loaded (teleports, pools, altar, jewellery box and similar facilities)
