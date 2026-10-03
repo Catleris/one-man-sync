@@ -25,6 +25,7 @@ import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.GameState;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.DBTableID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.NPC;
@@ -955,20 +956,119 @@ public class OneManSyncPlugin extends Plugin
     private JsonObject buildSlayerState()
     {
         JsonObject o=new JsonObject();
-        o.addProperty("level",client.getRealSkillLevel(Skill.SLAYER));
-        o.addProperty("points",Math.max(0,client.getVarbitValue(VarbitID.SLAYER_POINTS)));
-        o.addProperty("streak",Math.max(0,client.getVarbitValue(VarbitID.SLAYER_TASKS_COMPLETED)));
-        o.addProperty("taskCountVarp",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
-        o.addProperty("taskTargetVarp",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_TARGET)));
 
-        String task=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_NAME_KEY);
-        String amount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.AMOUNT_KEY);
-        String initial=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
-        String location=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_LOC_KEY);
-        o.addProperty("taskName",task==null?"":task);
-        o.addProperty("amount",safeInt(amount,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
-        o.addProperty("initialAmount",safeInt(initial,0));
-        o.addProperty("location",location==null?"":location);
+        int level=Math.max(1,client.getRealSkillLevel(Skill.SLAYER));
+        int points=Math.max(0,client.getVarbitValue(VarbitID.SLAYER_POINTS));
+        int streak=Math.max(0,client.getVarbitValue(VarbitID.SLAYER_TASKS_COMPLETED));
+        int amount=Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT));
+        int initialAmount=Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT_ORIGINAL));
+        int taskId=Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_TARGET));
+        int areaId=Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_AREA));
+
+        String taskName="";
+        String taskLocation="";
+
+        try
+        {
+            if(amount>0 && taskId>0)
+            {
+                int taskDBRow=-1;
+                if(taskId==98)
+                {
+                    var bossRows=client.getDBRowsByValue(
+                        DBTableID.SlayerTaskSublist.ID,
+                        DBTableID.SlayerTaskSublist.COL_TASK_SUBTABLE_ID,
+                        0,
+                        client.getVarbitValue(VarbitID.SLAYER_TARGET_BOSSID));
+                    if(!bossRows.isEmpty())
+                    {
+                        taskDBRow=(Integer)client.getDBTableField(
+                            bossRows.get(0),
+                            DBTableID.SlayerTaskSublist.COL_TASK,
+                            0)[0];
+                    }
+                }
+                else
+                {
+                    var taskRows=client.getDBRowsByValue(
+                        DBTableID.SlayerTask.ID,
+                        DBTableID.SlayerTask.COL_ID,
+                        0,
+                        taskId);
+                    if(!taskRows.isEmpty()) taskDBRow=taskRows.get(0);
+                }
+
+                if(taskDBRow>=0)
+                {
+                    Object[] nameField=client.getDBTableField(
+                        taskDBRow,
+                        DBTableID.SlayerTask.COL_NAME_UPPERCASE,
+                        0);
+                    if(nameField!=null && nameField.length>0 && nameField[0] instanceof String)
+                    {
+                        taskName=(String)nameField[0];
+                    }
+                }
+
+                if(areaId>0)
+                {
+                    var areaRows=client.getDBRowsByValue(
+                        DBTableID.SlayerArea.ID,
+                        DBTableID.SlayerArea.COL_AREA_ID,
+                        0,
+                        areaId);
+                    if(!areaRows.isEmpty())
+                    {
+                        Object[] locationField=client.getDBTableField(
+                            areaRows.get(0),
+                            DBTableID.SlayerArea.COL_AREA_NAME_IN_HELPER,
+                            0);
+                        if(locationField!=null && locationField.length>0 && locationField[0] instanceof String)
+                        {
+                            taskLocation=(String)locationField[0];
+                        }
+                    }
+                }
+
+                if(client.getVarbitValue(VarbitID.SLAYER_MODIFIER_ID)==2)
+                {
+                    boolean negative=client.getVarbitValue(VarbitID.SLAYER_MODIFIER_NEGATIVE)==1;
+                    int modifier=client.getVarbitValue(VarbitID.SLAYER_MODIFIER_VALUE);
+                    initialAmount+=negative?-modifier:modifier;
+                    initialAmount=Math.max(0,initialAmount);
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            log.fine("Direct Slayer task decode failed: "+ex.getMessage());
+        }
+
+        // RuneLite Slayer profile is only a fallback. OneMan no longer depends on
+        // the Slayer plugin being enabled/initialized to know the active assignment.
+        String cachedTask=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_NAME_KEY);
+        String cachedAmount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.AMOUNT_KEY);
+        String cachedInitial=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
+        String cachedLocation=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_LOC_KEY);
+        String cachedPoints=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.POINTS_KEY);
+        String cachedStreak=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.STREAK_KEY);
+
+        if(taskName.isEmpty() && cachedTask!=null) taskName=cachedTask;
+        if(taskLocation.isEmpty() && cachedLocation!=null) taskLocation=cachedLocation;
+        if(amount<=0) amount=Math.max(0,safeInt(cachedAmount,amount));
+        if(initialAmount<=0) initialAmount=Math.max(0,safeInt(cachedInitial,initialAmount));
+        points=Math.max(points,Math.max(0,safeInt(cachedPoints,0)));
+        streak=Math.max(streak,Math.max(0,safeInt(cachedStreak,0)));
+
+        o.addProperty("level",level);
+        o.addProperty("points",points);
+        o.addProperty("streak",streak);
+        o.addProperty("taskCountVarp",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
+        o.addProperty("taskTargetVarp",taskId);
+        o.addProperty("taskName",taskName);
+        o.addProperty("amount",amount);
+        o.addProperty("initialAmount",initialAmount);
+        o.addProperty("location",taskLocation);
 
         JsonArray unlocks=new JsonArray();
         unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS));
