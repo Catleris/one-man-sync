@@ -358,6 +358,8 @@ public class OneManSyncPlugin extends Plugin
     {
         if(!ready() || event.getScriptId()!=ScriptID.COLLECTION_DRAW_LIST) return;
 
+        markStorageScan("collection_log_scan","Collection Log");
+
         Widget header=client.getWidget(InterfaceID.Collection.HEADER_TEXT);
         Widget items=client.getWidget(InterfaceID.Collection.ITEMS_CONTENTS);
         if(header==null || items==null || header.getChildren()==null || items.getChildren()==null) return;
@@ -594,6 +596,7 @@ public class OneManSyncPlugin extends Plugin
         root.add("poh",buildPohState());
         root.add("currencies",buildCurrencies());
         root.add("daily",buildDailyState());
+        root.add("unlocks",buildUnlocks());
         return root;
     }
 
@@ -844,6 +847,9 @@ public class OneManSyncPlugin extends Plugin
             out.add(s);
         }
 
+        appendLiveStorage(out,"inventory","Current Inventory",client.getItemContainer(InventoryID.INV));
+        appendLiveStorage(out,"equipment","Worn Equipment",client.getItemContainer(InventoryID.WORN));
+
         JsonObject runePouch=new JsonObject();
         runePouch.addProperty("key","rune_pouch");
         runePouch.addProperty("label","Rune Pouch");
@@ -853,6 +859,39 @@ public class OneManSyncPlugin extends Plugin
         out.add(runePouch);
 
         return out;
+    }
+
+    private void markStorageScan(String key,String label)
+    {
+        latestStorageItems.putIfAbsent(key,new LinkedHashMap<>());
+        storageLabels.put(key,label);
+        storageSnapshotEpochMs.put(key,System.currentTimeMillis());
+        storageComplete.add(key);
+        syncSoon();
+    }
+
+    private void appendLiveStorage(JsonArray out,String key,String label,ItemContainer container)
+    {
+        if(container==null || container.getItems()==null) return;
+        JsonObject s=new JsonObject();
+        s.addProperty("key",key);
+        s.addProperty("label",label);
+        s.addProperty("complete",true);
+        s.addProperty("lastSeenEpochMs",System.currentTimeMillis());
+        JsonArray items=new JsonArray();
+        for(Item item:container.getItems())
+        {
+            if(item==null || item.getId()<=0 || item.getQuantity()<=0) continue;
+            String name=itemName(item.getId());
+            if(name.isEmpty()) continue;
+            JsonObject o=new JsonObject();
+            o.addProperty("id",item.getId());
+            o.addProperty("name",name);
+            o.addProperty("quantity",item.getQuantity());
+            items.add(o);
+        }
+        s.add("items",items);
+        out.add(s);
     }
 
     private JsonArray buildRunePouchItems()
@@ -938,6 +977,17 @@ public class OneManSyncPlugin extends Plugin
         o.addProperty("soulWarsZeal",Math.max(0,client.getVarpValue(VarPlayerID.SOUL_WARS_ZEAL_TOKENS)));
         o.addProperty("pvpArenaPoints",Math.max(0,client.getVarbitValue(VarbitID.PVPA_POINTS_CURRENCY)));
         o.addProperty("kingdomCoffer",Math.max(0,client.getVarbitValue(VarbitID.MISC_COFFERS)));
+        return o;
+    }
+
+    private JsonObject buildUnlocks()
+    {
+        JsonObject o=new JsonObject();
+        o.addProperty("rigour",client.getVarbitValue(VarbitID.PRAYER_RIGOUR_UNLOCKED)>0);
+        o.addProperty("augury",client.getVarbitValue(VarbitID.PRAYER_AUGURY_UNLOCKED)>0);
+        o.addProperty("preserve",client.getVarbitValue(VarbitID.PRAYER_PRESERVE_UNLOCKED)>0);
+        o.addProperty("deadeye",client.getVarbitValue(VarbitID.PRAYER_DEADEYE_UNLOCKED)>0);
+        o.addProperty("mysticVigour",client.getVarbitValue(VarbitID.PRAYER_MYSTIC_VIGOUR_UNLOCKED)>0);
         return o;
     }
 
