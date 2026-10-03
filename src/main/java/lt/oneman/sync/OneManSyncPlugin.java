@@ -91,6 +91,25 @@ public class OneManSyncPlugin extends Plugin
     private static final Pattern NEW_PB_PATTERN =
         Pattern.compile(".*\\(new personal best\\).*", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern SLAYER_PROGRESS_MESSAGE =
+        Pattern.compile("^(?:You're assigned to kill|You have received a new Slayer assignment from .*:) (?:[Tt]he )?(?<name>.+?)(?: (?:in|on|south of) (?:the )?(?<location>[^;]+))?(?:; only | \\()(?<amount>\\d+)(?: more to go\\.|\\))$", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SLAYER_CURRENT_DIALOG =
+        Pattern.compile("^You're still (?:hunting|bringing balance to) (?<name>.+?)(?: (?:in|on|south of) (?:the )?(?<location>.+?))?(?:, with|; you have) (?<amount>\\d+) to go\\..*$", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SLAYER_ASSIGN_DIALOG =
+        Pattern.compile(".*(?:Your new task is to kill|You are to bring balance to)\\s*(?<amount>\\d+) (?<name>.+?)(?: (?:in|on|south of) (?:the )?(?<location>.+))?\\.$", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SLAYER_FIRST_ASSIGN_DIALOG =
+        Pattern.compile("^We'll start you off (?:hunting|bringing balance to) (?<name>.+?), you'll need to kill (?<amount>\\d+) of them\\.$", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SLAYER_BRACELET_PROGRESS =
+        Pattern.compile("^You still need to kill (?<amount>\\d+) monsters to complete your current Slayer assignment.*$", Pattern.CASE_INSENSITIVE);
+
+    private static final String SLAYER_NO_TASK_MESSAGE = "You need something new to hunt.";
+    private static final String SLAYER_CANCEL_MESSAGE = "Your task has been cancelled.";
+    private static final String SLAYER_CANCEL_JAD_MESSAGE = "You no longer have a slayer task as you left the fight cave.";
+
     private static final String[] PET_MESSAGES = {
         "You have a funny feeling like you're being followed",
         "You feel something weird sneaking into your backpack",
@@ -337,12 +356,21 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
-        if(!ready()) return;
+        if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
-        if(type!=ChatMessageType.GAMEMESSAGE && type!=ChatMessageType.SPAM) return;
+        boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;
+        boolean slayerDialog=type==ChatMessageType.DIALOG || type==ChatMessageType.MESBOX || type==ChatMessageType.NPC_SAY;
+        if(!normalGameMessage && !slayerDialog) return;
 
         String message=cleanMessage(event.getMessage());
         long now=System.currentTimeMillis();
+
+        if(captureSlayerMessage(message))
+        {
+            syncSoon();
+        }
+
+        if(!normalGameMessage) return;
 
         for(String petMessage:PET_MESSAGES){
             if(message.contains(petMessage)){
@@ -1015,13 +1043,143 @@ public class OneManSyncPlugin extends Plugin
         if(client.getGameState()!=GameState.LOGGED_IN || client.getLocalPlayer()==null) return;
         try
         {
-            slayerStateCache=readSlayerStateDirect();
+            JsonObject direct=readSlayerStateDirect();
+            JsonObject old=slayerStateCache;
+
+            boolean directValid=direct.has("taskSignalValid") && direct.get("taskSignalValid").getAsBoolean();
+            boolean oldValid=old!=null && old.has("taskSignalValid") && old.get("taskSignalValid").getAsBoolean();
+
+            // Some clients temporarily expose Slayer level while assignment varps are zero.
+            // Never erase a confirmed task just because a later periodic read is empty.
+            if(!directValid && oldValid)
+            {
+                copyJsonProperty(old,direct,"taskName");
+                copyJsonProperty(old,direct,"amount");
+                copyJsonProperty(old,direct,"initialAmount");
+                copyJsonProperty(old,direct,"location");
+                copyJsonProperty(old,direct,"taskSource");
+                copyJsonProperty(old,direct,"taskSignalValid");
+                copyJsonProperty(old,direct,"lastTaskSeenEpochMs");
+            }
+
+            if(old!=null)
+            {
+                int oldPoints=jsonInt(old,"points");
+                int oldStreak=jsonInt(old,"streak");
+                if(jsonInt(direct,"points")==0 && oldPoints>0) direct.addProperty("points",oldPoints);
+                if(jsonInt(direct,"streak")==0 && oldStreak>0) direct.addProperty("streak",oldStreak);
+            }
+
+            slayerStateCache=direct;
             lastSlayerRefreshTick=client.getTickCount();
         }
         catch(Exception ex)
         {
             log.fine("Slayer state refresh failed: "+ex.getMessage());
         }
+    }
+
+    private static void copyJsonProperty(JsonObject from,JsonObject to,String key)
+    {
+        if(from!=null && from.has(key)) to.add(key,from.get(key).deepCopy());
+    }
+
+    private static int jsonInt(JsonObject o,String key)
+    {
+        try{return o!=null && o.has(key)?o.get(key).getAsInt():0;}
+        catch(Exception ex){return 0;}
+    }
+
+    private boolean captureSlayerMessage(String message)
+    {
+        if(message==null || message.isEmpty()) return false;
+
+        if(message.equalsIgnoreCase(SLAYER_NO_TASK_MESSAGE)
+            || message.equalsIgnoreCase(SLAYER_CANCEL_MESSAGE)
+            || message.equalsIgnoreCase(SLAYER_CANCEL_JAD_MESSAGE))
+        {
+            JsonObject state=readSlayerStateDirect();
+            state.addProperty("taskName","");
+            state.addProperty("amount",0);
+            state.addProperty("initialAmount",0);
+            state.addProperty("location","");
+            state.addProperty("taskSource","chat-clear");
+            state.addProperty("taskSignalValid",true);
+            state.addProperty("lastTaskSeenEpochMs",System.currentTimeMillis());
+            slayerStateCache=state;
+            return true;
+        }
+
+        Matcher m=SLAYER_PROGRESS_MESSAGE.matcher(message);
+        if(m.matches())
+        {
+            cacheSlayerTaskFromMessage(m.group("name"),m.group("amount"),m.group("location"),false);
+            return true;
+        }
+
+        m=SLAYER_CURRENT_DIALOG.matcher(message);
+        if(m.matches())
+        {
+            cacheSlayerTaskFromMessage(m.group("name"),m.group("amount"),m.group("location"),false);
+            return true;
+        }
+
+        m=SLAYER_ASSIGN_DIALOG.matcher(message);
+        if(m.matches())
+        {
+            cacheSlayerTaskFromMessage(m.group("name"),m.group("amount"),m.group("location"),true);
+            return true;
+        }
+
+        m=SLAYER_FIRST_ASSIGN_DIALOG.matcher(message);
+        if(m.matches())
+        {
+            cacheSlayerTaskFromMessage(m.group("name"),m.group("amount"),"",true);
+            return true;
+        }
+
+        m=SLAYER_BRACELET_PROGRESS.matcher(message);
+        if(m.matches())
+        {
+            JsonObject old=slayerStateCache;
+            String name=old!=null && old.has("taskName")?old.get("taskName").getAsString():"";
+            if(!name.isEmpty())
+            {
+                cacheSlayerTaskFromMessage(name,m.group("amount"),
+                    old.has("location")?old.get("location").getAsString():"",false);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void cacheSlayerTaskFromMessage(String name,String amountText,String location,boolean newAssignment)
+    {
+        if(name==null || name.trim().isEmpty()) return;
+        int amount=Math.max(0,safeInt(amountText,0));
+        JsonObject state=readSlayerStateDirect();
+        JsonObject old=slayerStateCache;
+
+        state.addProperty("taskName",name.trim());
+        state.addProperty("amount",amount);
+        int oldInitial=old!=null?jsonInt(old,"initialAmount"):0;
+        state.addProperty("initialAmount",newAssignment?amount:Math.max(amount,oldInitial));
+        state.addProperty("location",location==null?"":location.trim());
+        state.addProperty("taskSource","chat");
+        state.addProperty("taskSignalValid",amount>0);
+        state.addProperty("lastTaskSeenEpochMs",System.currentTimeMillis());
+
+        if(old!=null)
+        {
+            int oldPoints=jsonInt(old,"points");
+            int oldStreak=jsonInt(old,"streak");
+            if(jsonInt(state,"points")==0 && oldPoints>0) state.addProperty("points",oldPoints);
+            if(jsonInt(state,"streak")==0 && oldStreak>0) state.addProperty("streak",oldStreak);
+        }
+
+        slayerStateCache=state;
+        lastSlayerRefreshTick=client.getTickCount();
     }
 
     private JsonObject readSlayerStateDirect()
@@ -1038,6 +1196,7 @@ public class OneManSyncPlugin extends Plugin
 
         String taskName="";
         String taskLocation="";
+        String taskSource="none";
 
         try
         {
@@ -1078,6 +1237,7 @@ public class OneManSyncPlugin extends Plugin
                     if(nameField!=null && nameField.length>0 && nameField[0] instanceof String)
                     {
                         taskName=(String)nameField[0];
+                        taskSource="game-db";
                     }
                 }
 
@@ -1124,7 +1284,11 @@ public class OneManSyncPlugin extends Plugin
         String cachedPoints=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.POINTS_KEY);
         String cachedStreak=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.STREAK_KEY);
 
-        if(taskName.isEmpty() && cachedTask!=null) taskName=cachedTask;
+        if(taskName.isEmpty() && cachedTask!=null && !cachedTask.trim().isEmpty())
+        {
+            taskName=cachedTask.trim();
+            taskSource="runelite-profile";
+        }
         if(taskLocation.isEmpty() && cachedLocation!=null) taskLocation=cachedLocation;
         if(amount<=0) amount=Math.max(0,safeInt(cachedAmount,amount));
         if(initialAmount<=0) initialAmount=Math.max(0,safeInt(cachedInitial,initialAmount));
@@ -1140,6 +1304,12 @@ public class OneManSyncPlugin extends Plugin
         o.addProperty("amount",amount);
         o.addProperty("initialAmount",initialAmount);
         o.addProperty("location",taskLocation);
+        o.addProperty("taskSource",taskSource);
+        o.addProperty("taskSignalValid",!taskName.isEmpty() && amount>0);
+        o.addProperty("lastTaskSeenEpochMs",(!taskName.isEmpty() && amount>0)?System.currentTimeMillis():0L);
+        o.addProperty("rawTaskCount",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
+        o.addProperty("rawTaskTarget",taskId);
+        o.addProperty("rawTaskArea",areaId);
 
         JsonArray unlocks=new JsonArray();
         unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS));
