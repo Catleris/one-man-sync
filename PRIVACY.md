@@ -23,6 +23,7 @@ When enabled, the plugin may transmit:
 - Recent tracked boss loot
 - Bank item IDs, names, and quantities when the bank is opened
 - Clue Scroll STASH built/filled state for each STASH unit
+- Current inventory and worn equipment snapshot
 - Selected storage snapshots when the relevant storage is viewed or available (Seed Vault, Looting Bag, Rune Pouch, Group Storage, POH Costume Room)
 - Slayer task/progression state, POH feature observations, selected minigame/progression currencies, Kingdom state, Bird House tracker timestamps, and Farming Contract state
 - OneMan Sync Key used to authenticate the request
