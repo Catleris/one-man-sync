@@ -1316,6 +1316,12 @@ public class OneManSyncPlugin extends Plugin
         unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS1));
         unlocks.add(client.getVarpValue(VarPlayerID.SLAYER_REWARDS_UNLOCKS2));
         o.add("unlockBits",unlocks);
+        JsonObject rewardUnlocks=new JsonObject();
+        rewardUnlocks.addProperty("biggerAndBadder",client.getVarbitValue(VarbitID.SLAYER_UNLOCK_SUPERIORMOBS)>0);
+        rewardUnlocks.addProperty("biggerAndBadderEnabled",client.getVarbitValue(VarbitID.SLAYER_TOGGLEOFF_SUPERIORMOBS)==0);
+        rewardUnlocks.addProperty("slugSalter",client.getVarbitValue(VarbitID.SLAYER_AUTOKILL_ROCKSLUGS)>0);
+        rewardUnlocks.addProperty("reptileFreezer",client.getVarbitValue(VarbitID.SLAYER_AUTOKILL_DESERTLIZARDS)>0);
+        o.add("rewardUnlocks",rewardUnlocks);
 
         JsonArray blocked=new JsonArray();
         int[] blockedVarps={
