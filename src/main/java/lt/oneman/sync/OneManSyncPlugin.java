@@ -228,6 +228,8 @@ public class OneManSyncPlugin extends Plugin
             loginCountdown=-1;
             progressDirty=false;
             lastKnownTotalLevel=-1;
+            slayerStateCache=null;
+            lastSlayerRefreshTick=-100000;
         }
     }
 
@@ -270,7 +272,14 @@ public class OneManSyncPlugin extends Plugin
             || varbitId==VarbitID.SLAYER_MODIFIER_NEGATIVE
             || varbitId==VarbitID.SLAYER_POINTS
             || varbitId==VarbitID.SLAYER_TASKS_COMPLETED
-            || varbitId==VarbitID.SLAYER_WILDERNESS_TASKS_COMPLETED;
+            || varbitId==VarbitID.SLAYER_WILDERNESS_TASKS_COMPLETED
+            || varpId==VarPlayerID.SLAYER_REWARDS_UNLOCKS
+            || varpId==VarPlayerID.SLAYER_REWARDS_UNLOCKS1
+            || varpId==VarPlayerID.SLAYER_REWARDS_UNLOCKS2
+            || varbitId==VarbitID.SLAYER_UNLOCK_SUPERIORMOBS
+            || varbitId==VarbitID.SLAYER_TOGGLEOFF_SUPERIORMOBS
+            || varbitId==VarbitID.SLAYER_AUTOKILL_ROCKSLUGS
+            || varbitId==VarbitID.SLAYER_AUTOKILL_DESERTLIZARDS;
     }
 
     @Subscribe
@@ -1029,12 +1038,9 @@ public class OneManSyncPlugin extends Plugin
 
     private JsonObject buildSlayerState()
     {
+        // Read again at send time: cached data is only a bounded label fallback.
+        refreshSlayerStateCache();
         JsonObject cached=slayerStateCache;
-        if(cached==null)
-        {
-            refreshSlayerStateCache();
-            cached=slayerStateCache;
-        }
         return cached!=null?cached.deepCopy():readSlayerStateDirect();
     }
 
@@ -1046,29 +1052,7 @@ public class OneManSyncPlugin extends Plugin
             JsonObject direct=readSlayerStateDirect();
             JsonObject old=slayerStateCache;
 
-            boolean directValid=direct.has("taskSignalValid") && direct.get("taskSignalValid").getAsBoolean();
-            boolean oldValid=old!=null && old.has("taskSignalValid") && old.get("taskSignalValid").getAsBoolean();
-
-            // Some clients temporarily expose Slayer level while assignment varps are zero.
-            // Never erase a confirmed task just because a later periodic read is empty.
-            if(!directValid && oldValid)
-            {
-                copyJsonProperty(old,direct,"taskName");
-                copyJsonProperty(old,direct,"amount");
-                copyJsonProperty(old,direct,"initialAmount");
-                copyJsonProperty(old,direct,"location");
-                copyJsonProperty(old,direct,"taskSource");
-                copyJsonProperty(old,direct,"taskSignalValid");
-                copyJsonProperty(old,direct,"lastTaskSeenEpochMs");
-            }
-
-            if(old!=null)
-            {
-                int oldPoints=jsonInt(old,"points");
-                int oldStreak=jsonInt(old,"streak");
-                if(jsonInt(direct,"points")==0 && oldPoints>0) direct.addProperty("points",oldPoints);
-                if(jsonInt(direct,"streak")==0 && oldStreak>0) direct.addProperty("streak",oldStreak);
-            }
+            direct=OneManSlayerState.reconcile(direct,old,System.currentTimeMillis());
 
             slayerStateCache=direct;
             lastSlayerRefreshTick=client.getTickCount();
@@ -1077,11 +1061,6 @@ public class OneManSyncPlugin extends Plugin
         {
             log.fine("Slayer state refresh failed: "+ex.getMessage());
         }
-    }
-
-    private static void copyJsonProperty(JsonObject from,JsonObject to,String key)
-    {
-        if(from!=null && from.has(key)) to.add(key,from.get(key).deepCopy());
     }
 
     private static int jsonInt(JsonObject o,String key)
@@ -1104,6 +1083,7 @@ public class OneManSyncPlugin extends Plugin
             state.addProperty("initialAmount",0);
             state.addProperty("location","");
             state.addProperty("taskSource","chat-clear");
+            state.addProperty("taskStatus","none");
             state.addProperty("taskSignalValid",true);
             state.addProperty("lastTaskSeenEpochMs",System.currentTimeMillis());
             slayerStateCache=state;
@@ -1163,20 +1143,15 @@ public class OneManSyncPlugin extends Plugin
 
         state.addProperty("taskName",name.trim());
         state.addProperty("amount",amount);
-        int oldInitial=old!=null?jsonInt(old,"initialAmount"):0;
-        state.addProperty("initialAmount",newAssignment?amount:Math.max(amount,oldInitial));
+        int original=jsonInt(state,"initialAmount");
+        if(original<=0 && old!=null && old.has("taskName") && name.trim().equalsIgnoreCase(old.get("taskName").getAsString()))
+            original=jsonInt(old,"initialAmount");
+        state.addProperty("initialAmount",newAssignment?amount:Math.max(amount,original));
         state.addProperty("location",location==null?"":location.trim());
         state.addProperty("taskSource","chat");
-        state.addProperty("taskSignalValid",amount>0);
+        state.addProperty("taskSignalValid",true);
+        state.addProperty("taskStatus",amount>0?"active":"none");
         state.addProperty("lastTaskSeenEpochMs",System.currentTimeMillis());
-
-        if(old!=null)
-        {
-            int oldPoints=jsonInt(old,"points");
-            int oldStreak=jsonInt(old,"streak");
-            if(jsonInt(state,"points")==0 && oldPoints>0) state.addProperty("points",oldPoints);
-            if(jsonInt(state,"streak")==0 && oldStreak>0) state.addProperty("streak",oldStreak);
-        }
 
         slayerStateCache=state;
         lastSlayerRefreshTick=client.getTickCount();
@@ -1281,19 +1256,18 @@ public class OneManSyncPlugin extends Plugin
         String cachedAmount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.AMOUNT_KEY);
         String cachedInitial=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
         String cachedLocation=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.TASK_LOC_KEY);
-        String cachedPoints=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.POINTS_KEY);
-        String cachedStreak=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.STREAK_KEY);
 
-        if(taskName.isEmpty() && cachedTask!=null && !cachedTask.trim().isEmpty())
+        // The live count is authoritative. A zero must not resurrect a profile task.
+        // Only a profile count and initial amount matching both live values may
+        // supply a missing label, and that label remains unverified until chat/DB confirmation.
+        boolean profileMatches=amount>0 && taskId>0 && safeInt(cachedAmount,-1)==amount
+            && initialAmount>0 && safeInt(cachedInitial,-1)==initialAmount;
+        if(taskName.isEmpty() && profileMatches && cachedTask!=null && !cachedTask.trim().isEmpty())
         {
-            taskName=cachedTask.trim();
-            taskSource="runelite-profile";
+            taskName=cachedTask.trim(); taskSource="runelite-profile-unverified";
+            if(taskLocation.isEmpty() && cachedLocation!=null) taskLocation=cachedLocation;
         }
-        if(taskLocation.isEmpty() && cachedLocation!=null) taskLocation=cachedLocation;
-        if(amount<=0) amount=Math.max(0,safeInt(cachedAmount,amount));
-        if(initialAmount<=0) initialAmount=Math.max(0,safeInt(cachedInitial,initialAmount));
-        points=Math.max(points,Math.max(0,safeInt(cachedPoints,0)));
-        streak=Math.max(streak,Math.max(0,safeInt(cachedStreak,0)));
+        if(amount==0) { taskName=""; taskLocation=""; initialAmount=0; taskSource="game-no-task"; }
 
         o.addProperty("level",level);
         o.addProperty("points",points);
@@ -1305,8 +1279,12 @@ public class OneManSyncPlugin extends Plugin
         o.addProperty("initialAmount",initialAmount);
         o.addProperty("location",taskLocation);
         o.addProperty("taskSource",taskSource);
-        o.addProperty("taskSignalValid",!taskName.isEmpty() && amount>0);
-        o.addProperty("lastTaskSeenEpochMs",(!taskName.isEmpty() && amount>0)?System.currentTimeMillis():0L);
+        boolean confirmed=taskSource.equals("game-db") || taskSource.equals("game-no-task");
+        o.addProperty("schemaVersion",2);
+        o.addProperty("observedEpochMs",System.currentTimeMillis());
+        o.addProperty("taskSignalValid",confirmed);
+        o.addProperty("taskStatus",amount==0?"none":confirmed?"active":"unknown");
+        o.addProperty("lastTaskSeenEpochMs",confirmed?System.currentTimeMillis():0L);
         o.addProperty("rawTaskCount",Math.max(0,client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
         o.addProperty("rawTaskTarget",taskId);
         o.addProperty("rawTaskArea",areaId);
