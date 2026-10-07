@@ -1,4 +1,4 @@
-# OneMan Slayer Lab 0.3 — testinė kopija
+# OneMan Slayer Lab 0.4 — testinė kopija
 
 Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pagrindiniai failai nepakeisti.
 
@@ -62,3 +62,25 @@ Automatiniai testai tikrina duomenų, kiekių, sesijos, banko, loot ir kelionės
 - Kelionės: https://oldschool.runescape.wiki/w/Slayer_ring , https://oldschool.runescape.wiki/w/Rada%27s_blessing , https://oldschool.runescape.wiki/w/Royal_seed_pod
 
 Katalogo faktai išvardyti `slayer-knowledge.tsv`; tai vietinė šaltinių kopija, todėl būsimi žaidimo pakeitimai reikalauja atnaujinimo. Wiki lentelės sąlygos gali priklausyti nuo vietos, varianto ar Slayer master; jos nėra universalūs privalomi reikalavimai.
+
+## Nauja 0.4 — Prayer resource monitor
+
+Devyni skirtukai; naujas **Prayer** veikia ir be Slayer tasko. Įjunk `OneMan Slayer Lab` ir atidaryk S → Prayer. Rodomi dabartiniai Prayer taškai, tik jau įjungti prayers, nešiojamų Prayer potion / Super restore (įskaitant mixes) dozės ir apytikslis išsekimo laikas. NPC atakos ar projectiles neskaitomi; jokio Prayer pasirinkimo ar keitimo indikatoriaus nėra.
+
+Plugino nustatymai:
+- **Prayer points warning below**: pradinis limitas 15; perspėja kai taškų mažiau, ne kai lygiai 15.
+- **Prayer / restore doses below**: pradinis limitas 2; combined doses, ne potion buteliukų skaičius.
+- **Desktop Prayer alerts**: pagal nutylėjimą išjungta; įjunk, jeigu nori RuneLite pranešimų. Perspėjimas vieną kartą per žemos būsenos epizodą; atsikuria taškus / papildžius dozes persijungia naujam epizodui. Jų matomumas/garsas priklauso nuo RuneLite notification nustatymų.
+- Nulis išjungia atitinkamą ribą. Vaizdiniai perspėjimai rodomi Prayer tekste ir spalvotame skirtuko pavadinime.
+
+Įvertis remiasi iki 30 s stebėtų taškų nuostoliais pagal game ticks; reikia bent 12 s stabilaus prayer rinkinio ir bent 2 prarastų taškų. Pakeitus prayers, įrangą ar padidėjus taškams, duomenys renkami iš naujo. Flicking, išoriniai taškų nuostoliai, regeneration ir lag gali iškreipti įvertį. Tai nėra tiksli boss atakų ar Prayer bonus formulė. Sanfew serum, blighted potions, bankas ir kiti atkūrimo šaltiniai nepriskaičiuojami. Potion dozės neatstoja vienodo atkuriamų taškų kiekio.
+
+Papildomas žaidimo testas:
+1. Be Slayer tasko atidaryk Prayer skirtuką — turi rodyti taškus ir jau aktyvius prayers.
+2. Įjunk/išjunk pasirinktą prayer pats; sąrašas turi atsinaujinti kitame game tick.
+3. Perženk taškų ribą: turi atsirasti vizualus perspėjimas. Įjungus desktop alerts, žemo epizodo metu neturi kartotis pranešimai kas tick.
+4. Paimk 4-dose Prayer potion ir 3-dose Super restore: kiekiai 4 ir 3. Išgerk dozę; noted items/banko kopija nedidina šio kiekio.
+5. Su stabiliu naudojimu palauk bent 12 s / 2 prarastus taškus; turi atsirasti apytikslis laikas. Išgerk potion ar pakeisk prayers/įrangą — įvertis turi pradėti rinkti duomenis iš naujo.
+6. Logout / kita paskyra / plugin restart neturi perkelti ankstesnio įverčio ar perspėjimo epizodo.
+
+Atnaujinant vėl išsaugok `dev-home`, įskaitant ten esančią `.runelite` konfigūraciją ir savo vietinį Jagex prisijungimo failą. Credentials failo niekam nesiųsk ir nekelk į GitHub.

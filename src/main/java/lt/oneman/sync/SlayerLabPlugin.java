@@ -46,6 +46,8 @@ public class SlayerLabPlugin extends Plugin
     @Inject private Notifier notifier;
     @Provides SlayerLabConfig provideConfig(ConfigManager manager) { return manager.getConfig(SlayerLabConfig.class); }
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
+    private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
+    private String prayerView = "Log in to view Prayer resources.";
     private int lastXp = -1;
     private String currentTask = "";
     private final java.util.List<SlayerLabMapPoint> mapPoints = new ArrayList<>();
@@ -60,6 +62,7 @@ public class SlayerLabPlugin extends Plugin
 
     @Override protected void startUp()
     {
+        prayerMonitor.reset();
         active = true;
         overlayManager.add(minimapOverlay);
         nextRefresh = 0;
@@ -80,6 +83,7 @@ public class SlayerLabPlugin extends Plugin
     }
     @Override protected void shutDown()
     {
+        prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
         overlayManager.remove(minimapOverlay);
@@ -96,6 +100,7 @@ public class SlayerLabPlugin extends Plugin
         nextRefresh = 0;
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
+            prayerMonitor.reset(); prayerView="Log in to view Prayer resources.";
             account.pause("Logged out", System.currentTimeMillis());
             lastXp = -1; currentTask = ""; lastWarning = "";
             clearLocations();
@@ -106,12 +111,13 @@ public class SlayerLabPlugin extends Plugin
     @Subscribe public void onGameTick(GameTick event)
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN || client.getLocalPlayer() == null) return;
+        if (!bindAccount(System.currentTimeMillis())) return;
+        refreshPrayer();
         for (int i = 0; i < mapPoints.size(); i++)
             mapPoints.get(i).highlight(destinations.get(i) == selectedDestination, (client.getTickCount() / 2) % 2 == 0);
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();
-        if (!bindAccount(now)) return;
         goal = Optional.ofNullable(configManager.getConfiguration(SlayerLabConfig.GROUP, account.profile, "lootGoal")).orElse("");
         if (lastXp < 0) lastXp = client.getSkillExperience(Skill.SLAYER);
         // Built-in Slayer handles assignment DB decoding, messages and profile changes.
@@ -187,17 +193,41 @@ public class SlayerLabPlugin extends Plugin
         final String sessionNote = session.note;
         final long sessionStarted = session.started;
         final String sessionProfile = account.profile;
-        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
+        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText(),prayerView};
         java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
         SwingUtilities.invokeLater(() -> {
             if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile); panel.showLocations(snapshot); }
         });
+    }
+    private void refreshPrayer()
+    {
+        int points=client.getBoostedSkillLevel(Skill.PRAYER);
+        int level=client.getRealSkillLevel(Skill.PRAYER);
+        java.util.List<String> enabled=SlayerLabPrayer.active(client);
+        prayerMonitor.observe(points,String.join("|",enabled));
+        Map<String,Integer> inventory=new TreeMap<>();
+        ItemContainer container=client.getItemContainer(InventoryID.INV);
+        if(container!=null) for(Item item:container.getItems())
+        {
+            if(item.getId()<0 || item.getQuantity()<=0) continue;
+            ItemComposition definition=itemManager.getItemComposition(item.getId());
+            if(definition.getNote()!=-1) continue;
+            inventory.merge(SlayerLabKnowledge.normalize(definition.getName()),item.getQuantity(),Integer::sum);
+        }
+        SlayerLabPrayer.Doses doses=SlayerLabPrayer.doses(inventory);
+        java.util.List<String> alerts=prayerMonitor.crossed(points,doses,config);
+        if(config.notifyPrayer()) for(String alert:alerts) notifier.notify("OneMan Prayer: "+alert);
+        prayerView=prayerMonitor.describe(points,level,enabled,doses,config);
+        String snapshot=prayerView;
+        boolean low=!prayerMonitor.warnings(points,doses,config).isEmpty();
+        SwingUtilities.invokeLater(() -> { if(active && panel!=null) panel.showPrayer(snapshot,low); });
     }
     private boolean bindAccount(long now)
     {
         String profileKey=configManager.getRSProfileKey();
         if(!Objects.equals(profileKey,account.profile))
         {
+            prayerMonitor.reset(); prayerView="Loading Prayer resources…";
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
             publish("Loading this account profile…", "");
@@ -207,6 +237,7 @@ public class SlayerLabPlugin extends Plugin
     @Subscribe public void onItemContainerChanged(ItemContainerChanged event)
     {
         nextRefresh=0;
+        if(event.getContainerId()==InventoryID.WORN) prayerMonitor.resetEstimate();
         if(event.getContainerId()!=InventoryID.BANK || client.getGameState()!=GameState.LOGGED_IN) return;
         if(!bindAccount(System.currentTimeMillis())) return;
         Map<String,Integer> items=new TreeMap<>();
@@ -308,7 +339,7 @@ public class SlayerLabPlugin extends Plugin
     private final class LabPanel extends PluginPanel
     {
         private final JTabbedPane tabs = new JTabbedPane();
-        private final JTextArea[] sections = new JTextArea[8];
+        private final JTextArea[] sections = new JTextArea[9];
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
         private final JTextArea note = new JTextArea(3,20);
         private String shownTask = "", shownProfile = "";
@@ -327,10 +358,10 @@ public class SlayerLabPlugin extends Plugin
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.3");
+            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.4");
             title.setForeground(new Color(218, 176, 85));
 
-            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
+            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History","Prayer"};
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
@@ -397,6 +428,14 @@ public class SlayerLabPlugin extends Plugin
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
         }
+        void showPrayer(String view,boolean low)
+        {
+            JTextArea section=sections[8];
+            if(!section.getText().equals(view)) {
+                int caret=section.getCaretPosition(); section.setText(view); section.setCaretPosition(Math.min(caret,view.length()));
+            }
+            tabs.setForegroundAt(8,low?new Color(255,120,90):UIManager.getColor("Label.foreground"));
+        }
         void showTabs(String[] views,String task,String sessionNote,long started,String profile)
         {
             updating=true;
@@ -413,7 +452,8 @@ public class SlayerLabPlugin extends Plugin
         void showView(String view, String link)
         {
             updating=true; shownTask=""; shownProfile=""; shownSession=0;
-            for(JTextArea section:sections) section.setText(view);
+            for(int i=0;i<8;i++) sections[i].setText(view);
+            showPrayer(prayerView,false);
             variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;
             wiki.setEnabled(!link.isEmpty()); updating=false;

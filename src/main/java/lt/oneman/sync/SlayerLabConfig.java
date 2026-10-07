@@ -23,4 +23,12 @@ public interface SlayerLabConfig extends Config
     default int runeWarning() { return 100; }
     @ConfigItem(keyName="notifySupplies", name="Desktop supplies alerts", description="Notify once when a chosen threshold is crossed. Local notifications only.", position=5)
     default boolean notifySupplies() { return false; }
+    @Range(min=0,max=99)
+    @ConfigItem(keyName="prayerPointsWarning", name="Prayer points warning below", description="Visual warning below this number of your Prayer points. Zero disables it.", position=6)
+    default int prayerPointsWarning() { return 15; }
+    @Range(min=0,max=112)
+    @ConfigItem(keyName="prayerDosesWarning", name="Prayer / restore doses below", description="Combined carried Prayer potion and Super restore doses, including mixes. Zero disables it.", position=7)
+    default int prayerDosesWarning() { return 2; }
+    @ConfigItem(keyName="notifyPrayer", name="Desktop Prayer alerts", description="Optional local alert when your points or carried doses cross their threshold. Rearms after recovery.", position=8)
+    default boolean notifyPrayer() { return false; }
 }
