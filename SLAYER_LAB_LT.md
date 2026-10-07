@@ -1,76 +1,64 @@
-# OneMan Slayer Lab — testinė kopija
+# OneMan Slayer Lab 0.3 — testinė kopija
 
-Bazė: Catleris/one-man-sync, master a0166081ff023027768f8ac2f0c51e64c710b21d.
-Darbo šaka: dev/slayer-helper-lab. Originalūs OneManSyncPlugin.java ir OneManSyncConfig.java nepakeisti.
+Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pagrindiniai failai nepakeisti.
 
-## Paleidimas Windows / IntelliJ
+## Paleidimas / atnaujinimas
 
-1. Parsisiųsk šios šakos ZIP arba klonuok ją į naują aplanką. Neišpakuok ant seno plugino.
-2. IntelliJ → Open → pasirink naują aplanką. Gradle JVM: JDK 17; kodas kompiliuojamas Java 11 target.
-3. Gradle → Tasks → other → run, arba PowerShell naujame aplanke: `.\gradlew.bat run`.
-4. Development RuneLite įjunk `Slayer` ir `OneMan Slayer Lab`. Dešinėje paspausk auksinę S piktogramą.
-5. `OneMan Sync` yra nukopijuotas, tačiau sinchronizacija pagal nutylėjimą išjungta. Slayer pagalbininkui sync key nereikia.
+1. Uždaryk testinį RuneLite. Naujos versijos kodą naudok atskirame testinio projekto aplanke.
+2. Atnaujindamas išsaugok savo `dev-home` aplanką: jame yra testinio kliento prisijungimas, nustatymai ir nauja vietinė istorija. Jo nekelk į GitHub ir nesiųsk kitiems.
+3. IntelliJ → Open → projektas. Gradle JVM: JDK 17; Java target: 11.
+4. Windows PowerShell: `.\gradlew.bat run`; Linux: `./gradlew run`.
+5. Įjunk RuneLite `Slayer` ir `OneMan Slayer Lab`; atidaryk auksinę S piktogramą.
 
-Gradle run naudoja atskirą user.home: projekto dev-home. Todėl įprastos RuneLite paskyros nustatymai ir sync key neperimami. Šio aplanko nekelk į GitHub ir nesiųsk kitiems. Neįjunk OneMan Sync serverio sinchronizacijos, jeigu testuoji tik vietinį Slayer skydelį.
+Gradle run naudoja atskirą `user.home=dev-home`. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
 
-Jagex paskyros prisijungimas prie development kliento: laikykis oficialaus RuneLite vadovo:
+Jagex paskyros prisijungimas: oficialus RuneLite vadovas
 https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
-Nesiųsk prisijungimo duomenų ar JX_* reikšmių kitiems.
 
-## Ką rodo
+## Aštuoni nauji rodiniai
 
-- Dabartinį taską ir likusį kiekį; duomenys iš RuneLite Slayer profilio ir žaidimo task count, atnaujinami maždaug kas 3 sekundes.
-- 25 paruoštus taskų aprašus, monstrų vietas, kelionės ir prieigos sąlygas.
-- Būtinų specialių daiktų patikrą užrašu READY, EQUIP arba MISSING. Inventoriuje esantis apsaugos daiktas nėra laikomas užsidėtu; pažymėti (noted) daiktai netinka.
-- Slayer helmet alternatyvas tik ten, kur jis tikrai pakeičia apsaugą. Jis nepakeičia mirror shield ar witchwood icon.
-- Priskirtą vietą (pvz., Konar) atskirai; kitos vietos tokio tasko atveju yra tik informacinės.
-- Neaprašytam taskui rodo Wiki mygtuką ir aiškiai nekuria spėjamų reikalavimų.
+- **Prep:** aktyvus taskas, priskirta vieta, Slayer lygis, specialių daiktų patikra. Būsena skiria banke matytą daiktą, inventorių ir užsidėtą įrangą. Atidaryk banką, kad būtų išsaugota jo kopija su data. Pažymėti daiktai ir banko placeholders nepatvirtina pasiruošimo.
+- **Tactics:** rankinis monstrų/bossų variantų pasirinkimas, statiniai pasiruošimo ir strategijos patarimai, pasirinkto varianto Wiki. Hydra, Araxxor, Cerberus, Abyssal Sire, Kraken, Grotesque Guardians ir kiti svarbesni variantai turi papildomus patarimus.
+- **Places:** įėjimų alternatyvos, prieiga, žinomos cannon/multi sąlygos, banko orientyrai ir Wilderness rizika. Konar priskirtai vietai žymimi tik tiksliai atitinkantys žinomi įėjimai; bendros vietos lieka informacinės.
+- **Travel:** kelionės pasirinkimai pagal nešiojamus teleportų daiktus ir patikrintas konkrečių questų baigimo būsenas. Slayer ring, Rada's blessing, Falador tablet, ring of dueling ir royal seed pod rodomi tik su aiškia prieinamumo būsena.
+- **Supplies:** maistas, potion dozės, matoma ammo/runes. Plugino nustatymuose pasirink combat style ir savo perspėjimo ribas; nulis išjungia ribą. Desktop alert yra pasirenkamas, pagal nutylėjimą išjungtas.
+- **Session:** sesijos laikas, priskirto NPC loot įvykiais užfiksuoti kills/h, atskiras tasko credits/h, Slayer XP/h ir likusio laiko įvertis. Galima išsaugoti sesijos pastabą.
+- **Loot:** Ironman upgrade tikslų idėjos su paaiškinimu, pasirenkamas arba įrašomas norimas daiktas, kiekis datuotoje banko kopijoje ir šioje sesijoje stebėtas loot.
+- **History:** iki 50 naujausių stebėtų sesijų: taskas, priskirta vieta, pasirinktas įėjimas/variantas, paskutinė įranga, XP, credits, loot ir pastaba. Duomenys atskiri RuneLite paskyros profiliams.
 
-Bankas, quest completion, potion charges ir pakankami consumable kiekiai netikrinami. Įrangos patikra patvirtina tik daikto turėjimą/užsidėjimą. Blue dragons apsauga ir Turoth/Kurask visas combat setup aprašomi tekstu, automatiškai jų paruošimas nepatvirtinamas. Vietų aprašai nėra automatinė navigacija.
+## Aprėptis ir ribos
 
-## Patikrinimas žaidime (atlieka vartotojas)
+Įtraukti **158 Wiki ir RuneLite taskų / specialių priskyrimų katalogo įrašai**, tarp jų 95 Slayer Hydras. Tai nėra 158 ranka parašytos išsamios kovos taktikos. Bendras katalogas turi šaltinio lygį, vietas, įrangos/prieigos pastabas ir variantus; svarbesni taskai turi papildomai paruoštą checklistą ar taktikas. Boss/specialiems priskyrimams, kurių bendroje Wiki lentelėje nėra, naudojamas konkretaus monstro Wiki.
 
-1. Prisijunk turėdamas taską → tikrink pavadinimą, kiekį ir vietą su enchanted gem / Slayer master.
-2. Pakeisk taską → naujas pavadinimas turi atsirasti be kliento restarto.
-3. Dust devils/Banshees: apsaugą padėk banke, paimk į inventorių, užsidėk. Būsena turi keistis MISSING → EQUIP → READY.
-4. Patikrink spalvotą/imbued Slayer helmet. Black mask neturi pakeisti facemask/earmuffs apsaugos.
-5. Basilisk/Cockatrice: Slayer helmet neturi patvirtinti mirror shield. Cave horror: neturi pakeisti witchwood icon.
-6. Gargoyles: rock hammer inventoriuje arba granite hammer turi būti atpažįstamas.
-7. Konar taskas: priskirta vieta išlieka virš bendrų vietų ir negali būti tyliai pakeista kita.
-8. Užbaigęs / atšaukęs taską → nėra aktyvaus tasko. Atsijungęs → prisijungimo pranešimas; kita paskyra neturi matyti ankstesnio tasko.
-9. Išjunk / įjunk Lab pluginą → nėra dubliuotos S piktogramos.
+Vietų koordinatės yra patikrinti RuneLite įėjimai. Ne visiems įrašams ar kiekvienai jų vietai yra navigacija. **Centre map** centruoja jau atidarytą world map; **Track entrance** įjungia pulsuojantį žymeklį ir minimap kryptį; **Stop tracking** išjungia sekimą. Wilderness įėjimai oranžiniai ir nepasirenkami automatiškai. Tai kryptis į įėjimą, ne pilnas kelio skaičiavimas. Kitoje map area, aukšte ar instance minimap rodyklė nerodoma.
 
-## Šaltiniai
+Banko kopija gali pasenti. Questai tikrinami tik aprašytiems kelionės variantams; diary išimtys, fairy-ring dalinis atrakinimas, POH, teleportų dienos limitai, weapon charges, rune pouch ir quiver turinys netikrinami. Karuulm boots checklistas netaikomas kaip draudimas elite diary išimčiai. Checklistas skirtas įprastam tasko monstrui: pasirinkus bossą papildomą setupą būtina patikrinti Tactics / Wiki.
 
-- RuneLite SlayerPlugin / SlayerConfig (task detection): https://github.com/runelite/runelite/tree/master/runelite-client/src/main/java/net/runelite/client/plugins/slayer
-- OSRS Wiki: https://oldschool.runescape.wiki/w/Slayer_equipment
-- Taskų vietos ir individualūs reikalavimai: https://oldschool.runescape.wiki/w/Slayer_task
-- Blue dragon kelias: https://oldschool.runescape.wiki/w/Blue_dragon
-- Gargoyle įrankiai: https://oldschool.runescape.wiki/w/Gargoyle
+Kills skaičiuojami iš RuneLite priskirtų NPC loot įvykių, todėl ne visi nužudymai gali būti matomi. Tasko credits nėra tikslus kills skaičius dėl apyrankių ir kelių credits. XP apima visą sesijoje gautą Slayer XP. Banking/travel įeina į sesijos laiką. Logout, tasko pakeitimas, išvalymas ar plugino išjungimas archyvuoja sesiją. Ankstesnis žaidimas neatkuriamas. Po nutrūkusio kliento sesija baigiama ties paskutiniu išsaugotu stebėjimu, nepridedant neprisijungto laiko.
 
-Ne visi taskai turi išsamų aprašą; Wiki mygtukas skirtas naujoms ir neaprašytoms užduotims patikrinti.
+Duomenys saugomi vietinėje RuneLite konfigūracijoje, be šio pagalbininko tinklo užklausų. Wiki atidaromas tik paspaudus. Pagalbininkas neatlieka teleportų, ėjimo ar combat veiksmų ir nerodo gyvų boss mechanikų / prayer patarimų.
 
-## Nauja versija 0.2 — žemėlapis ir minimap kryptis
+## Patikrinimas žaidime — atlieka vartotojas
 
-- Žemėlapyje rodomi patikrinti įėjimų taškai 24 taskų tipams (ne visi monstrai ir ne visos jų vietos). Blue dragons: Taverley Dungeon ir Heroes' Guild. Neaprašyti variantai lieka Wiki.
-- DESTINATION / ENTRANCE sąraše pasirink vietą. Centre map centruoja jau atidarytą world map į pasirinkimą. Įprasti taškai mėlyni, Wilderness — oranžiniai.
-- Track entrance pradeda sekti pasirinktą įėjimą: ryškus mėlynas taškas pulsuoja pasaulio žemėlapyje; minimape yra pulsuojanti krypties rodyklė, o priėjus — įėjimo žymeklis.
-- Stop tracking išjungia sekimą. Tasko/vietos pasikeitimas, tasko pabaiga, logout ir plugino išjungimas išvalo jo žymeklius.
-- Konar priskirtai vietai rodomos tik tiksliai atitinkančios patikrintos vietos. Jeigu vieta dar neaprašyta, navigacija nepradedama.
-- Prieš Track entrance perskaityk prieigos sąlygas. Quest, shortcut ir teleporto atrakinimai šioje versijoje automatiškai netikrinami.
+1. Su aktyviu tasku sutikrink pavadinimą, kiekį ir Konar vietą su enchanted gem.
+2. Atidaryk banką. Dust devils / Banshees apsaugą perkelk bankas → inventorius → įranga: turi būti TAKE FROM BANK → EQUIP → READY. Black mask nepakeičia facemask; Slayer helmet nepakeičia mirror shield / witchwood icon.
+3. Pasirink įėjimą, atidaryk world map → Centre map → Track entrance. Pakeisk tikslą, Stop tracking, patikrink logout ir tasko pasikeitimą. Nežinoma Konar vieta negali rodyti kito požemio.
+4. Tactics pasirink bossą ir įprastą monstrą; patikrink besikeičiantį aprašą ir Wiki. Prep yra įprasto monstro, ne automatiškai patvirtintas boss setupas.
+5. Travel paimk / padėk charged Slayer ring ar kitą parodytą teleportą; quest apribojimas neturi būti žymimas baigtu neatlikus questo.
+6. Supplies pasirink ribas ir combat style; suvalgyk maistą / išgerk potion. Kiekiai ir perspėjimai turi atsinaujinti. Noted supplies neturi skaičiuotis.
+7. Session nužudyk kelis tasko monstrus; stebėk credits ir loot kills atskirai. Po 60 s turi atsirasti rates, po bent 3 credits — ETA. Išsaugok pastabą.
+8. Loot pasirink tikslą; sutikrink banko kopiją ir stebėtą loot. Logout/login turi išsaugoti History. Kita paskyra neturi matyti pirmos banko ar istorijos.
+9. Išjunk/įjunk Lab: neturi dubliuotis S piktograma ar map pins. Originalų OneMan Sync patikrink atskirai — jo pagrindinis kodas nekeistas.
 
-Tai įėjimų/krypties navigacija, o ne pilnas kelių paieškos algoritmas. Atstumas tiesus; mėlyna rodyklė nerodo, kad galima tiesiai pereiti sieną ar kalną. Po įėjimo vadovaukis tasko chamber/floor aprašu; vidinių požemio maršrutų nėra. Kitoje map area, kitame aukšte ar instance minimap rodyklė nesukuriama. Bankas ir kelionės teleportai nepasirenkami automatiškai.
+Automatiniai testai tikrina duomenų, kiekių, sesijos, banko, loot ir kelionės logiką. Kompiliavimas ir testai nepakeičia šio žaidimo patikrinimo.
 
-Atnaujinimas: uždaryk Development klientą, pakeisk testinio projekto kodo failus šios versijos failais, išsaugok savo dev-home aplanką ir paleisk `.\gradlew.bat run` iš naujo. Originalaus RuneLite/Plugin Hub failų nekeisk.
+## Duomenų šaltiniai (2026-10-07)
 
-Testavimas žaidime:
-1. Taskas su keliomis vietomis: pasirink variantą, atidaryk world map, spausk Centre map → Track entrance. Pasirinktas taškas turi pulsuoti.
-2. Keliauk link pasirinkto įėjimo: minimap rodyklė turi suktis kartu su kamera, o priėjus pakeisti išvaizdą į įėjimo žymeklį.
-3. Pasirink kitą vietą: sekimas pakeičiamas tik paspaudus Track entrance. Stop tracking turi panaikinti rodyklę.
-4. Konar taskui neturi būti kitos dungeon vietos. Neaprašytai priskirtai vietai turi būti išjungti navigacijos mygtukai.
-5. Po logout / task change / plugino išjungimo neturi likti žymeklių. Patikrink fixed ir resizable minimap.
+- OSRS Wiki Slayer task lentelė: https://oldschool.runescape.wiki/w/Slayer_task
+- Slayer įranga: https://oldschool.runescape.wiki/w/Slayer_equipment
+- RuneLite Task ir SlayerConfig: https://github.com/runelite/runelite/tree/master/runelite-client/src/main/java/net/runelite/client/plugins/slayer
+- Įėjimų koordinatės: https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/worldmap/DungeonLocation.java
+- Strategijos: https://oldschool.runescape.wiki/w/Alchemical_Hydra/Strategies , https://oldschool.runescape.wiki/w/Araxxor/Strategies , https://oldschool.runescape.wiki/w/Cerberus/Strategies , https://oldschool.runescape.wiki/w/Abyssal_Sire/Strategies , https://oldschool.runescape.wiki/w/Kraken/Strategies , https://oldschool.runescape.wiki/w/Grotesque_Guardians/Strategies , https://oldschool.runescape.wiki/w/Lizardman_shaman/Strategies
+- Kelionės: https://oldschool.runescape.wiki/w/Slayer_ring , https://oldschool.runescape.wiki/w/Rada%27s_blessing , https://oldschool.runescape.wiki/w/Royal_seed_pod
 
-Koordinačių šaltinis: RuneLite DungeonLocation (įėjimai):
-https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/worldmap/DungeonLocation.java
-
-Jagex login: https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
+Katalogo faktai išvardyti `slayer-knowledge.tsv`; tai vietinė šaltinių kopija, todėl būsimi žaidimo pakeitimai reikalauja atnaujinimo. Wiki lentelės sąlygos gali priklausyti nuo vietos, varianto ar Slayer master; jos nėra universalūs privalomi reikalavimai.

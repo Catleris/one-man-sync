@@ -7,6 +7,12 @@ import javax.inject.Inject;
 import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.StatChanged;
+import net.runelite.client.events.NpcLootReceived;
+import net.runelite.client.game.ItemStack;
+import com.google.inject.Provides;
+import net.runelite.client.Notifier;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
@@ -35,6 +41,13 @@ public class SlayerLabPlugin extends Plugin
     @Inject private OverlayManager overlayManager;
     @Inject private WorldMapPointManager mapManager;
     @Inject private SlayerLabMinimapOverlay minimapOverlay;
+    @Inject private SlayerLabAccount account;
+    @Inject private SlayerLabConfig config;
+    @Inject private Notifier notifier;
+    @Provides SlayerLabConfig provideConfig(ConfigManager manager) { return manager.getConfig(SlayerLabConfig.class); }
+    private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
+    private int lastXp = -1;
+    private String currentTask = "";
     private final java.util.List<SlayerLabMapPoint> mapPoints = new ArrayList<>();
     private java.util.List<SlayerLabLocations.Destination> destinations = Collections.emptyList();
     private volatile SlayerLabLocations.Destination selectedDestination;
@@ -67,6 +80,7 @@ public class SlayerLabPlugin extends Plugin
     }
     @Override protected void shutDown()
     {
+        account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
         overlayManager.remove(minimapOverlay);
         clearLocations();
@@ -82,6 +96,8 @@ public class SlayerLabPlugin extends Plugin
         nextRefresh = 0;
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
+            account.pause("Logged out", System.currentTimeMillis());
+            lastXp = -1; currentTask = ""; lastWarning = "";
             clearLocations();
             lastView = "";
             publish("Log in to detect your Slayer task.", "");
@@ -94,12 +110,20 @@ public class SlayerLabPlugin extends Plugin
             mapPoints.get(i).highlight(destinations.get(i) == selectedDestination, (client.getTickCount() / 2) % 2 == 0);
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
+        long now = System.currentTimeMillis();
+        if (!bindAccount(now)) return;
+        goal = Optional.ofNullable(configManager.getConfiguration(SlayerLabConfig.GROUP, account.profile, "lootGoal")).orElse("");
+        if (lastXp < 0) lastXp = client.getSkillExperience(Skill.SLAYER);
         // Built-in Slayer handles assignment DB decoding, messages and profile changes.
         String name = configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_NAME_KEY);
         String location = configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_LOC_KEY);
         int remaining = client.getVarpValue(VarPlayerID.SLAYER_COUNT);
         if (remaining <= 0 || name == null || name.trim().isEmpty())
         {
+            if (account.journal.active != null && remaining == 0)
+                account.journal.observe(account.journal.active.task, account.journal.active.assignedArea, 0, account.journal.active.initial, now);
+            account.pause("Task completed / cleared", now);
+            currentTask = ""; lastWarning = "";
             clearLocations();
             publish("No active task detected. Ask a Slayer master or check your enchanted gem. Keep RuneLite's Slayer plugin enabled.", "");
             return;
@@ -112,6 +136,7 @@ public class SlayerLabPlugin extends Plugin
         {
             clearLocations();
             taskSignature = signature;
+            variant = SlayerLabAdvice.REGULAR;
             destinations = SlayerLabLocations.forTask(name, location);
             for (SlayerLabLocations.Destination destination : destinations)
             {
@@ -120,44 +145,115 @@ public class SlayerLabPlugin extends Plugin
                 mapManager.add(point);
             }
         }
-        Set<String> inventory = itemNames(InventoryID.INV);
-        Set<String> equipment = itemNames(InventoryID.WORN);
+        currentTask = name;
+        String initialText=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
+        int initial=0;
+        try { initial=Integer.parseInt(initialText); } catch(NumberFormatException ignored) { }
+        account.journal.observe(name, location, remaining, initial, now);
+        SlayerLabJournal.Session session = account.journal.active;
+        session.variant = variant;
+        session.gear = String.join(", ", new TreeSet<>(itemNames(InventoryID.WORN)));
+        session.chosenRoute = selectedDestination == null ? "" : selectedDestination.name;
+        account.save(now, false);
+        Set<String> inventory = itemNames(InventoryID.INV), equipment = itemNames(InventoryID.WORN);
         SlayerLabCatalog.Guide guide = SlayerLabCatalog.find(name);
-        StringBuilder out = new StringBuilder(name + "\nRemaining: " + remaining + "\n");
-        boolean restricted = location != null && !location.trim().isEmpty();
-        if (restricted) out.append("\nASSIGNED LOCATION\n").append(location).append("\nKills must count in this assigned area. Generic locations below are reference only.\n");
-        if (guide == null)
-        {
-            out.append("\nNo curated guide for this task yet. Use Task Wiki to check its equipment and locations; no requirements are guessed.");
-        }
-        else
-        {
-            out.append("\nREQUIRED EQUIPMENT\n");
-            if (guide.requirements.isEmpty()) out.append("No automatic equipment checklist for this task. Check the preparation notes below.\n");
-            for (SlayerLabCatalog.Requirement req : guide.requirements)
-                out.append(req.label).append("\n").append(req.status(inventory, equipment)).append("\n\n");
-            out.append("\nPREPARATION\n").append(guide.advice);
-            out.append("\n\n").append(restricted ? "OTHER LOCATIONS (REFERENCE ONLY)" : "WHERE TO FIND THEM").append("\n").append(guide.locations);
-        }
-        if (destinations.isEmpty())
-            out.append("\n\nMAP\nNo verified entrance marker for this task / assigned area yet. Use the Wiki.");
-        else
-            out.append("\n\nMAP\nChoose an entrance below, open the world map and press Centre map. Blue pins show alternatives; orange pins indicate Wilderness. Track entrance adds a pulsing marker and minimap direction arrow. Access conditions are not automatically verified.");
-        SlayerLabLocations.Destination selected = selectedDestination;
-        if (selected != null)
-        {
-            out.append("\n\nTRACKING: ").append(selected).append("\n").append(selected.access);
-            WorldPoint player = client.getLocalPlayer().getWorldLocation();
-            if (client.getTopLevelWorldView().isInstance() || (player.getY() >= 6400) != (selected.entrance.getY() >= 6400))
-                out.append("\nDifferent map area: follow the dungeon notes. No cross-floor arrow.");
-            else
-                out.append("\nDirection: ").append(SlayerLabLocations.direction(player, selected.entrance))
-                    .append(" | direct distance: ").append(player.distanceTo(selected.entrance)).append(" tiles");
-            out.append("\nDestination/direction only: not a calculated walking path. At the entrance, follow the chamber/floor notes above.");
-        }
-        out.append("\n\nItem checks use carried, unnoted items only. Bank ownership, quest access, charges and consumable quantities are not verified.\n\nLocal helper • Wiki opens only when clicked.");
-        publish(out.toString(), SlayerLabCatalog.wiki(name));
+        SlayerLabKnowledge.Entry knowledge = SlayerLabKnowledge.find(name);
+        String summary = name + "\nRemaining: " + remaining + "\nAssigned area: " + (location == null || location.isEmpty() ? "any eligible location" : location);
+        String prep = summary + "\n\n" + account.preparation(guide, inventory, equipment, now)
+            + "\n\n" + (guide == null ? "Use Task Wiki for requirements." : guide.advice)
+            + "\n\n" + (knowledge == null ? "" : knowledge.overview())
+            + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER)
+            + "\nA variant may require a higher level; protection and exemptions must be checked for that variant.";
+        StringBuilder places = new StringBuilder(summary+"\n\nAssigned locations must be respected; generic alternatives are reference only.\n\n");
+        for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination)).append("\n");
+        if(destinations.isEmpty()) places.append("No verified entrance for this task/assigned area. Use Task Wiki.\n");
+        if(guide != null) places.append("\nSource locations:\n").append(guide.locations);
+        SlayerLabLocations.Destination selected=selectedDestination;
+        if(selected!=null) places.append("\n\nTRACKING: ").append(selected.name).append("\nDirection: ")
+            .append(SlayerLabLocations.direction(client.getLocalPlayer().getWorldLocation(), selected.entrance));
+        places.append("\n\nMarkers and direction only; no calculated walking path or internal dungeon route.");
+        Set<String> carried=new HashSet<>(inventory); carried.addAll(equipment);
+        Set<String> quests = new HashSet<>();
+        Quest[] checked={Quest.HEROES_QUEST,Quest.CABIN_FEVER,Quest.SONG_OF_THE_ELVES,Quest.HORROR_FROM_THE_DEEP,Quest.MONKEY_MADNESS_II,Quest.BONE_VOYAGE,Quest.PRIEST_IN_PERIL};
+        String[] labels={"Heroes' Quest","Cabin Fever","Song of the Elves","Horror from the Deep","Monkey Madness II","Bone Voyage","Priest in Peril"};
+        for(int i=0;i<checked.length;i++) if(checked[i].getState(client)==QuestState.FINISHED) quests.add(labels[i]);
+        StringBuilder travel=new StringBuilder("Availability uses carried items and verified quest completion. Dated bank ownership does not make a route ready.\n\n");
+        for(SlayerLabLocations.Destination d:destinations) travel.append(SlayerLabTravel.route(d,carried,quests));
+        if(destinations.isEmpty()) travel.append("No verified travel route for this assigned area; see Task Wiki.");
+        SlayerLabSupplies.Counts supplies = supplyCounts();
+        String warning=supplies.warnings(config);
+        if(config.notifySupplies() && !warning.isEmpty() && !warning.equals(lastWarning)) notifier.notify("Slayer Lab: " + warning);
+        lastWarning=warning;
+        final String sessionNote = session.note;
+        final long sessionStarted = session.started;
+        final String sessionProfile = account.profile;
+        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
+        java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
+        SwingUtilities.invokeLater(() -> {
+            if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile); panel.showLocations(snapshot); }
+        });
     }
+    private boolean bindAccount(long now)
+    {
+        String profileKey=configManager.getRSProfileKey();
+        if(!Objects.equals(profileKey,account.profile))
+        {
+            lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
+            variant=SlayerLabAdvice.REGULAR;
+            publish("Loading this account profile…", "");
+        }
+        return account.bind(profileKey,now);
+    }
+    @Subscribe public void onItemContainerChanged(ItemContainerChanged event)
+    {
+        nextRefresh=0;
+        if(event.getContainerId()!=InventoryID.BANK || client.getGameState()!=GameState.LOGGED_IN) return;
+        if(!bindAccount(System.currentTimeMillis())) return;
+        Map<String,Integer> items=new TreeMap<>();
+        for(Item item:event.getItemContainer().getItems()) {
+            if(item.getId()<0 || item.getQuantity()<=0) continue;
+            ItemComposition d=itemManager.getItemComposition(item.getId());
+            if(d.getPlaceholderTemplateId()!=-1) continue;
+            if(d.getNote()!=-1) d=itemManager.getItemComposition(d.getLinkedNoteId());
+            items.merge(SlayerLabKnowledge.normalize(d.getName()),item.getQuantity(),Integer::sum);
+        }
+        account.captureBank(items,System.currentTimeMillis());
+    }
+    @Subscribe public void onStatChanged(StatChanged event)
+    {
+        if(event.getSkill()!=Skill.SLAYER || client.getGameState()!=GameState.LOGGED_IN) return;
+        if(lastXp>=0 && Objects.equals(account.profile,configManager.getRSProfileKey())) account.journal.xp(event.getXp()-lastXp);
+        lastXp=event.getXp();
+    }
+    @Subscribe public void onNpcLootReceived(NpcLootReceived event)
+    {
+        if(account.journal.active==null || !Objects.equals(account.profile,configManager.getRSProfileKey())) return;
+        SlayerLabKnowledge.Entry entry=SlayerLabKnowledge.find(currentTask);
+        if(entry==null || !entry.matchesNpc(event.getNpc().getName())) return;
+        Map<String,Integer> loot=new TreeMap<>();
+        for(ItemStack stack:event.getItems()) {
+            ItemComposition d=itemManager.getItemComposition(stack.getId());
+            if(d.getNote()!=-1) d=itemManager.getItemComposition(d.getLinkedNoteId());
+            loot.merge(SlayerLabKnowledge.normalize(d.getName()),stack.getQuantity(),Integer::sum);
+        }
+        account.journal.loot(loot); nextRefresh=0;
+    }
+    private SlayerLabSupplies.Counts supplyCounts()
+    {
+        Map<String,Integer> counts=new TreeMap<>(); Set<String> edible=new HashSet<>(),drinkable=new HashSet<>();
+        for(int id:new int[]{InventoryID.INV,InventoryID.WORN}) {
+            ItemContainer c=client.getItemContainer(id); if(c==null) continue;
+            for(Item item:c.getItems()) {
+                if(item.getId()<0 || item.getQuantity()<=0) continue;
+                ItemComposition d=itemManager.getItemComposition(item.getId()); if(d.getNote()!=-1) continue;
+                String n=SlayerLabKnowledge.normalize(d.getName()); counts.merge(n,item.getQuantity(),Integer::sum);
+                String[] actions=d.getInventoryActions(); if(actions==null) continue;
+                for(String action:actions) { if("Eat".equalsIgnoreCase(action)) edible.add(n); if("Drink".equalsIgnoreCase(action)) drinkable.add(n); }
+            }
+        }
+        return SlayerLabSupplies.count(counts,edible,drinkable);
+    }
+
     WorldPoint navigationTarget()
     {
         SlayerLabLocations.Destination selected = selectedDestination;
@@ -211,7 +307,14 @@ public class SlayerLabPlugin extends Plugin
     }
     private final class LabPanel extends PluginPanel
     {
-        private final JTextArea text = new JTextArea();
+        private final JTabbedPane tabs = new JTabbedPane();
+        private final JTextArea[] sections = new JTextArea[8];
+        private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
+        private final JTextArea note = new JTextArea(3,20);
+        private String shownTask = "", shownProfile = "";
+        private long shownSession;
+        private boolean updating;
+
         private final JButton wiki = new JButton("Task Wiki");
         private String url = "";
         private final JComboBox<SlayerLabLocations.Destination> choices = new JComboBox<>();
@@ -224,18 +327,27 @@ public class SlayerLabPlugin extends Plugin
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.2");
+            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.3");
             title.setForeground(new Color(218, 176, 85));
 
-            text.setColumns(20);
-            text.setEditable(false);
-            text.setLineWrap(true);
-            text.setWrapStyleWord(true);
-            text.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
-            text.setForeground(new Color(225, 225, 225));
-            text.setBackground(new Color(30, 30, 30));
-            text.setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
-            add(text, BorderLayout.CENTER);
+            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
+            for(int i=0;i<labels.length;i++) {
+                JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
+                area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
+                JPanel page=new JPanel(new BorderLayout(0,6)); page.add(area,BorderLayout.CENTER);
+                if(i==1) {
+                    JPanel options=new JPanel(new BorderLayout()); options.add(variants,BorderLayout.NORTH);
+                    JButton variantWiki=new JButton("Selected variant Wiki"); options.add(variantWiki,BorderLayout.SOUTH); page.add(options,BorderLayout.NORTH);
+                    variantWiki.addActionListener(e -> { String selected=(String)variants.getSelectedItem(); if(selected!=null && !shownTask.isEmpty()) LinkBrowser.browse(SlayerLabAdvice.strategy(SlayerLabAdvice.REGULAR.equals(selected)?shownTask:selected)); });
+                }
+                if(i==6) { goals.setEditable(true); JButton saveGoal=new JButton("Save loot goal"); JPanel options=new JPanel(new BorderLayout()); options.add(goals,BorderLayout.NORTH); options.add(saveGoal,BorderLayout.SOUTH); page.add(options,BorderLayout.NORTH);
+                    saveGoal.addActionListener(e -> { String entered=String.valueOf(goals.getEditor().getItem()).trim(); String value=entered.substring(0,Math.min(120,entered.length())); String profile=shownProfile; clientThread.invokeLater(()->{ if(!profile.isEmpty() && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { configManager.setConfiguration(SlayerLabConfig.GROUP,account.profile,"lootGoal",value); nextRefresh=0; } }); }); }
+                if(i==5) { JPanel notes=new JPanel(new BorderLayout()); note.setLineWrap(true); note.setWrapStyleWord(true); JButton save=new JButton("Save session note"); notes.add(new JScrollPane(note),BorderLayout.CENTER); notes.add(save,BorderLayout.SOUTH); page.add(notes,BorderLayout.SOUTH);
+                    save.addActionListener(e -> { String value=note.getText().substring(0, Math.min(1000,note.getText().length())); long started=shownSession; String profile=shownProfile; clientThread.invokeLater(()->{ if(account.journal.active!=null && account.journal.active.started==started && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { account.journal.active.note=value; account.save(System.currentTimeMillis(),true); nextRefresh=0; } }); }); }
+                tabs.addTab(labels[i],page);
+            }
+            add(tabs, BorderLayout.CENTER);
+            variants.addActionListener(e -> { if(updating) return; String value=(String)variants.getSelectedItem(); if(value!=null) clientThread.invokeLater(()->{variant=value; nextRefresh=0;}); });
             wiki.addActionListener(e -> { if (!url.isEmpty()) LinkBrowser.browse(url); });
             JPanel controls = new JPanel();
             controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
@@ -285,13 +397,26 @@ public class SlayerLabPlugin extends Plugin
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
         }
+        void showTabs(String[] views,String task,String sessionNote,long started,String profile)
+        {
+            updating=true;
+            shownProfile=profile;
+            if(shownSession!=started) { shownSession=started; note.setText(sessionNote); }
+            if(!shownTask.equals(task)) {
+                shownTask=task; variants.removeAllItems(); for(String option:SlayerLabAdvice.variants(task)) variants.addItem(option);
+                goals.removeAllItems(); for(SlayerLabAdvice.Goal option:SlayerLabAdvice.goals(task)) goals.addItem(option.item);
+                goals.getEditor().setItem(goal); note.setText(sessionNote);
+            }
+            for(int i=0;i<sections.length;i++) { int caret=sections[i].getCaretPosition(); sections[i].setText(views[i]); sections[i].setCaretPosition(Math.min(caret,views[i].length())); }
+            url=SlayerLabCatalog.wiki(task); wiki.setEnabled(true); updating=false;
+        }
         void showView(String view, String link)
         {
-            int caret = text.getCaretPosition();
-            text.setText(view);
-            text.setCaretPosition(Math.min(caret, view.length()));
+            updating=true; shownTask=""; shownProfile=""; shownSession=0;
+            for(JTextArea section:sections) section.setText(view);
+            variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;
-            wiki.setEnabled(!link.isEmpty());
+            wiki.setEnabled(!link.isEmpty()); updating=false;
         }
     }
 }

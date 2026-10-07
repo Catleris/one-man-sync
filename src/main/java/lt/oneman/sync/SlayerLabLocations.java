@@ -44,6 +44,15 @@ final class SlayerLabLocations
     private static final Destination KALPHITE_CAVE = new Destination("Kalphite Cave", 3319, 3122, "East of Shantay Pass; task-only. Desert travel supplies recommended.", false);
     private static final Destination KALPHITE_LAIR = new Destination("Kalphite Lair", 3226, 3108, "West of Shantay Pass; rope needed unless an entry rope is attached. Workers count; this route is not to the Queen.", false);
     private static final Destination WILD = new Destination("Wilderness Slayer Cave", 3259, 3666, "South entrance. PvP area: players can attack you and items may be lost. Select deliberately; never selected automatically.", true);
+    private static final Destination KARUULM = new Destination("Karuulm Slayer Dungeon",1308,3807,"Floor-protection boots unless elite Kourend & Kebos Diary exempt; check Slayer level and task-only chambers.",false);
+    private static final Destination KRAKEN = new Destination("Kraken Cove",2277,3611,"87 Slayer and a matching task. Select regular cave kraken or Kraken boss deliberately.",false);
+    private static final Destination DEVIL = new Destination("Smoke Devil Dungeon",2411,3061,"93 Slayer, matching task and face protection.",false);
+    private static final Destination ICE = new Destination("Asgarnian Ice Dungeon",3007,3150,"Wyvern chamber: 72 Slayer and appropriate wyvern shield.",false);
+    private static final Destination WYVERN = new Destination("Wyvern Cave",3745,3779,"Bone Voyage; Slayer level depends on variant; appropriate wyvern shield.",false);
+    private static final Destination JORMUNGAND = new Destination("Jormungand's Prison",2464,4012,"The Fremennik Exiles; 60 Slayer for knights and protective shield.",false);
+    private static final Destination SPIDER = new Destination("Morytania Spider Cave",3656,3409,"Morytania access; 92 Slayer for araxytes/Araxxor. Venom precautions.",false,"Morytania Spider Nest");
+    private static final Destination ANCIENT = new Destination("Ancient Cavern",2511,3508,"Barbarian training access; dangerous dungeon. Appropriate dragonfire protection for dragon targets.",false);
+    private static final Destination BRIMHAVEN = new Destination("Brimhaven Dungeon",2743,3154,"Entry fee unless exempt; axe for vines. Chamber access depends on route.",false);
     private static final Map<String, List<Destination>> TASKS = new HashMap<>();
     private static void add(String task, Destination... places) { TASKS.put(SlayerLabCatalog.normalize(task), Collections.unmodifiableList(Arrays.asList(places))); }
     static
@@ -72,6 +81,19 @@ final class SlayerLabLocations
         add("Black demons", TAVERLEY, CHASM, WILD);
         add("Dagannoth", LIGHTHOUSE, CATACOMBS);
         add("Kalphites", KALPHITE_CAVE, KALPHITE_LAIR);
+        add("Hydras",KARUULM); add("Wyrms",KARUULM); add("Drakes",KARUULM);
+        add("Cave kraken",KRAKEN); add("Smoke devils",DEVIL); add("Skeletal wyverns",ICE);
+        add("Fossil Island wyverns",WYVERN); add("Araxytes",SPIDER);
+        add("Basilisks",FREMENNIK,JORMUNGAND);
+        Destination[] known = {TAVERLEY,HEROES,TOWER,CATACOMBS,FREMENNIK,STRONGHOLD,SMOKE,SWAMP,HORRORS,IORWERTH,EDGEVILLE,DEN,SEWERS,CHASM,VOLCANO,LIGHTHOUSE,KALPHITE_CAVE,KALPHITE_LAIR,WILD,KARUULM,KRAKEN,DEVIL,ICE,WYVERN,JORMUNGAND,SPIDER,ANCIENT,BRIMHAVEN};
+        for (SlayerLabKnowledge.Entry entry : SlayerLabKnowledge.all())
+        {
+            List<Destination> existing = new ArrayList<>(TASKS.getOrDefault(normalize(entry.task), Collections.emptyList()));
+            for (String place : entry.locations.split("; "))
+                for (Destination destination : known)
+                    if (destination.matches(place) && !existing.contains(destination)) existing.add(destination);
+            if (!existing.isEmpty()) TASKS.put(normalize(entry.task), Collections.unmodifiableList(existing));
+        }
     }
     static List<Destination> forTask(String task, String assignedLocation)
     {

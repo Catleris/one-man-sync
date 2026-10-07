@@ -47,7 +47,7 @@ public class SlayerLabCatalogTest
     }
     @Test public void everyGuideHasPreparationAndLocations()
     {
-        assertEquals(25, SlayerLabCatalog.all().size());
+        assertTrue(SlayerLabCatalog.all().size() >= 158);
         for (SlayerLabCatalog.Guide guide : SlayerLabCatalog.all())
         {
             assertFalse(guide.locations.isEmpty());
