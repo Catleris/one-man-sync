@@ -49,3 +49,28 @@ Bankas, quest completion, potion charges ir pakankami consumable kiekiai netikri
 - Gargoyle įrankiai: https://oldschool.runescape.wiki/w/Gargoyle
 
 Ne visi taskai turi išsamų aprašą; Wiki mygtukas skirtas naujoms ir neaprašytoms užduotims patikrinti.
+
+## Nauja versija 0.2 — žemėlapis ir minimap kryptis
+
+- Žemėlapyje rodomi patikrinti įėjimų taškai 24 taskų tipams (ne visi monstrai ir ne visos jų vietos). Blue dragons: Taverley Dungeon ir Heroes' Guild. Neaprašyti variantai lieka Wiki.
+- DESTINATION / ENTRANCE sąraše pasirink vietą. Centre map centruoja jau atidarytą world map į pasirinkimą. Įprasti taškai mėlyni, Wilderness — oranžiniai.
+- Track entrance pradeda sekti pasirinktą įėjimą: ryškus mėlynas taškas pulsuoja pasaulio žemėlapyje; minimape yra pulsuojanti krypties rodyklė, o priėjus — įėjimo žymeklis.
+- Stop tracking išjungia sekimą. Tasko/vietos pasikeitimas, tasko pabaiga, logout ir plugino išjungimas išvalo jo žymeklius.
+- Konar priskirtai vietai rodomos tik tiksliai atitinkančios patikrintos vietos. Jeigu vieta dar neaprašyta, navigacija nepradedama.
+- Prieš Track entrance perskaityk prieigos sąlygas. Quest, shortcut ir teleporto atrakinimai šioje versijoje automatiškai netikrinami.
+
+Tai įėjimų/krypties navigacija, o ne pilnas kelių paieškos algoritmas. Atstumas tiesus; mėlyna rodyklė nerodo, kad galima tiesiai pereiti sieną ar kalną. Po įėjimo vadovaukis tasko chamber/floor aprašu; vidinių požemio maršrutų nėra. Kitoje map area, kitame aukšte ar instance minimap rodyklė nesukuriama. Bankas ir kelionės teleportai nepasirenkami automatiškai.
+
+Atnaujinimas: uždaryk Development klientą, pakeisk testinio projekto kodo failus šios versijos failais, išsaugok savo dev-home aplanką ir paleisk `.\gradlew.bat run` iš naujo. Originalaus RuneLite/Plugin Hub failų nekeisk.
+
+Testavimas žaidime:
+1. Taskas su keliomis vietomis: pasirink variantą, atidaryk world map, spausk Centre map → Track entrance. Pasirinktas taškas turi pulsuoti.
+2. Keliauk link pasirinkto įėjimo: minimap rodyklė turi suktis kartu su kamera, o priėjus pakeisti išvaizdą į įėjimo žymeklį.
+3. Pasirink kitą vietą: sekimas pakeičiamas tik paspaudus Track entrance. Stop tracking turi panaikinti rodyklę.
+4. Konar taskui neturi būti kitos dungeon vietos. Neaprašytai priskirtai vietai turi būti išjungti navigacijos mygtukai.
+5. Po logout / task change / plugino išjungimo neturi likti žymeklių. Patikrink fixed ir resizable minimap.
+
+Koordinačių šaltinis: RuneLite DungeonLocation (įėjimai):
+https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/worldmap/DungeonLocation.java
+
+Jagex login: https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
