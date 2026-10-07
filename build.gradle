@@ -39,6 +39,8 @@ tasks.register('run', JavaExec) {
 	mainClass = pluginMainClass
 
 	jvmArgs "-ea"
+	// Separate RuneLite profile/settings for the development copy.
+	systemProperty "user.home", file("dev-home").absolutePath
 	args "--developer-mode", "--debug"
 }
 
