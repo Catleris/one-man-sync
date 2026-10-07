@@ -71,10 +71,11 @@ import okhttp3.Response;
 
 @PluginDescriptor(
     name = "OneMan Sync",
-    description = "Syncs OSRS progress and memories to oneman.lt",
+    description = "Local Slayer preparation, maps and Prayer resources, with optional progression sync to oneman.lt",
     tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash", "slayer", "storage", "poh"},
     internalName = "one-man-sync"
 )
+@net.runelite.client.plugins.PluginDependency(net.runelite.client.plugins.slayer.SlayerPlugin.class)
 public class OneManSyncPlugin extends Plugin
 {
     private static final Logger log = Logger.getLogger(OneManSyncPlugin.class.getName());
@@ -131,6 +132,7 @@ public class OneManSyncPlugin extends Plugin
 
     private static final Map<String, Integer> BOSS_VARPS = loadBossVarps();
 
+    @Inject private OneManSlayerHelper slayerHelper;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -174,12 +176,14 @@ public class OneManSyncPlugin extends Plugin
     @Provides
     OneManSyncConfig provideConfig(ConfigManager configManager)
     {
+        OneManConfigMigration.migrate(configManager);
         return configManager.getConfig(OneManSyncConfig.class);
     }
 
     @Override
     protected void startUp()
     {
+        slayerHelper.startUp();
         if (client.getGameState() == GameState.LOGGED_IN)
         {
             loginCountdown = 10;
@@ -190,6 +194,7 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void shutDown()
     {
+        slayerHelper.shutDown();
         loginCountdown=-1;
         progressDirty=false;
         requestInFlight=false;
@@ -220,6 +225,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        slayerHelper.onGameStateChanged(event);
         if(event.getGameState()==GameState.LOGGED_IN){
             loginCountdown=10;
             progressDirty=true;
@@ -236,6 +242,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onStatChanged(StatChanged event)
     {
+        slayerHelper.onStatChanged(event);
         if(!ready()) return;
         int total=calculateTotalLevel();
         if(lastKnownTotalLevel>0 && total>lastKnownTotalLevel) syncSoon();
@@ -285,6 +292,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onNpcLootReceived(NpcLootReceived event)
     {
+        slayerHelper.onNpcLootReceived(event);
         if(!ready() || event.getNpc()==null) return;
 
         String source=event.getNpc().getName();
@@ -317,6 +325,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        slayerHelper.onItemContainerChanged(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
         ItemContainer container=event.getItemContainer();
@@ -474,6 +483,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameTick(GameTick event)
     {
+        slayerHelper.onGameTick(event);
         if(!ready()) return;
 
         // Pet message can precede the Collection Log message. If a follower appears,

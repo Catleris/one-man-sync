@@ -11,7 +11,7 @@ import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.game.ItemStack;
-import com.google.inject.Provides;
+import javax.inject.Singleton;
 import net.runelite.client.Notifier;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InventoryID;
@@ -21,17 +21,13 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
-import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.plugins.*;
 import net.runelite.client.plugins.slayer.SlayerConfig;
-import net.runelite.client.plugins.slayer.SlayerPlugin;
 import net.runelite.client.ui.*;
 import net.runelite.client.util.LinkBrowser;
 
-@PluginDescriptor(name = "OneMan Slayer Lab", description = "Local Slayer preparation and locations — development copy", tags = {"slayer", "oneman", "lab"}, internalName = "one-man-slayer-lab", enabledByDefault = true)
-@PluginDependency(SlayerPlugin.class)
-public class SlayerLabPlugin extends Plugin
+@Singleton
+public class OneManSlayerHelper
 {
     @Inject private Client client;
     @Inject private ConfigManager configManager;
@@ -42,9 +38,8 @@ public class SlayerLabPlugin extends Plugin
     @Inject private WorldMapPointManager mapManager;
     @Inject private SlayerLabMinimapOverlay minimapOverlay;
     @Inject private SlayerLabAccount account;
-    @Inject private SlayerLabConfig config;
+    @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
-    @Provides SlayerLabConfig provideConfig(ConfigManager manager) { return manager.getConfig(SlayerLabConfig.class); }
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
     private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
     private String prayerView = "Log in to view Prayer resources.";
@@ -60,7 +55,7 @@ public class SlayerLabPlugin extends Plugin
     private int nextRefresh;
     private volatile boolean active;
 
-    @Override protected void startUp()
+    void startUp()
     {
         prayerMonitor.reset();
         active = true;
@@ -76,12 +71,12 @@ public class SlayerLabPlugin extends Plugin
             g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
             g.drawString("S", 6, 19);
             g.dispose();
-            navigation = NavigationButton.builder().tooltip("OneMan Slayer Lab").icon(icon).priority(6).panel(panel).build();
+            navigation = NavigationButton.builder().tooltip("OneMan Sync").icon(icon).priority(6).panel(panel).build();
             toolbar.addNavigation(navigation);
             panel.showView("Log in to detect your Slayer task.", "");
         });
     }
-    @Override protected void shutDown()
+    void shutDown()
     {
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
@@ -95,7 +90,7 @@ public class SlayerLabPlugin extends Plugin
         });
         lastView = "";
     }
-    @Subscribe public void onGameStateChanged(GameStateChanged event)
+    public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
         if (event.getGameState() == GameState.LOGIN_SCREEN)
@@ -108,7 +103,7 @@ public class SlayerLabPlugin extends Plugin
             publish("Log in to detect your Slayer task.", "");
         }
     }
-    @Subscribe public void onGameTick(GameTick event)
+    public void onGameTick(GameTick event)
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN || client.getLocalPlayer() == null) return;
         if (!bindAccount(System.currentTimeMillis())) return;
@@ -234,7 +229,7 @@ public class SlayerLabPlugin extends Plugin
         }
         return account.bind(profileKey,now);
     }
-    @Subscribe public void onItemContainerChanged(ItemContainerChanged event)
+    public void onItemContainerChanged(ItemContainerChanged event)
     {
         nextRefresh=0;
         if(event.getContainerId()==InventoryID.WORN) prayerMonitor.resetEstimate();
@@ -250,13 +245,13 @@ public class SlayerLabPlugin extends Plugin
         }
         account.captureBank(items,System.currentTimeMillis());
     }
-    @Subscribe public void onStatChanged(StatChanged event)
+    public void onStatChanged(StatChanged event)
     {
         if(event.getSkill()!=Skill.SLAYER || client.getGameState()!=GameState.LOGGED_IN) return;
         if(lastXp>=0 && Objects.equals(account.profile,configManager.getRSProfileKey())) account.journal.xp(event.getXp()-lastXp);
         lastXp=event.getXp();
     }
-    @Subscribe public void onNpcLootReceived(NpcLootReceived event)
+    public void onNpcLootReceived(NpcLootReceived event)
     {
         if(account.journal.active==null || !Objects.equals(account.profile,configManager.getRSProfileKey())) return;
         SlayerLabKnowledge.Entry entry=SlayerLabKnowledge.find(currentTask);
@@ -325,13 +320,15 @@ public class SlayerLabPlugin extends Plugin
     }
     private void publish(String view, String url)
     {
+        view = "Website sync: " + (config.enabled() ? "enabled" : "disabled (local tools still work)") + "\n\n" + view;
         if (view.equals(lastView)) return;
         lastView = view;
+        final String displayedView = view;
         java.util.List<SlayerLabLocations.Destination> snapshot = destinations;
         SwingUtilities.invokeLater(() -> {
             if (active && panel != null)
             {
-                panel.showView(view, url);
+                panel.showView(displayedView, url);
                 panel.showLocations(snapshot);
             }
         });
@@ -358,7 +355,7 @@ public class SlayerLabPlugin extends Plugin
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.5");
+            JLabel title = new JLabel("ONEMAN SYNC • SLAYER / PRAYER");
             title.setForeground(new Color(218, 176, 85));
 
             String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History","Prayer"};
@@ -403,11 +400,11 @@ public class SlayerLabPlugin extends Plugin
             });
             centre.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                if (choice != null) SlayerLabPlugin.this.track(choice, true);
+                if (choice != null) OneManSlayerHelper.this.track(choice, true);
             });
             track.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                if (choice != null) SlayerLabPlugin.this.track(choice, false);
+                if (choice != null) OneManSlayerHelper.this.track(choice, false);
             });
             clear.addActionListener(e -> clientThread.invokeLater(() -> { selectedDestination = null; nextRefresh = 0; }));
             JPanel header = new JPanel(new BorderLayout(0, 10));

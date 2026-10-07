@@ -1,4 +1,4 @@
-# OneMan Slayer Lab 0.5 — testinė kopija
+# OneMan Sync 0.6 — sujungtas Slayer / Prayer
 
 Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pagrindiniai failai nepakeisti.
 
@@ -8,7 +8,7 @@ Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pa
 2. Atnaujindamas išsaugok savo `dev-home` aplanką: jame yra testinio kliento prisijungimas, nustatymai ir nauja vietinė istorija. Jo nekelk į GitHub ir nesiųsk kitiems.
 3. IntelliJ → Open → projektas. Gradle JVM: JDK 17; Java target: 11.
 4. Windows PowerShell: `.\gradlew.bat run`; Linux: `./gradlew run`.
-5. Įjunk RuneLite `Slayer` ir `OneMan Slayer Lab`; atidaryk auksinę S piktogramą.
+5. Įjunk RuneLite `OneMan Sync` (RuneLite `Slayer` priklausomybė įjungiama kartu); atidaryk auksinę S piktogramą.
 
 Gradle run naudoja atskirą `user.home=dev-home`. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
 
@@ -65,7 +65,7 @@ Katalogo faktai išvardyti `slayer-knowledge.tsv`; tai vietinė šaltinių kopij
 
 ## Nauja 0.4 — Prayer resource monitor
 
-Devyni skirtukai; naujas **Prayer** veikia ir be Slayer tasko. Įjunk `OneMan Slayer Lab` ir atidaryk S → Prayer. Rodomi dabartiniai Prayer taškai, tik jau įjungti prayers, nešiojamų Prayer potion / Super restore (įskaitant mixes) dozės ir apytikslis išsekimo laikas. NPC atakos ar projectiles neskaitomi; jokio Prayer pasirinkimo ar keitimo indikatoriaus nėra.
+Devyni skirtukai; naujas **Prayer** veikia ir be Slayer tasko. Įjunk `OneMan Sync` ir atidaryk S → Prayer. Rodomi dabartiniai Prayer taškai, tik jau įjungti prayers, nešiojamų Prayer potion / Super restore (įskaitant mixes) dozės ir apytikslis išsekimo laikas. NPC atakos ar projectiles neskaitomi; jokio Prayer pasirinkimo ar keitimo indikatoriaus nėra.
 
 Plugino nustatymai:
 - **Prayer points warning below**: pradinis limitas 15; perspėja kai taškų mažiau, ne kai lygiai 15.
@@ -92,3 +92,11 @@ Atnaujinant vėl išsaugok `dev-home`, įskaitant ten esančią `.runelite` konf
 Siunčiama naujai perskaityta tasko būsena, normalus task streak ir named rewards. Gyvas count 0 nebepakeičiamas senu RuneLite profilio count; tasko pavadinimas neišsaugomas neribotai ar kitam target. Prarastas patvirtinimas aiškiai pažymimas. Atrakintų rewards pokyčiai inicijuoja sync. Praėjus login sync / nustačius taską sutikrink svetainės Slayer timestamp; neįrašome 194 ar kitų vartotojo pasakytų skaičių rankiniu būdu.
 
 Serverio ir Account Hub rodinio pataisa turi būti įdiegta svetainėje atskirai. Iki to senas UI gali vis tiek rodyti statinę Bigger and Badder rekomendaciją. Plugin Hub šio darbo metu dar nurodo b6b7696; jo atnaujinimas nepriklauso nuo vietinio Developer kliento.
+
+## 0.6 — vienas įskiepis
+
+Slayer Lab sujungtas į OneMan Sync: vienas įjungimas, bendri nustatymai ir S skydelis su visais devyniais skirtukais. Slayer ir Prayer veikia net išjungus `Enable OneMan Sync`. Svetainės siuntimui vis dar reikia įjungti šį nustatymą ir įrašyti Sync Key. Ankstesni Lab perspėjimų nustatymai perkeliami vieną kartą, neperrašant jau įrašytų Sync nustatymų. Banko duomenys, istorija ir tikslai išsaugomi pagal tą patį RuneScape profilį.
+
+Atnaujinant nekeisk ir netrink `dev-home`: jame yra tavo testinės aplinkos prisijungimas, nustatymai ir istorija. Naujas paleidiklis krauna tik OneMan Sync, seno atskiro Lab įjungti nereikia. IntelliJ Gradle → Tasks → other → run arba PowerShell projekto kataloge `./gradlew.bat run`.
+
+Patikrink žaidime: vienas OneMan įskiepis; S skirtukai; tasko pasikeitimas ir likutis; žemėlapio vietos; Prayer perspėjimai; ankstesnė istorija po perkrovimo; vietinis skydelis išjungus svetainės sync. Su įjungtu sync patikrink atsinaujinantį taską svetainėje (svetainės serverio pataisa platinama atskirai).

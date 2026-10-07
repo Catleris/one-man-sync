@@ -1,12 +1,11 @@
 package lt.oneman.sync;
 
-import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.Range;
 
 @ConfigGroup("one-man-sync")
-public interface OneManSyncConfig extends Config
+public interface OneManSyncConfig extends SlayerLabConfig
 {
     @ConfigItem(
         keyName = "enabled",
@@ -25,7 +24,7 @@ public interface OneManSyncConfig extends Config
         name = "Sync Key",
         description = "Generate this in oneman.lt -> Account -> RuneLite Sync. This is a OneMan API token, not a Jagex credential.",
         secret = true,
-        position = 2
+        position = 1
     )
     default String syncKey()
     {
@@ -37,7 +36,7 @@ public interface OneManSyncConfig extends Config
         keyName = "intervalMinutes",
         name = "Full sync every",
         description = "Periodic full sync interval in minutes.",
-        position = 3
+        position = 2
     )
     default int intervalMinutes()
     {

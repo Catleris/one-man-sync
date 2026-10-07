@@ -7,7 +7,7 @@ public class OneManSyncPluginTest
 {
     public static void main(String[] args) throws Exception
     {
-        ExternalPluginManager.loadBuiltin(OneManSyncPlugin.class, SlayerLabPlugin.class);
+        ExternalPluginManager.loadBuiltin(OneManSyncPlugin.class);
         RuneLite.main(args);
     }
 }

@@ -6,6 +6,12 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
+## Slayer and Prayer tools (0.6)
+
+OneMan Slayer Lab is now part of this single plugin. The S sidebar contains preparation, static tactics, locations, travel, supplies, session, loot, history and Prayer resource tabs. These tools work with website sync disabled. They do not predict attacks or select/switch prayers. Existing Lab preferences are migrated once; per-account bank snapshots, goals and journals retain their original profile storage.
+
+Developer launch: `./gradlew run` (`./gradlew.bat run` on Windows). Keep your existing `dev-home` directory when updating to preserve login and local account data. See [Lithuanian setup and test checklist](SLAYER_LAB_LT.md).
+
 ## Data sent when sync is enabled
 
 The plugin can send the following to `https://oneman.lt/runelite_sync.php`:

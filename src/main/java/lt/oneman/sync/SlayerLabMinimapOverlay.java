@@ -12,8 +12,8 @@ import net.runelite.client.ui.overlay.*;
 final class SlayerLabMinimapOverlay extends Overlay
 {
     private final Client client;
-    private final SlayerLabPlugin plugin;
-    @Inject SlayerLabMinimapOverlay(Client client, SlayerLabPlugin plugin)
+    private final OneManSlayerHelper plugin;
+    @Inject SlayerLabMinimapOverlay(Client client, OneManSlayerHelper plugin)
     {
         this.client = client;
         this.plugin = plugin;

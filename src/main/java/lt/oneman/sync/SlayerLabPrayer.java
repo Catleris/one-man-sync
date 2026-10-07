@@ -135,6 +135,6 @@ final class SlayerLabPrayer
             +"\n\nThis lists prayers you have already enabled. It does not choose prayers or inspect enemy attacks."
             +"\n\nTime uses observed point losses over up to 30 seconds of stable usage (0.6 s/game tick). Changing prayers, equipment or restoring points resets the sample. External drains, flicking, regeneration and lag can make estimates unreliable."
             +"\n\nDoses are carried unnoted Prayer potions, Super restores and their mixes only. Sanfew serum, blighted potions, bank items and other restoration sources are not included. Doses are not equivalent restoration amounts."
-            +"\n\nWarning limits and optional desktop alerts: OneMan Slayer Lab settings. This monitor works without a Slayer assignment.";
+            +"\n\nWarning limits and optional desktop alerts: OneMan Sync settings. This monitor works without a Slayer assignment.";
     }
 }
