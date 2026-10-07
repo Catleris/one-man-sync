@@ -1,4 +1,4 @@
-# OneMan Slayer Lab 0.4 — testinė kopija
+# OneMan Slayer Lab 0.5 — testinė kopija
 
 Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pagrindiniai failai nepakeisti.
 
@@ -84,3 +84,11 @@ Papildomas žaidimo testas:
 6. Logout / kita paskyra / plugin restart neturi perkelti ankstesnio įverčio ar perspėjimo epizodo.
 
 Atnaujinant vėl išsaugok `dev-home`, įskaitant ten esančią `.runelite` konfigūraciją ir savo vietinį Jagex prisijungimo failą. Credentials failo niekam nesiųsk ir nekelk į GitHub.
+
+## 0.5 — OneMan Sync Slayer pataisa
+
+Šioje testinėje šakoje atnaujintas ir nukopijuotas **OneMan Sync** siuntimo kodas. `master` šaka nepakeista. Slayer Lab pats į oneman.lt nesiunčia. Norint atnaujinti svetainės duomenis, Development kliente atskirai įjunk **OneMan Sync → Enable sync**, įrašyk savo OneMan svetainėje sugeneruotą **Sync Key**. Jo niekam nesiųsk. Preserve `dev-home`; jo nekelk į GitHub.
+
+Siunčiama naujai perskaityta tasko būsena, normalus task streak ir named rewards. Gyvas count 0 nebepakeičiamas senu RuneLite profilio count; tasko pavadinimas neišsaugomas neribotai ar kitam target. Prarastas patvirtinimas aiškiai pažymimas. Atrakintų rewards pokyčiai inicijuoja sync. Praėjus login sync / nustačius taską sutikrink svetainės Slayer timestamp; neįrašome 194 ar kitų vartotojo pasakytų skaičių rankiniu būdu.
+
+Serverio ir Account Hub rodinio pataisa turi būti įdiegta svetainėje atskirai. Iki to senas UI gali vis tiek rodyti statinę Bigger and Badder rekomendaciją. Plugin Hub šio darbo metu dar nurodo b6b7696; jo atnaujinimas nepriklauso nuo vietinio Developer kliento.

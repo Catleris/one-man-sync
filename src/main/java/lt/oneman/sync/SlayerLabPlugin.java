@@ -358,7 +358,7 @@ public class SlayerLabPlugin extends Plugin
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.4");
+            JLabel title = new JLabel("ONEMAN • SLAYER LAB 0.5");
             title.setForeground(new Color(218, 176, 85));
 
             String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History","Prayer"};
