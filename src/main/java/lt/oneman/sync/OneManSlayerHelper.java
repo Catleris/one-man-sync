@@ -35,6 +35,7 @@ public class OneManSlayerHelper
     @Inject private OverlayManager overlayManager;
     @Inject private WorldMapPointManager mapManager;
     @Inject private SlayerLabMinimapOverlay minimapOverlay;
+    @Inject private SlayerRequirementOverlay requirementOverlay;
     @Inject private SlayerLabAccount account;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
@@ -57,6 +58,7 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         active = true;
         overlayManager.add(minimapOverlay);
+        overlayManager.add(requirementOverlay);
         nextRefresh = 0;
         lastView = "";
         SwingUtilities.invokeLater(() -> {
@@ -71,6 +73,8 @@ public class OneManSlayerHelper
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
         overlayManager.remove(minimapOverlay);
+        overlayManager.remove(requirementOverlay);
+        requirementOverlay.rows=Collections.emptyList();
         clearLocations();
         SwingUtilities.invokeLater(() -> {
             panel = null;
@@ -81,6 +85,7 @@ public class OneManSlayerHelper
     public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
+        requirementOverlay.rows=Collections.emptyList();
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
             prayerMonitor.reset(); prayerView="Log in to view Prayer resources.";
@@ -94,10 +99,23 @@ public class OneManSlayerHelper
     public void onGameTick(GameTick event)
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN || client.getLocalPlayer() == null) return;
+        requirementOverlay.rows=Collections.emptyList();
         if (!bindAccount(System.currentTimeMillis())) return;
         refreshPrayer();
         for (int i = 0; i < mapPoints.size(); i++)
             mapPoints.get(i).highlight(selectedDestination!=null && mapPoints.get(i).getWorldPoint().equals(selectedDestination.entrance), (client.getTickCount() / 2) % 2 == 0);
+        // Refresh item hints every tick so equipping an item updates immediately.
+        String hintTask=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_NAME_KEY);
+        SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(hintTask);
+        String hintAmount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.AMOUNT_KEY);
+        int hintRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
+        if(hintRemaining>0 && Integer.toString(hintRemaining).equals(hintAmount) && hintGuide!=null) {
+            Set<String> inv=itemNames(InventoryID.INV), worn=itemNames(InventoryID.WORN);
+            java.util.List<SlayerRequirementOverlay.Row> rows=new ArrayList<>();
+            for(SlayerLabCatalog.Requirement requirement:hintGuide.requirements)
+                rows.add(SlayerRequirementOverlay.row(requirement,inv,worn,account.bank.items,account.bank.seen>0));
+            requirementOverlay.rows=Collections.unmodifiableList(rows);
+        }
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();

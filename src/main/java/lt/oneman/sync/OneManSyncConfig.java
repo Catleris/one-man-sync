@@ -53,4 +53,6 @@ public interface OneManSyncConfig extends SlayerLabConfig
 
     @ConfigItem(keyName="uploadMilestoneScreenshots", name="Upload milestone screenshots", description="Send captured screenshots to your OneMan account. Requires local capture and OneMan Sync enabled.", warning="This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers", position=6)
     default boolean uploadMilestoneScreenshots(){return false;}
+    @ConfigItem(keyName="slayerRequirementsOverlay", name="Slayer item hints", description="Show task protection and finishing items on the left: red missing, purple in last observed bank, green carried/equipped, grey bank unknown.", position=7)
+    default boolean slayerRequirementsOverlay(){return true;}
 }
