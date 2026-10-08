@@ -3,6 +3,11 @@ package lt.oneman.sync;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.Range;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RequestFocusType;
+import net.runelite.client.config.FlashNotification;
+import java.awt.Color;
 
 @ConfigGroup("one-man-sync")
 public interface OneManSyncConfig extends SlayerLabConfig
@@ -81,4 +86,11 @@ public interface OneManSyncConfig extends SlayerLabConfig
     default int prayerDosesWarning() { return 2; }
     @ConfigItem(keyName="notifyPrayer", name="Desktop Prayer alerts", description="Optional local alert when your points or carried doses cross their threshold. Rearms after recovery.", position=18)
     default boolean notifyPrayer() { return false; }
+    @ConfigItem(keyName="superiorSpawnAlert", name="Superior spawn alert", description="Optional local Superior alert. Default when enabled: red two-second flash, sound and desktop notification even while focused. Customize notification settings here. If built-in Slayer notifications are enabled, OneMan suppresses its extra sound/desktop alert.", position=8)
+    default Notification superiorSpawnAlert(){
+        return Notification.OFF.withInitialized(true).withOverride(true)
+            .withTray(true).withSound(NotificationSound.NATIVE).withRequestFocus(RequestFocusType.TASKBAR)
+            .withFlash(FlashNotification.FLASH_TWO_SECONDS).withFlashColor(new Color(255,0,0,90))
+            .withSendWhenFocused(true).withVolume(100).withTimeout(5);
+    }
 }

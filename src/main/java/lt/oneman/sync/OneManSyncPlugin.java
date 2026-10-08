@@ -71,7 +71,7 @@ import okhttp3.Response;
 
 @PluginDescriptor(
     name = "OneMan Sync",
-    description = "Local Slayer preparation, maps and Prayer resources, with optional progression sync to oneman.lt",
+    description = "Local Slayer preparation, maps and Superior alerts, with optional progression sync to oneman.lt",
     tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash", "slayer", "storage", "poh"},
     internalName = "one-man-sync"
 )
@@ -388,6 +388,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
+        slayerHelper.onChatMessage(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
         boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;

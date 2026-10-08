@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.7.1-dev";
+    static final String VERSION = "0.7.2-dev";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -76,11 +76,11 @@ final class OneManCompanion {
             g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
             PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
-            if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer & Prayer");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer & Prayer"});
+            if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             root.add(sections,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
-            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer & Prayer").icon(icon).priority(6).panel(root).build();
+            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
     }
@@ -250,7 +250,7 @@ final class OneManCompanion {
         SwingUtilities.invokeLater(() -> { if(active&&panel!=null)panel.update(nextText,prep,slayerText,freshText,currentSummary,choices,goalId,screenshots.status()); });
     }
     private void showLoggedOut() {
-        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan → Slayer & Prayer → History."); } });
+        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan → Slayer → History."); } });
     }
     private final class Panel extends PluginPanel {
         final JTextArea next=area(),prep=area(),slayer=area(),fresh=area(),summary=area(),memories=area();

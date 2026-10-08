@@ -6,6 +6,12 @@ import javax.inject.Inject;
 import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RequestFocusType;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.slayer.SlayerPlugin;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.events.NpcLootReceived;
@@ -39,9 +45,10 @@ public class OneManSlayerHelper
     @Inject private SlayerLabAccount account;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
+    @Inject private PluginManager pluginManager;
+    private final SuperiorAlert superiorAlert=new SuperiorAlert();
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
     private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
-    private String prayerView = "Log in to view Prayer resources.";
     private int lastXp = -1;
     private String currentTask = "";
     private final java.util.List<SlayerLabMapPoint> mapPoints = new ArrayList<>();
@@ -56,6 +63,7 @@ public class OneManSlayerHelper
     void startUp()
     {
         prayerMonitor.reset();
+        superiorAlert.reset();
         active = true;
         overlayManager.add(minimapOverlay);
         overlayManager.add(requirementOverlay);
@@ -72,6 +80,7 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
+        superiorAlert.reset();
         overlayManager.remove(minimapOverlay);
         overlayManager.remove(requirementOverlay);
         requirementOverlay.rows=Collections.emptyList();
@@ -88,13 +97,24 @@ public class OneManSlayerHelper
         requirementOverlay.rows=Collections.emptyList();
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
-            prayerMonitor.reset(); prayerView="Log in to view Prayer resources.";
+            prayerMonitor.reset();
+            superiorAlert.reset();
             account.pause("Logged out", System.currentTimeMillis());
             lastXp = -1; currentTask = ""; lastWarning = "";
             clearLocations();
             lastView = "";
             publish("Log in to detect your Slayer task.", "");
         }
+    }
+    public void onChatMessage(ChatMessage event) {
+        if(!active || client.getGameState()!=GameState.LOGGED_IN)return;
+        Notification alert=config.superiorSpawnAlert();
+        if(alert==null||!alert.isEnabled()||!superiorAlert.accept(event.getType(),event.getMessage(),client.getTickCount()))return;
+        boolean builtIn=pluginManager.getPlugins().stream().anyMatch(p->p instanceof SlayerPlugin&&pluginManager.isPluginEnabled(p))
+            && configManager.getConfig(SlayerConfig.class).showSuperiorNotification().isEnabled();
+        if(builtIn)alert=alert.withInitialized(true).withOverride(true).withTray(false).withSound(NotificationSound.OFF)
+            .withGameMessage(false).withRequestFocus(RequestFocusType.OFF);
+        notifier.notify(alert,"OneMan: A superior foe has appeared!");
     }
     public void onGameTick(GameTick event)
     {
@@ -195,7 +215,7 @@ public class OneManSlayerHelper
         final String sessionNote = session.note;
         final long sessionStarted = session.started;
         final String sessionProfile = account.profile;
-        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText(),prayerView};
+        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
         java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
         SwingUtilities.invokeLater(() -> {
             if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile); panel.showLocations(snapshot); }
@@ -219,17 +239,14 @@ public class OneManSlayerHelper
         SlayerLabPrayer.Doses doses=SlayerLabPrayer.doses(inventory);
         java.util.List<String> alerts=prayerMonitor.crossed(points,doses,config);
         if(config.notifyPrayer()) for(String alert:alerts) notifier.notify("OneMan Prayer: "+alert);
-        prayerView=prayerMonitor.describe(points,level,enabled,doses,config);
-        String snapshot=prayerView;
-        boolean low=!prayerMonitor.warnings(points,doses,config).isEmpty();
-        SwingUtilities.invokeLater(() -> { if(active && panel!=null) panel.showPrayer(snapshot,low); });
+
     }
     private boolean bindAccount(long now)
     {
         String profileKey=configManager.getRSProfileKey();
         if(!Objects.equals(profileKey,account.profile))
         {
-            prayerMonitor.reset(); prayerView="Loading Prayer resources…";
+            prayerMonitor.reset();
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
             publish("Loading this account profile…", "");
@@ -343,7 +360,7 @@ public class OneManSlayerHelper
     private final class LabPanel extends PluginPanel
     {
         private final JTabbedPane tabs = new JTabbedPane();
-        private final JTextArea[] sections = new JTextArea[9];
+        private final JTextArea[] sections = new JTextArea[8];
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
         private final JTextArea note = new JTextArea(3,20);
         private String shownTask = "", shownProfile = "";
@@ -363,10 +380,10 @@ public class OneManSlayerHelper
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN SYNC • SLAYER / PRAYER");
+            JLabel title = new JLabel("ONEMAN SYNC • SLAYER");
             title.setForeground(new Color(218, 176, 85));
 
-            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History","Prayer"};
+            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
@@ -437,14 +454,6 @@ public class OneManSlayerHelper
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
         }
-        void showPrayer(String view,boolean low)
-        {
-            JTextArea section=sections[8];
-            if(!section.getText().equals(view)) {
-                CompanionText.update(section,view);
-            }
-            tabs.setForegroundAt(8,low?new Color(255,120,90):UIManager.getColor("Label.foreground"));
-        }
         void showTabs(String[] views,String task,String sessionNote,long started,String profile)
         {
             updating=true;
@@ -462,7 +471,6 @@ public class OneManSlayerHelper
         {
             updating=true; shownTask=""; shownProfile=""; shownSession=0;
             for(int i=0;i<8;i++) sections[i].setText(view);
-            showPrayer(prayerView,false);
             variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;
             wiki.setEnabled(!link.isEmpty()); updating=false;
