@@ -441,7 +441,7 @@ public class OneManSlayerHelper
         {
             JTextArea section=sections[8];
             if(!section.getText().equals(view)) {
-                int caret=section.getCaretPosition(); section.setText(view); section.setCaretPosition(Math.min(caret,view.length()));
+                CompanionText.update(section,view);
             }
             tabs.setForegroundAt(8,low?new Color(255,120,90):UIManager.getColor("Label.foreground"));
         }
@@ -455,7 +455,7 @@ public class OneManSlayerHelper
                 goals.removeAllItems(); for(SlayerLabAdvice.Goal option:SlayerLabAdvice.goals(task)) goals.addItem(option.item);
                 goals.getEditor().setItem(goal); note.setText(sessionNote);
             }
-            for(int i=0;i<sections.length;i++) { int caret=sections[i].getCaretPosition(); sections[i].setText(views[i]); sections[i].setCaretPosition(Math.min(caret,views[i].length())); }
+            for(int i=0;i<sections.length;i++) CompanionText.update(sections[i],views[i]);
             url=SlayerLabCatalog.wiki(task); wiki.setEnabled(true); updating=false;
         }
         void showView(String view, String link)

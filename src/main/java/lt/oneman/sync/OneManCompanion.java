@@ -272,7 +272,7 @@ final class OneManCompanion {
             capture.addActionListener(e->clientThread.invokeLater(()-> { if(baseline)screenshots.capture(player,profile,"Progress"); }));
         }
         void update(String n,String p,String s,String f,String sum,List<CompanionPlanner.Step> choices,String id,String status) {
-            next.setText(n);prep.setText(p);slayer.setText(s);fresh.setText(f);summary.setText(sum);memories.setText(status);
+            CompanionText.update(next,n);CompanionText.update(prep,p);CompanionText.update(slayer,s);CompanionText.update(fresh,f);CompanionText.update(summary,sum);CompanionText.update(memories,status);
             CompanionPlanner.Step old=(CompanionPlanner.Step)goals.getSelectedItem();
             if(old==null||!old.id.equals(id)||goals.getItemCount()!=choices.size()) {
                 updating=true;goals.removeAllItems();for(CompanionPlanner.Step choice:choices) {goals.addItem(choice);if(choice.id.equals(id))goals.setSelectedItem(choice);}updating=false;
