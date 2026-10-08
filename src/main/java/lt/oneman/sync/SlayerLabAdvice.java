@@ -75,6 +75,12 @@ final class SlayerLabAdvice
         out.append("\n\nDated bank counts may be stale; equipped items and alternate item forms are not included in the bank count.\nAttributed session loot:\n").append(session==null?"No session":session.loot);
         return out.toString();
     }
+    static String comparison(SlayerLabLocations.Destination d,String task) {
+        String description=comparison(d);
+        if(SlayerLabCatalog.taskKey(task).equals("bloodvelds")&&(d.name.equals("Iorwerth Dungeon")||d.name.equals("Meiyerditch Laboratories")))
+            return description.replace("Cannon: not verified for this chamber — check location guide","Cannon: ALLOWED in the Bloodveld chamber; verify the setup spot in Location guide");
+        return description;
+    }
     static String comparison(SlayerLabLocations.Destination d)
     {
         String n=d.name.toLowerCase(Locale.ROOT);

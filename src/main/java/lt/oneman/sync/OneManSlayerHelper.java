@@ -155,7 +155,7 @@ public class OneManSlayerHelper
             + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER)
             + "\nA variant may require a higher level; protection and exemptions must be checked for that variant.";
         StringBuilder places = new StringBuilder(summary+"\n\nAssigned locations must be respected; generic alternatives are reference only.\n\n");
-        for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination)).append("\n");
+        for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination,name)).append("\n");
         if(destinations.isEmpty()) places.append("No verified entrance for this task/assigned area. Use Task Wiki.\n");
         if(guide != null) places.append("\nSource locations:\n").append(guide.locations);
         SlayerLabLocations.Destination selected=selectedDestination;
@@ -386,7 +386,7 @@ public class OneManSlayerHelper
             }
             choices.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice));
+                access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice,shownTask));
                 boolean pin=choice!=null&&choice.entrance!=null;centre.setEnabled(pin);track.setEnabled(pin);
             });
             locationWiki.addActionListener(e->{SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();if(choice!=null)LinkBrowser.browse("https://oldschool.runescape.wiki/w/"+java.net.URLEncoder.encode(choice.name.replace(' ','_'),java.nio.charset.StandardCharsets.UTF_8));});

@@ -174,7 +174,7 @@ final class OneManCompanion {
         }
         overlay.needed=Collections.unmodifiableSet(ids);
         if(required.isEmpty()&&!CompanionTraining.isSkill(s))text.append("No verified supply checklist for this goal yet. Open the guide; no readiness is inferred.\n");
-        else text.append("Curated start items only. Open the guide for stage-specific extras, usable tool level, charges and encounters. Bank snapshots can be outdated.");
+        if(!required.isEmpty())text.append("Curated start items only. Open the guide for stage-specific extras, usable tool level, charges and encounters. Bank snapshots can be outdated.");
         return text.toString();
     }
     private String training(CompanionPlanner.Step s) {

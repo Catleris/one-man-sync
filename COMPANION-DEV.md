@@ -4,11 +4,13 @@ Development branch: `dev/companion-suite`. The Hub release/pending Slayer PR is 
 
 ## 0.7.1 feedback fixes
 
-- Bloodveld singular assignment now resolves to the full Bloodvelds task facts, entrance list and protection notes. Assigned-area filtering remains strict. Adds Iorwerth / God Wars entrances and a Meiyerditch reference entry without an invented map pin. Stronghold cannon permission is explicit; tower, Catacombs and God Wars prohibition remain explicit; unaudited chambers say unverified.
+- Bloodveld singular assignment now resolves to the full Bloodvelds task facts, entrance list and protection notes. Assigned-area filtering remains strict. Adds Iorwerth / God Wars entrances and a Meiyerditch reference entry without an invented map pin. Stronghold cannon permission is explicit; Bloodveld-specific Iorwerth/Meiyerditch cannon permission is explicit; tower, Catacombs and God Wars prohibition remain explicit; unaudited chambers say unverified.
 - A selected skill/quest goal now controls Next, with actual gaps and prerequisite steps. Slayer targets show real XP remaining, observed task, known eligible master choices filtered by combat/Slayer/quests, and a practical task loop. Other skills use their catalog method. Default roadmap can be restored with its button.
 - Observed Chronicle ownership in inventory/equipment/dated bank is recorded per profile and skips the obtain step. This does not infer remaining charges.
 - C/S navigation merged into a single OneMan shield, with Overview and Slayer & Prayer sections. Existing settings and profile keys remain compatible.
 - Sync displays a bounded/redacted JSON server error for failed uploads. HTTP 500 is a server failure, not proof of client sync; live root cause remains unconfirmed until the server error is observed. No production change/deployment is made.
+
+Cannon source facts: OSRS Wiki Stronghold Slayer Cave / Dwarf multicannon; Bloodveld chamber coverage cross-checked against https://github.com/FreeArcanes/slayer-best-in-bank/blob/master/CANNON-TASK-COVERAGE.md (audit 2026-07-25). Entrance pins come from RuneLite DungeonLocation. Meiyerditch is deliberately reference-only until a precise entrance is verified. Location guide opens the selected dungeon page.
 
 ## Included
 
