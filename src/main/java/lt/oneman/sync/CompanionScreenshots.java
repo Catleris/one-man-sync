@@ -26,8 +26,8 @@ final class CompanionScreenshots {
     private ExecutorService worker;
     private final Set<Call> calls=ConcurrentHashMap.newKeySet();
     private final AtomicInteger pending=new AtomicInteger();
-    private int generation;
-    void start(Directory d) { directory=d;active=true;generation++;pending.set(0);worker=Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,"OneMan screenshots");t.setDaemon(true);return t;}); }
+    private volatile int generation;
+    void start(Directory d) { directory=d;generation++;active=true;pending.set(0);worker=Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,"OneMan screenshots");t.setDaemon(true);return t;}); }
     void stop() { active=false;generation++;calls.forEach(Call::cancel);calls.clear();if(worker!=null)worker.shutdownNow(); }
     String status() { return last; }
     void capture(String player,String profile,String milestone) {
@@ -48,7 +48,7 @@ final class CompanionScreenshots {
                 Filepath dir=directory.get().join("screenshots",folder);dir.createDirectories();
                 Filepath file=dir.joinSegment(captured+"-"+UUID.randomUUID()+".png");file.write(png);
                 last="Saved: "+file+"\nMilestone: "+milestone+"\n"+(upload?"Upload queued.":"Local only.");
-                if(upload&&!token.isEmpty()&&active&&epoch==generation&&config.uploadMilestoneScreenshots()&&config.enabled())send(png,player,milestone,captured,token,epoch);
+                if(upload&&!token.isEmpty()&&active&&epoch==generation&&config.uploadMilestoneScreenshots()&&config.enabled()&&config.syncKey().trim().equals(token))send(png,player,milestone,captured,token,epoch);
             } catch(IOException | RuntimeException error) { last="Screenshot could not be saved. No upload was sent."; }
             finally { if(epoch==generation)pending.decrementAndGet(); } }); }
             catch(RejectedExecutionException ignored) { if(epoch==generation)pending.decrementAndGet(); }

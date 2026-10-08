@@ -42,6 +42,7 @@ tasks.register('run', JavaExec) {
 	jvmArgs "-ea"
 	// Separate RuneLite profile/settings for the development copy.
 	systemProperty "user.home", file("dev-home").absolutePath
+	systemProperty "oneman.devHomeConfigured", "true"
 	args "--developer-mode", "--debug"
 }
 

@@ -147,6 +147,7 @@ public class OneManSyncPlugin extends Plugin
     private int lastKnownTotalLevel = -1;
     private boolean progressDirty = false;
     private volatile boolean requestInFlight = false;
+    private volatile Call activeSyncCall;
 
     private final Map<String, CollectionEntry> observedCollection = new ConcurrentHashMap<>();
     private final Set<String> pendingNewCollection = ConcurrentHashMap.newKeySet();
@@ -196,6 +197,7 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void shutDown()
     {
+        Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
         companion.shutDown();
         slayerHelper.shutDown();
         loginCountdown=-1;
@@ -235,6 +237,14 @@ public class OneManSyncPlugin extends Plugin
             progressDirty=true;
             clientThread.invokeLater(this::refreshSlayerStateCache);
         } else if(event.getGameState()==GameState.LOGIN_SCREEN){
+            Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+            requestInFlight=false;
+            latestBankItems.clear();bankSnapshotComplete=false;bankSnapshotEpochMs=0L;
+            latestStorageItems.clear();storageSnapshotEpochMs.clear();storageLabels.clear();storageComplete.clear();
+            latestPohFeatures.clear();pohSnapshotEpochMs=0L;
+            observedCollection.clear();pendingNewCollection.clear();pendingCaMeta.clear();
+            pendingLootEvents.clear();pendingPetEvents.clear();pendingPbEvents.clear();
+            pendingPetSignalAt=0L;pendingPetSignalTick=-1;lastLootSource="";lastLootAt=0L;
             loginCountdown=-1;
             progressDirty=false;
             lastKnownTotalLevel=-1;
@@ -612,33 +622,37 @@ public class OneManSyncPlugin extends Plugin
         lastFullSyncTick=client.getTickCount();
         progressDirty=false;
 
-        http.newCall(request).enqueue(new Callback(){
+        activeSyncCall=http.newCall(request);
+        activeSyncCall.enqueue(new Callback(){
             @Override public void onFailure(Call call,IOException e){
-                requestInFlight=false;
-                progressDirty=true;
-                companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
-                log.fine("OneMan sync failed");
+                clientThread.invokeLater(() -> {
+                    if(call!=activeSyncCall)return;
+                    requestInFlight=false;progressDirty=true;
+                    companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
+                    log.fine("OneMan sync failed");
+                });
             }
-
             @Override public void onResponse(Call call,Response response)throws IOException{
-                try(Response r=response){
-                    String text=r.body()!=null?r.body().string():"";
-                    if(!r.isSuccessful()){
-                        progressDirty=true;
-                        companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+r.code());
-                        log.fine("OneMan sync HTTP "+r.code());
-                    }else{
-                        companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
-                        pendingNewCollection.removeAll(sentNewCollection);
-                        for(Integer id:sentCaMeta.keySet()) pendingCaMeta.remove(id,sentCaMeta.get(id));
-                        for(String k:sentLoot.keySet()) pendingLootEvents.remove(k,sentLoot.get(k));
-                        for(String k:sentPets.keySet()) pendingPetEvents.remove(k,sentPets.get(k));
-                        for(String k:sentPb.keySet()) pendingPbEvents.remove(k,sentPb.get(k));
-                        log.fine("OneMan sync OK: "+text);
-                    }
-                }finally{
-                    requestInFlight=false;
-                }
+                final boolean success;final int code;
+                try(Response r=response){success=r.isSuccessful();code=r.code();}
+                clientThread.invokeLater(() -> {
+                    if(call!=activeSyncCall)return;
+                    try {
+                        if(!success){
+                            progressDirty=true;
+                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code);
+                            log.fine("OneMan sync HTTP "+code);
+                        }else{
+                            companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
+                            pendingNewCollection.removeAll(sentNewCollection);
+                            for(Integer id:sentCaMeta.keySet())pendingCaMeta.remove(id,sentCaMeta.get(id));
+                            for(String k:sentLoot.keySet())pendingLootEvents.remove(k,sentLoot.get(k));
+                            for(String k:sentPets.keySet())pendingPetEvents.remove(k,sentPets.get(k));
+                            for(String k:sentPb.keySet())pendingPbEvents.remove(k,sentPb.get(k));
+                            log.fine("OneMan sync OK");
+                        }
+                    }finally{requestInFlight=false;activeSyncCall=null;}
+                });
             }
         });
     }

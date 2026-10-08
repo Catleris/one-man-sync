@@ -47,12 +47,16 @@ final class OneManCompanion {
     private Map<String,Long> synced = new LinkedHashMap<>();
     private String syncStatus = "No successful upload in this session.";
     private long started, startingXp, ticks;
+    private int loginDelay;
     private boolean baseline;
+    private CompanionDay day=new CompanionDay();
+    private long lastDaySave;
     private List<CompanionPlanner.Step> route = Collections.emptyList();
     private int qp;
     private String player = "";
 
     void startUp(CompanionScreenshots.Directory directory) {
+        ticks=0;loginDelay=10;levels.clear();completed.clear();lastSession="No active session.";
         try (Reader r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("efficiency-catalog.json")), StandardCharsets.UTF_8)) {
             planner = new CompanionPlanner(gson.fromJson(r, CompanionPlanner.Catalog.class));
         } catch (IOException | RuntimeException error) { throw new IllegalStateException("Cannot load bundled OneMan roadmap", error); }
@@ -74,21 +78,26 @@ final class OneManCompanion {
         SwingUtilities.invokeLater(() -> { if(navigation!=null)toolbar.removeNavigation(navigation); navigation=null;panel=null; });
     }
     void onGameStateChanged(GameStateChanged e) {
+        if(e.getGameState()==GameState.LOGGED_IN)loginDelay=10;
         if(e.getGameState()==GameState.LOGIN_SCREEN) { finish(); overlay.needed=Collections.emptySet(); baseline=false; levels.clear();completed.clear(); showLoggedOut(); }
     }
     void onGameTick(GameTick e) {
         if(!active || client.getGameState()!=GameState.LOGGED_IN || client.getLocalPlayer()==null) return;
+        if(loginDelay>0){loginDelay--;return;}
         if(++ticks%5!=0) return;
         String key=configs.getRSProfileKey(); if(key==null || key.isEmpty())return;
         if(!key.equals(profile)) {
             finish(); profile=key; baseline=false; synced.clear();syncStatus="No successful upload in this session.";
             manual.clear(); selected="";
+            try { String savedDay=configs.getConfiguration("one-man-sync",profile,"companionDay");day=savedDay==null?new CompanionDay():gson.fromJson(savedDay,CompanionDay.class);if(day==null)day=new CompanionDay(); } catch(RuntimeException ignored) {day=new CompanionDay();}
+            day.resume();
             try { String saved=configs.getConfiguration("one-man-sync",profile,"companionManual");
                 if(saved!=null)manual.addAll(Arrays.asList(gson.fromJson(saved,String[].class))); } catch(RuntimeException ignored) { manual.clear(); }
             String goal=configs.getConfiguration("one-man-sync",profile,"companionGoal"); if(goal!=null)selected=goal;
             String summary=configs.getConfiguration("one-man-sync",profile,"companionSummary");lastSummary=summary==null?"No previous session recorded.":summary;
         }
         player=client.getLocalPlayer().getName();
+        if(!baseline)day.resume();
         Map<String,Integer> nextLevels=new LinkedHashMap<>();
         for(Skill skill:Skill.values())if(skill!=Skill.OVERALL)nextLevels.put(skill.getName(),client.getRealSkillLevel(skill));
         Set<String> nextQuests=new HashSet<>();
@@ -97,11 +106,15 @@ final class OneManCompanion {
             for(CompanionPlanner.Step n:planner.ordered)if(normal(n.name).equals(normal(q.getName())))nextQuests.add(n.id);
         }}catch(RuntimeException ignored) { /* Unknown state remains incomplete. */ }
         if(baseline) {
+            nextQuests.addAll(completed);
             for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(player,profile,"Quest: "+planner.nodes.get(q).name);
             nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(player,profile,skill+" 99"); });
         }
         levels=nextLevels;completed=nextQuests;
+        if(completed.contains(selected)||manual.contains(selected))selected="";
         if(!baseline) { baseline=true;started=System.currentTimeMillis();startingXp=client.getOverallExperience();startingLevels=new LinkedHashMap<>(levels);startingQuests=new HashSet<>(completed); }
+        day.observe(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString(),levels,completed,client.getOverallExperience());
+        if(System.currentTimeMillis()-lastDaySave>30000){saveDay();}
         qp=0;for(CompanionPlanner.Step n:planner.ordered)if(completed.contains(n.id))qp+=n.questPoints;
         route=planner.plan(levels,completed,manual,qp);
         if(selected.isEmpty() && !route.isEmpty())selected=route.get(0).id;
@@ -144,11 +157,18 @@ final class OneManCompanion {
     }
     private static int count(Map<String,Integer> map,String need) { return map.entrySet().stream().filter(e->CompanionSupplies.matches(e.getKey(),need)).mapToInt(Map.Entry::getValue).sum(); }
     private String summary() {
-        StringBuilder text=new StringBuilder("Session started: "+Instant.ofEpochMilli(started)+"\n");
+        StringBuilder text=new StringBuilder(day.text(planner.nodes)+"\nSession started: "+Instant.ofEpochMilli(started)+"\n");
         text.append("Observed XP: ").append(Math.max(0,client.getOverallExperience()-startingXp)).append("\n");
         levels.forEach((s,l)-> { int before=startingLevels.getOrDefault(s,l);if(l>before)text.append(s).append(": ").append(before).append(" → ").append(l).append("\n"); });
         for(CompanionPlanner.Step n:planner.ordered)if(completed.contains(n.id)&&!startingQuests.contains(n.id))text.append("Quest: ").append(n.name).append("\n");
         CompanionPlanner.Step next=goal();text.append("\nContinue next time: ").append(next==null?"choose a goal":next.name);
+        if(profile.equals(account.profile)) {
+            List<SlayerLabJournal.Session> sessions=new ArrayList<>(account.journal.history);
+            if(account.journal.active!=null)sessions.add(account.journal.active);
+            int credits=0,kills=0,xp=0;Map<String,Integer> loot=new TreeMap<>();
+            for(SlayerLabJournal.Session session:sessions)if(session.started>=started) {credits+=session.credits;kills+=session.kills;xp+=session.slayerXp;session.loot.forEach((k,v)->loot.merge(k,v,Integer::sum));}
+            text.append("\nSession Slayer: ").append(credits).append(" credits, ").append(kills).append(" attributed kills, ").append(xp).append(" XP\nObserved loot: ").append(loot);
+        }
         text.append("\nOnly progress observed while this plugin was running is counted.");return text.toString();
     }
     private void finish() {
@@ -156,8 +176,10 @@ final class OneManCompanion {
         // Use last sampled XP on logout; the client may already be resetting.
         lastSummary=lastSession;
         configs.setConfiguration("one-man-sync",profile,"companionSummary",lastSummary);
+        saveDay();day.resume();
         baseline=false;
     }
+    private void saveDay(){if(!profile.isEmpty()){configs.setConfiguration("one-man-sync",profile,"companionDay",gson.toJson(day));lastDaySave=System.currentTimeMillis();}}
     private String lastSession="No active session.";
     void syncResult(String sentProfile,JsonObject snapshot,boolean success,String status) {
         clientThread.invokeLater(() -> {
@@ -182,7 +204,9 @@ final class OneManCompanion {
         }
         CompanionPlanner.Step selectedGoal=goal();String prep=preparation(selectedGoal);
         SlayerLabJournal.Session session=profile.equals(account.profile)?account.journal.active:null;
+        if(session==null&&profile.equals(account.profile)&&!account.journal.history.isEmpty())session=account.journal.history.get(0);
         String slayer=SlayerLabJournal.metrics(session,System.currentTimeMillis());
+        if(session!=null)slayer+="\nStatus: "+session.status+"\n";
         if(session!=null)slayer+="\nRemaining: "+session.remaining+"\nStarted: "+Instant.ofEpochMilli(session.started)+"\nObserved loot: "+session.loot;
         StringBuilder fresh=new StringBuilder("Plugin: "+VERSION+"\n"+syncStatus+"\n\n");
         for(String key:Arrays.asList("Skills","Slayer","Bank","Quests"))fresh.append(key).append(": ").append(synced.containsKey(key)?Instant.ofEpochMilli(synced.get(key)):"not uploaded / unknown").append("\n");
@@ -193,7 +217,7 @@ final class OneManCompanion {
         SwingUtilities.invokeLater(() -> { if(active&&panel!=null)panel.update(nextText,prep,slayerText,freshText,currentSummary,choices,goalId,screenshots.status()); });
     }
     private void showLoggedOut() {
-        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary); } });
+        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan Sync → History."); } });
     }
     private final class Panel extends PluginPanel {
         final JTextArea next=area(),prep=area(),slayer=area(),fresh=area(),summary=area(),memories=area();
