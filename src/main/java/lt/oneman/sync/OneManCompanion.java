@@ -15,6 +15,7 @@ import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -89,7 +90,7 @@ final class OneManCompanion {
         if(!key.equals(profile)) {
             finish(); profile=key; baseline=false; synced.clear();syncStatus="No successful upload in this session.";
             manual.clear(); selected="";
-            try { String savedDay=configs.getConfiguration("one-man-sync",profile,"companionDay");day=savedDay==null?new CompanionDay():gson.fromJson(savedDay,CompanionDay.class);if(day==null)day=new CompanionDay(); } catch(RuntimeException ignored) {day=new CompanionDay();}
+            try { String savedDay=configs.getConfiguration("one-man-sync",profile,"companionDay");day=savedDay==null?new CompanionDay():gson.fromJson(savedDay,CompanionDay.class);if(day==null||day.gainedLevels==null||day.lastLevels==null||day.quests==null)day=new CompanionDay(); } catch(RuntimeException ignored) {day=new CompanionDay();}
             day.resume();
             try { String saved=configs.getConfiguration("one-man-sync",profile,"companionManual");
                 if(saved!=null)manual.addAll(Arrays.asList(gson.fromJson(saved,String[].class))); } catch(RuntimeException ignored) { manual.clear(); }
@@ -115,7 +116,7 @@ final class OneManCompanion {
         if(!baseline) { baseline=true;started=System.currentTimeMillis();startingXp=client.getOverallExperience();startingLevels=new LinkedHashMap<>(levels);startingQuests=new HashSet<>(completed); }
         day.observe(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString(),levels,completed,client.getOverallExperience());
         if(System.currentTimeMillis()-lastDaySave>30000){saveDay();}
-        qp=0;for(CompanionPlanner.Step n:planner.ordered)if(completed.contains(n.id))qp+=n.questPoints;
+        qp=Math.max(0,client.getVarpValue(VarPlayerID.QP));
         route=planner.plan(levels,completed,manual,qp);
         if(selected.isEmpty() && !route.isEmpty())selected=route.get(0).id;
         render();
@@ -196,7 +197,7 @@ final class OneManCompanion {
         });
     }
     private void render() {
-        StringBuilder next=new StringBuilder("OneMan local catalog · live levels and quests\nQuest points verified from mapped quests: "+qp+"\n\n");
+        StringBuilder next=new StringBuilder("OneMan local catalog · live levels and quests\nLive quest points: "+qp+"\n\n");
         int index=0;for(CompanionPlanner.Step s:route) {
             if(++index>3)break;next.append(index).append(". ").append(s.name).append("\n")
                 .append(planner.requirements(s,levels,completed,qp)).append("\nWhy now: ")

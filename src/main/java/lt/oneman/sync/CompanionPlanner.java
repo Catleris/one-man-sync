@@ -17,7 +17,9 @@ final class CompanionPlanner {
     static final class Catalog { List<Step> nodes; Map<String,List<String>> methods; }
     final Map<String,Step> nodes = new LinkedHashMap<>();
     final List<Step> ordered;
+    final Map<String,List<String>> methods;
     CompanionPlanner(Catalog data) {
+        methods=data.methods==null?Collections.emptyMap():data.methods;
         ordered = new ArrayList<>(data.nodes);
         ordered.sort(Comparator.comparingDouble(n -> n.rank));
         ordered.forEach(n -> nodes.put(n.id,n));
@@ -44,7 +46,8 @@ final class CompanionPlanner {
                     if (e.getKey().equals("Herblore") && nodes.containsKey("DRUIDIC_RITUAL")) visit(nodes.get("DRUIDIC_RITUAL"),levels,done,manual,qp,visited,out);
                     Step training = new Step(); training.id=id; training.type="training";
                     training.name=e.getKey()+" → "+e.getValue(); training.skills.put(e.getKey(),e.getValue());
-                    training.why=Arrays.asList("Reikia tikslui: "+n.name,"Needed for: "+n.name);
+                    List<String> method=methods.getOrDefault(e.getKey(),Arrays.asList("Pasirink prieinamą training metodą.","Choose an accessible training method."));
+                    training.why=Arrays.asList("Reikia tikslui: "+n.name+". "+method.get(0),"Needed for: "+n.name+". "+method.get(Math.min(1,method.size()-1)));
                     training.wiki="https://oldschool.runescape.wiki/w/"+e.getKey(); out.add(training);
                 }
             }

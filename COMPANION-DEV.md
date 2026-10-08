@@ -4,7 +4,7 @@ Development branch: `dev/companion-suite`. The Hub release/pending Slayer PR is 
 
 ## Included
 
-- OneMan Companion sidebar navigation (`C`), Next tab: three local catalog steps, real level gaps, missing quests and route reasons. Catalog version 2026-10-06.1 matches the website catalog; no projected quest XP or assumed levels. Quest points are a conservative sum of mapped completed quests. This is the default Ironman route, not a guarantee of globally optimal routing or combat readiness. Web-only manual selections are not imported into this local planner.
+- OneMan Companion sidebar navigation (`C`), Next tab: three local catalog steps, real level gaps, missing quests and route reasons. Catalog version 2026-10-06.1 matches the website catalog; no projected quest XP or assumed levels. Quest points use the live game QP varp. This is the default Ironman route, not a guarantee of globally optimal routing or combat readiness. Web-only manual selections are not imported into this local planner.
 - Prep tab: select a route/catalog goal, compare required quantity with unnoted inventory, equipment and dated bank snapshot, open guide. Bank outlines follow the chosen checklist.
 - Verified starter checklists: Cook's Assistant, Doric's Quest, Druidic Ritual, Sheep Shearer, Goblin Diplomacy, Chronicle; generic mining/woodcutting tools. Goals without a checklist explicitly say unknown. Existing OneMan Sync Slayer Prep covers regular task protection separately. Tool level, charges, encounters and stage-specific extras still need the guide.
 - Slayer tab: observed session start/status, remaining, task credits, attributed loot kills, XP and loot. Existing Session/History tabs retain detailed journal history. Task credits and loot kills are distinct.
