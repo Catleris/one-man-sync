@@ -161,12 +161,11 @@ final class OneManCompanion {
         List<String> required=CompanionSupplies.forStep(s);StringBuilder text=new StringBuilder();
         boolean same=profile.equals(account.profile);
         if(CompanionTraining.isSkill(s))text.append(training(s)).append("\n\n");
-        text.append(same?account.bankAge(System.currentTimeMillis()):"Bank unknown — open your bank.").append("\n\n");
         Set<Integer> ids=new HashSet<>(); ItemContainer bank=client.getItemContainer(InventoryID.BANK);
         for(String need:required) {
             int carried=count(inv,need), worn=count(equipment,need), stored=same?count(account.bank.items,need):0;
             text.append(need).append("\nInventory: ").append(carried).append(" | equipped: ").append(worn)
-                .append(" | bank snapshot: ").append(same&&account.bank.seen>0?stored:"unknown").append("\n");
+                .append(" | bank: ").append(same&&account.bank.seen>0?stored:"unknown").append("\n");
             int quantity=CompanionSupplies.quantity(s,need);
             text.append(carried+worn>=quantity?"READY":stored+carried+worn>=quantity?"TAKE FROM BANK":"MISSING / bank unknown")
                 .append(" — need ").append(quantity).append("\n\n");
@@ -174,7 +173,7 @@ final class OneManCompanion {
         }
         overlay.needed=Collections.unmodifiableSet(ids);
         if(required.isEmpty()&&!CompanionTraining.isSkill(s))text.append("No verified supply checklist for this goal yet. Open the guide; no readiness is inferred.\n");
-        if(!required.isEmpty())text.append("Curated start items only. Open the guide for stage-specific extras, usable tool level, charges and encounters. Bank snapshots can be outdated.");
+        if(!required.isEmpty())text.append("Starting items only. Guide: extra supplies and charges. Bank counts may be outdated.");
         return text.toString();
     }
     private String training(CompanionPlanner.Step s) {
