@@ -339,6 +339,7 @@ public class OneManSlayerHelper
         private final JButton centre = new JButton("Centre map");
         private final JButton track = new JButton("Track entrance");
         private final JButton clear = new JButton("Stop tracking");
+        private final JButton locationWiki=new JButton("Location guide");
         private java.util.List<SlayerLabLocations.Destination> shown = Collections.emptyList();
         LabPanel()
         {
@@ -377,7 +378,7 @@ public class OneManSlayerHelper
             access.setWrapStyleWord(true);
             access.setOpaque(false);
             controls.add(access);
-            for (JButton button : new JButton[]{centre, track, clear, wiki})
+            for (JButton button : new JButton[]{centre, track, clear, locationWiki, wiki})
             {
                 button.setAlignmentX(Component.LEFT_ALIGNMENT);
                 button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -388,6 +389,7 @@ public class OneManSlayerHelper
                 access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice));
                 boolean pin=choice!=null&&choice.entrance!=null;centre.setEnabled(pin);track.setEnabled(pin);
             });
+            locationWiki.addActionListener(e->{SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();if(choice!=null)LinkBrowser.browse("https://oldschool.runescape.wiki/w/"+java.net.URLEncoder.encode(choice.name.replace(' ','_'),java.nio.charset.StandardCharsets.UTF_8));});
             centre.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
                 if (choice != null) OneManSlayerHelper.this.track(choice, true);
@@ -409,7 +411,7 @@ public class OneManSlayerHelper
             choices.removeAllItems();
             for (SlayerLabLocations.Destination destination : locations) choices.addItem(destination);
             boolean hasLocations = !locations.isEmpty();
-            choices.setEnabled(hasLocations);
+            choices.setEnabled(hasLocations);locationWiki.setEnabled(hasLocations);
             SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();
             boolean pin=choice!=null&&choice.entrance!=null;
             centre.setEnabled(pin);

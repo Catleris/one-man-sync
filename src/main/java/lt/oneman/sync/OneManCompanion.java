@@ -74,7 +74,7 @@ final class OneManCompanion {
             Graphics2D g = icon.createGraphics(); g.setColor(new Color(218,176,85));
             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
             g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
-            PluginPanel root=new PluginPanel();root.setLayout(new BorderLayout(0,6));
+            PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer & Prayer");
             JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer & Prayer"});
@@ -124,7 +124,6 @@ final class OneManCompanion {
             nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(player,profile,skill+" 99"); });
         }
         levels=nextLevels;completed=nextQuests;
-        if(completed.contains(selected)||manual.contains(selected))selected="";
         if(!baseline) { baseline=true;started=System.currentTimeMillis();startingXp=client.getOverallExperience();startingLevels=new LinkedHashMap<>(levels);startingQuests=new HashSet<>(completed); }
         day.observe(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString(),levels,completed,client.getOverallExperience());
         if(System.currentTimeMillis()-lastDaySave>30000){saveDay();}
@@ -135,7 +134,7 @@ final class OneManCompanion {
         qp=Math.max(0,client.getVarpValue(VarPlayerID.QP));
         route=planner.plan(levels,completed,confirmed,qp);
         CompanionPlanner.Step chosen=goal();
-        if(focusedGoal&&chosen!=null&&CompanionTraining.achieved(chosen,levels,completed,confirmed)) {
+        if(chosen!=null&&CompanionTraining.achieved(chosen,levels,completed,confirmed)) {
             focusedGoal=false;selected="";configs.setConfiguration("one-man-sync",profile,"companionFocus",false);
         }
         if(selected.isEmpty() && !route.isEmpty())selected=route.get(0).id;
