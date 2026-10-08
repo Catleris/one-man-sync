@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master, dev/slayer-helper-lab ]
+    branches: [ master, dev/slayer-helper-lab, dev/companion-suite ]
   pull_request:
     branches: [ master ]
 
@@ -26,4 +26,12 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Build
-        run: ./gradlew clean build
+        run: ./gradlew clean build shadowJar
+
+      - name: Upload development build
+        uses: actions/upload-artifact@v4
+        with:
+          name: oneman-companion-dev
+          path: |
+            build/libs/*-all.jar
+            build/reports/tests/test/

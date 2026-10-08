@@ -28,7 +28,7 @@ dependencies {
 }
 
 group = 'lt.oneman'
-version = '0.6.0'
+version = '0.7.0-dev'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'

@@ -133,6 +133,7 @@ public class OneManSyncPlugin extends Plugin
     private static final Map<String, Integer> BOSS_VARPS = loadBossVarps();
 
     @Inject private OneManSlayerHelper slayerHelper;
+    @Inject private OneManCompanion companion;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -184,6 +185,7 @@ public class OneManSyncPlugin extends Plugin
     protected void startUp()
     {
         slayerHelper.startUp();
+        companion.startUp(this::getPluginDirectory);
         if (client.getGameState() == GameState.LOGGED_IN)
         {
             loginCountdown = 10;
@@ -194,6 +196,7 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void shutDown()
     {
+        companion.shutDown();
         slayerHelper.shutDown();
         loginCountdown=-1;
         progressDirty=false;
@@ -226,6 +229,7 @@ public class OneManSyncPlugin extends Plugin
     public void onGameStateChanged(GameStateChanged event)
     {
         slayerHelper.onGameStateChanged(event);
+        companion.onGameStateChanged(event);
         if(event.getGameState()==GameState.LOGGED_IN){
             loginCountdown=10;
             progressDirty=true;
@@ -484,6 +488,7 @@ public class OneManSyncPlugin extends Plugin
     public void onGameTick(GameTick event)
     {
         slayerHelper.onGameTick(event);
+        companion.onGameTick(event);
         if(!ready()) return;
 
         // Pet message can precede the Collection Log message. If a follower appears,
@@ -602,6 +607,7 @@ public class OneManSyncPlugin extends Plugin
             .post(body)
             .build();
 
+        final String sentProfile=configManager.getRSProfileKey();
         requestInFlight=true;
         lastFullSyncTick=client.getTickCount();
         progressDirty=false;
@@ -610,7 +616,8 @@ public class OneManSyncPlugin extends Plugin
             @Override public void onFailure(Call call,IOException e){
                 requestInFlight=false;
                 progressDirty=true;
-                log.warning("OneMan sync failed: "+e.getMessage());
+                companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
+                log.fine("OneMan sync failed");
             }
 
             @Override public void onResponse(Call call,Response response)throws IOException{
@@ -618,8 +625,10 @@ public class OneManSyncPlugin extends Plugin
                     String text=r.body()!=null?r.body().string():"";
                     if(!r.isSuccessful()){
                         progressDirty=true;
-                        log.warning("OneMan sync HTTP "+r.code()+": "+text);
+                        companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+r.code());
+                        log.fine("OneMan sync HTTP "+r.code());
                     }else{
+                        companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
                         pendingNewCollection.removeAll(sentNewCollection);
                         for(Integer id:sentCaMeta.keySet()) pendingCaMeta.remove(id,sentCaMeta.get(id));
                         for(String k:sentLoot.keySet()) pendingLootEvents.remove(k,sentLoot.get(k));
@@ -643,6 +652,7 @@ public class OneManSyncPlugin extends Plugin
         JsonObject root=new JsonObject();
         root.addProperty("player",player);
         root.addProperty("clientRevision",client.getRevision());
+        root.addProperty("pluginVersion",OneManCompanion.VERSION);
         root.addProperty("totalLevel",calculateTotalLevel());
         root.addProperty("totalXp",client.getOverallExperience());
         root.addProperty("snapshotEpochMs",System.currentTimeMillis());
