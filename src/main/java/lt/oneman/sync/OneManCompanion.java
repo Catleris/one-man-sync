@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.7.0-dev";
+    static final String VERSION = "0.7.1-dev";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -36,6 +36,7 @@ final class OneManCompanion {
     @Inject private OverlayManager overlays;
     @Inject private CompanionBankOverlay overlay;
     @Inject private SlayerLabAccount account;
+    @Inject private OneManSlayerHelper slayerHelper;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -43,6 +44,8 @@ final class OneManCompanion {
     private NavigationButton navigation;
     private volatile boolean active;
     private String profile = "", selected = "", lastSummary = "No previous session recorded.";
+    private boolean focusedGoal;
+    private Set<String> observedUnlocks=new HashSet<>();
     private Set<String> manual = new HashSet<>(), completed = new HashSet<>(), startingQuests = new HashSet<>();
     private Map<String,Integer> levels = new LinkedHashMap<>(), startingLevels = new LinkedHashMap<>();
     private Map<String,Long> synced = new LinkedHashMap<>();
@@ -69,8 +72,15 @@ final class OneManCompanion {
             panel = new Panel();
             BufferedImage icon = new BufferedImage(24,24,BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = icon.createGraphics(); g.setColor(new Color(218,176,85));
-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.drawString("C",5,19); g.dispose();
-            navigation = NavigationButton.builder().tooltip("OneMan Companion").icon(icon).priority(7).panel(panel).build();
+            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
+            g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
+            PluginPanel root=new PluginPanel();root.setLayout(new BorderLayout(0,6));
+            JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
+            if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer & Prayer");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer & Prayer"});
+            sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
+            root.add(sections,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
+            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer & Prayer").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
     }
@@ -89,11 +99,13 @@ final class OneManCompanion {
         String key=configs.getRSProfileKey(); if(key==null || key.isEmpty())return;
         if(!key.equals(profile)) {
             finish(); profile=key; baseline=false; synced.clear();syncStatus="No successful upload in this session.";
-            manual.clear(); selected="";
+            manual.clear();observedUnlocks.clear();selected="";focusedGoal=false;
             try { String savedDay=configs.getConfiguration("one-man-sync",profile,"companionDay");day=savedDay==null?new CompanionDay():gson.fromJson(savedDay,CompanionDay.class);if(day==null||day.gainedLevels==null||day.lastLevels==null||day.quests==null)day=new CompanionDay(); } catch(RuntimeException ignored) {day=new CompanionDay();}
             day.resume();
             try { String saved=configs.getConfiguration("one-man-sync",profile,"companionManual");
                 if(saved!=null)manual.addAll(Arrays.asList(gson.fromJson(saved,String[].class))); } catch(RuntimeException ignored) { manual.clear(); }
+            try{String unlocks=configs.getConfiguration("one-man-sync",profile,"companionObservedUnlocks");if(unlocks!=null)observedUnlocks.addAll(Arrays.asList(gson.fromJson(unlocks,String[].class)));}catch(RuntimeException ignored){observedUnlocks.clear();}
+            focusedGoal=Boolean.parseBoolean(configs.getConfiguration("one-man-sync",profile,"companionFocus"));
             String goal=configs.getConfiguration("one-man-sync",profile,"companionGoal"); if(goal!=null)selected=goal;
             String summary=configs.getConfiguration("one-man-sync",profile,"companionSummary");lastSummary=summary==null?"No previous session recorded.":summary;
         }
@@ -116,15 +128,24 @@ final class OneManCompanion {
         if(!baseline) { baseline=true;started=System.currentTimeMillis();startingXp=client.getOverallExperience();startingLevels=new LinkedHashMap<>(levels);startingQuests=new HashSet<>(completed); }
         day.observe(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString(),levels,completed,client.getOverallExperience());
         if(System.currentTimeMillis()-lastDaySave>30000){saveDay();}
+        if(CompanionSupplies.hasChronicle(container(InventoryID.INV),container(InventoryID.WORN),profile.equals(account.profile)?account.bank.items:Collections.emptyMap())) {
+            if(observedUnlocks.add("CHRONICLE"))configs.setConfiguration("one-man-sync",profile,"companionObservedUnlocks",gson.toJson(observedUnlocks));
+        }
+        Set<String> confirmed=new HashSet<>(manual);confirmed.addAll(observedUnlocks);
         qp=Math.max(0,client.getVarpValue(VarPlayerID.QP));
-        route=planner.plan(levels,completed,manual,qp);
+        route=planner.plan(levels,completed,confirmed,qp);
+        CompanionPlanner.Step chosen=goal();
+        if(focusedGoal&&chosen!=null&&CompanionTraining.achieved(chosen,levels,completed,confirmed)) {
+            focusedGoal=false;selected="";configs.setConfiguration("one-man-sync",profile,"companionFocus",false);
+        }
         if(selected.isEmpty() && !route.isEmpty())selected=route.get(0).id;
         render();
     }
     private static String normal(String s) { return s.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]",""); }
     private CompanionPlanner.Step goal() {
         for(CompanionPlanner.Step s:route)if(s.id.equals(selected))return s;
-        return planner.nodes.get(selected);
+        CompanionPlanner.Step catalog=planner.nodes.get(selected);
+        return catalog!=null?catalog:planner.trainingFromId(selected);
     }
     private Map<String,Integer> container(int id) {
         Map<String,Integer> map=new LinkedHashMap<>();ItemContainer c=client.getItemContainer(id);
@@ -140,6 +161,7 @@ final class OneManCompanion {
         Map<String,Integer> inv=container(InventoryID.INV),equipment=container(InventoryID.WORN);
         List<String> required=CompanionSupplies.forStep(s);StringBuilder text=new StringBuilder();
         boolean same=profile.equals(account.profile);
+        if(CompanionTraining.isSkill(s))text.append(training(s)).append("\n\n");
         text.append(same?account.bankAge(System.currentTimeMillis()):"Bank unknown — open your bank.").append("\n\n");
         Set<Integer> ids=new HashSet<>(); ItemContainer bank=client.getItemContainer(InventoryID.BANK);
         for(String need:required) {
@@ -152,9 +174,14 @@ final class OneManCompanion {
             if(bank!=null)for(Item item:bank.getItems())if(item.getId()>=0&&item.getQuantity()>0&&CompanionSupplies.matches(items.getItemComposition(item.getId()).getName(),need))ids.add(item.getId());
         }
         overlay.needed=Collections.unmodifiableSet(ids);
-        if(required.isEmpty())text.append("No verified supply checklist for this goal yet. Open the guide; no readiness is inferred.\n");
+        if(required.isEmpty()&&!CompanionTraining.isSkill(s))text.append("No verified supply checklist for this goal yet. Open the guide; no readiness is inferred.\n");
         else text.append("Curated start items only. Open the guide for stage-specific extras, usable tool level, charges and encounters. Bank snapshots can be outdated.");
         return text.toString();
+    }
+    private String training(CompanionPlanner.Step s) {
+        SlayerLabJournal.Session task=profile.equals(account.profile)?account.journal.active:null;
+        return CompanionTraining.describe(s,levels,completed,client.getLocalPlayer().getCombatLevel(),client.getAccountType().toString(),task,
+            client.getSkillExperience(Skill.SLAYER),planner.methods);
     }
     private static int count(Map<String,Integer> map,String need) { return map.entrySet().stream().filter(e->CompanionSupplies.matches(e.getKey(),need)).mapToInt(Map.Entry::getValue).sum(); }
     private String summary() {
@@ -197,13 +224,20 @@ final class OneManCompanion {
         });
     }
     private void render() {
-        StringBuilder next=new StringBuilder("OneMan local catalog · live levels and quests\nLive quest points: "+qp+"\n\n");
-        int index=0;for(CompanionPlanner.Step s:route) {
+        CompanionPlanner.Step selectedGoal=goal();
+        Set<String> confirmed=new HashSet<>(manual);confirmed.addAll(observedUnlocks);
+        List<CompanionPlanner.Step> visible=focusedGoal&&selectedGoal!=null?planner.forGoal(selectedGoal,levels,completed,confirmed,qp):route;
+        StringBuilder next=new StringBuilder("Player: "+player+" · "+client.getAccountType()+"\nCombat: "+client.getLocalPlayer().getCombatLevel()+" · Live quest points: "+qp+"\n");
+        next.append(focusedGoal&&selectedGoal!=null?"Selected goal: "+selectedGoal.name:"Default OneMan route").append("\n");
+        if(observedUnlocks.contains("CHRONICLE"))next.append("Chronicle ownership observed — obtain step skipped. Check remaining charges separately.\n");
+        next.append("\n");
+        if(focusedGoal&&CompanionTraining.isSkill(selectedGoal))next.append(training(selectedGoal)).append("\n\n");
+        int index=0;for(CompanionPlanner.Step s:visible) {
             if(++index>3)break;next.append(index).append(". ").append(s.name).append("\n")
                 .append(planner.requirements(s,levels,completed,qp)).append("\nWhy now: ")
                 .append(s.why.isEmpty()?"Next in the selected route":s.why.get(config.companionLanguage().equalsIgnoreCase("LT")?0:Math.min(1,s.why.size()-1))).append("\n\n");
         }
-        CompanionPlanner.Step selectedGoal=goal();String prep=preparation(selectedGoal);
+        String prep=preparation(selectedGoal);
         SlayerLabJournal.Session session=profile.equals(account.profile)?account.journal.active:null;
         if(session==null&&profile.equals(account.profile)&&!account.journal.history.isEmpty())session=account.journal.history.get(0);
         String slayer=SlayerLabJournal.metrics(session,System.currentTimeMillis());
@@ -218,7 +252,7 @@ final class OneManCompanion {
         SwingUtilities.invokeLater(() -> { if(active&&panel!=null)panel.update(nextText,prep,slayerText,freshText,currentSummary,choices,goalId,screenshots.status()); });
     }
     private void showLoggedOut() {
-        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan Sync → History."); } });
+        SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan → Slayer & Prayer → History."); } });
     }
     private final class Panel extends PluginPanel {
         final JTextArea next=area(),prep=area(),slayer=area(),fresh=area(),summary=area(),memories=area();
@@ -228,11 +262,13 @@ final class OneManCompanion {
             tabs.addTab("Next",new JScrollPane(next));
             JPanel preparation=new JPanel(new BorderLayout());preparation.add(goals,BorderLayout.NORTH);preparation.add(new JScrollPane(prep),BorderLayout.CENTER);
             JPanel actions=new JPanel(new GridLayout(0,1));JButton guide=new JButton("Open goal guide"),mark=new JButton("Confirm manual unlock"),capture=new JButton("Save progress screenshot");
+            JButton reset=new JButton("Follow default roadmap");actions.add(reset);
+            reset.addActionListener(e->clientThread.invokeLater(()->{focusedGoal=false;selected="";configs.setConfiguration("one-man-sync",profile,"companionFocus",false);}));
             actions.add(guide);actions.add(mark);preparation.add(actions,BorderLayout.SOUTH);tabs.addTab("Prep",preparation);
             tabs.addTab("Slayer",new JScrollPane(slayer));tabs.addTab("Sync",new JScrollPane(fresh));
             JPanel memoryPanel=new JPanel(new BorderLayout());memoryPanel.add(new JScrollPane(memories),BorderLayout.CENTER);memoryPanel.add(capture,BorderLayout.SOUTH);tabs.addTab("Memories",memoryPanel);
             tabs.addTab("Summary",new JScrollPane(summary));add(tabs,BorderLayout.CENTER);
-            goals.addActionListener(e-> { if(updating)return;CompanionPlanner.Step s=(CompanionPlanner.Step)goals.getSelectedItem();if(s!=null)clientThread.invokeLater(()-> { if(!baseline)return;selected=s.id;configs.setConfiguration("one-man-sync",profile,"companionGoal",selected);render(); }); });
+            goals.addActionListener(e-> { if(updating)return;CompanionPlanner.Step s=(CompanionPlanner.Step)goals.getSelectedItem();if(s!=null)clientThread.invokeLater(()-> { if(!baseline)return;selected=s.id;focusedGoal=true;configs.setConfiguration("one-man-sync",profile,"companionFocus",true);configs.setConfiguration("one-man-sync",profile,"companionGoal",selected);render(); }); });
             guide.addActionListener(e-> { CompanionPlanner.Step s=(CompanionPlanner.Step)goals.getSelectedItem();if(s!=null&&s.wiki!=null&&s.wiki.startsWith("https://oldschool.runescape.wiki/"))LinkBrowser.browse(s.wiki); });
             mark.addActionListener(e->clientThread.invokeLater(()-> { CompanionPlanner.Step s=goal();if(baseline&&s!=null&&"unlock".equals(s.type)) {manual.add(s.id);configs.setConfiguration("one-man-sync",profile,"companionManual",gson.toJson(manual));selected="";} }));
             capture.addActionListener(e->clientThread.invokeLater(()-> { if(baseline)screenshots.capture(player,profile,"Progress"); }));

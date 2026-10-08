@@ -78,7 +78,7 @@ final class SlayerLabAdvice
     static String comparison(SlayerLabLocations.Destination d)
     {
         String n=d.name.toLowerCase(Locale.ROOT);
-        String cannon=n.contains("catacombs")||n.contains("tower")||n.contains("kraken")?"Cannon unavailable": "Cannon rules vary by chamber/target — verify location guide";
+        String cannon=n.contains("catacombs")||n.contains("tower")||n.contains("kraken")||n.contains("god wars")?"Cannon: NOT ALLOWED":n.contains("stronghold slayer")?"Cannon: ALLOWED (matching active task required)":"Cannon: not verified for this chamber — check location guide";
         String bank=n.contains("taverley")?"Falador/Taverley banking route":n.contains("tower")?"Canifis bank":n.contains("karuulm")?"Mount Karuulm bank":n.contains("devil")?"Castle Wars bank":n.contains("iorwerth")?"Prifddinas banks":n.contains("swamp")?"Lumbridge bank":n.contains("edgeville")?"Edgeville bank":n.contains("sewers")?"Varrock banks":"Choose a bank teleport; no nearest-bank path is calculated";
         String multi=n.contains("catacombs")?"Multi-combat":"Combat zones vary by room/variant; check before area attacks";
         return d+"\n"+d.access+"\n"+cannon+"\n"+multi+"\nBank: "+bank+"\nPvP: "+(d.wilderness?"Wilderness — items at risk":"This entrance is outside Wilderness")+"\n";

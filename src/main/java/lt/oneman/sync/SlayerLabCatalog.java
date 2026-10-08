@@ -102,7 +102,13 @@ final class SlayerLabCatalog
 
     }
     static String normalize(String name) { return name == null ? "" : name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " "); }
-    static Guide find(String name) { return GUIDES.get(normalize(name)); }
+    static String taskKey(String name) {
+        String key=normalize(name);
+        // RuneLite assignment names can be singular while task guides use plurals.
+        if(!key.endsWith("s") && GUIDES.containsKey(key+"s"))return key+"s";
+        return key;
+    }
+    static Guide find(String name) { return GUIDES.get(taskKey(name)); }
     static Collection<Guide> all() { return Collections.unmodifiableCollection(GUIDES.values()); }
     static String wiki(String name)
     { return "https://oldschool.runescape.wiki/w/Special:Search?search=" + URLEncoder.encode("Slayer task/" + (name == null ? "" : name), StandardCharsets.UTF_8); }

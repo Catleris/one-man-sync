@@ -633,14 +633,16 @@ public class OneManSyncPlugin extends Plugin
                 });
             }
             @Override public void onResponse(Call call,Response response)throws IOException{
-                final boolean success;final int code;
-                try(Response r=response){success=r.isSuccessful();code=r.code();}
+                final boolean success;final int code;final String detail;
+                try(Response r=response){success=r.isSuccessful();code=r.code();
+                    detail=success?"":CompanionSyncError.describe(gson,r.body()!=null?r.body().string():"");
+                }
                 clientThread.invokeLater(() -> {
                     if(call!=activeSyncCall)return;
                     try {
                         if(!success){
                             progressDirty=true;
-                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code);
+                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code+detail);
                             log.fine("OneMan sync HTTP "+code);
                         }else{
                             companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");

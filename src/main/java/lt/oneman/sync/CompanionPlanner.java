@@ -32,6 +32,18 @@ final class CompanionPlanner {
         }
         return out;
     }
+    Step trainingFromId(String id) {
+        if(!id.startsWith("TRAIN_"))return null;
+        int split=id.lastIndexOf('_');if(split<=6)return null;
+        String skill=id.substring(6,split);if(!methods.containsKey(skill))return null;
+        try{int level=Integer.parseInt(id.substring(split+1));if(level<2||level>99)return null;
+            Step step=new Step();step.id=id;step.type="training";step.name=skill+" → "+level;
+            step.skills.put(skill,level);step.wiki="https://oldschool.runescape.wiki/w/"+skill;return step;
+        }catch(NumberFormatException ignored){return null;}
+    }
+    List<Step> forGoal(Step goal,Map<String,Integer> levels,Set<String> done,Set<String> confirmed,int qp) {
+        List<Step> steps=new ArrayList<>();visit(goal,levels,done,confirmed,qp,new HashSet<>(),steps);return steps;
+    }
     private void visit(Step n, Map<String,Integer> levels, Set<String> done, Set<String> manual,
         int qp, Set<String> visited, List<Step> out) {
         if (!visited.add(n.id) || done.contains(n.id) || manual.contains(n.id)
@@ -40,7 +52,7 @@ final class CompanionPlanner {
         for (String q : n.quests) { Step prior = nodes.get(q); if (prior != null) visit(prior,levels,done,manual,qp,visited,out); }
         for (Map.Entry<String,Integer> e : n.skills.entrySet()) {
             Integer have = levels.get(e.getKey());
-            if (!n.autoSkills && (have == null || have < e.getValue())) {
+            if (!n.autoSkills && !"training".equals(n.type) && (have == null || have < e.getValue())) {
                 String id = "TRAIN_"+e.getKey()+"_"+e.getValue();
                 if (visited.add(id)) {
                     if (e.getKey().equals("Herblore") && nodes.containsKey("DRUIDIC_RITUAL")) visit(nodes.get("DRUIDIC_RITUAL"),levels,done,manual,qp,visited,out);

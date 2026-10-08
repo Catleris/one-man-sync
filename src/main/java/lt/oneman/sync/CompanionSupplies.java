@@ -19,6 +19,9 @@ final class CompanionSupplies {
                 return Collections.emptyList();
         }
     }
+    static boolean hasChronicle(Map<String,Integer> inventory,Map<String,Integer> equipment,Map<String,Integer> bank) {
+        return java.util.stream.Stream.of(inventory,equipment,bank).anyMatch(m->m.entrySet().stream().anyMatch(e->e.getValue()>0&&matches(e.getKey(),"Chronicle")));
+    }
     static int quantity(CompanionPlanner.Step s,String need) {
         if(s==null)return 1;
         if(s.id.equals("DORICS_QUEST"))return need.equals("Clay")?6:need.equals("Copper ore")?4:2;

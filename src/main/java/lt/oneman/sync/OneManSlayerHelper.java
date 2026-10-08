@@ -1,7 +1,6 @@
 package lt.oneman.sync;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import javax.inject.Inject;
 import javax.swing.*;
@@ -32,7 +31,6 @@ public class OneManSlayerHelper
     @Inject private Client client;
     @Inject private ConfigManager configManager;
     @Inject private ItemManager itemManager;
-    @Inject private ClientToolbar toolbar;
     @Inject private ClientThread clientThread;
     @Inject private OverlayManager overlayManager;
     @Inject private WorldMapPointManager mapManager;
@@ -49,7 +47,6 @@ public class OneManSlayerHelper
     private java.util.List<SlayerLabLocations.Destination> destinations = Collections.emptyList();
     private volatile SlayerLabLocations.Destination selectedDestination;
     private String taskSignature = "";
-    private NavigationButton navigation;
     private LabPanel panel;
     private String lastView = "";
     private int nextRefresh;
@@ -65,14 +62,6 @@ public class OneManSlayerHelper
         SwingUtilities.invokeLater(() -> {
             if (!active) return;
             panel = new LabPanel();
-            BufferedImage icon = new BufferedImage(24, 24, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = icon.createGraphics();
-            g.setColor(new Color(218, 176, 85));
-            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
-            g.drawString("S", 6, 19);
-            g.dispose();
-            navigation = NavigationButton.builder().tooltip("OneMan Sync").icon(icon).priority(6).panel(panel).build();
-            toolbar.addNavigation(navigation);
             panel.showView("Log in to detect your Slayer task.", "");
         });
     }
@@ -84,12 +73,11 @@ public class OneManSlayerHelper
         overlayManager.remove(minimapOverlay);
         clearLocations();
         SwingUtilities.invokeLater(() -> {
-            if (navigation != null) toolbar.removeNavigation(navigation);
-            navigation = null;
             panel = null;
         });
         lastView = "";
     }
+    PluginPanel companionPanel(){return panel;}
     public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
@@ -109,7 +97,7 @@ public class OneManSlayerHelper
         if (!bindAccount(System.currentTimeMillis())) return;
         refreshPrayer();
         for (int i = 0; i < mapPoints.size(); i++)
-            mapPoints.get(i).highlight(destinations.get(i) == selectedDestination, (client.getTickCount() / 2) % 2 == 0);
+            mapPoints.get(i).highlight(selectedDestination!=null && mapPoints.get(i).getWorldPoint().equals(selectedDestination.entrance), (client.getTickCount() / 2) % 2 == 0);
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();
@@ -141,6 +129,7 @@ public class OneManSlayerHelper
             destinations = SlayerLabLocations.forTask(name, location);
             for (SlayerLabLocations.Destination destination : destinations)
             {
+                if(destination.entrance==null)continue;
                 SlayerLabMapPoint point = new SlayerLabMapPoint(destination);
                 mapPoints.add(point);
                 mapManager.add(point);
@@ -296,7 +285,7 @@ public class OneManSlayerHelper
     private void track(SlayerLabLocations.Destination destination, boolean centre)
     {
         clientThread.invokeLater(() -> {
-            if (!active || !destinations.contains(destination)) return;
+            if (!active || !destinations.contains(destination) || destination.entrance==null) return;
             if (centre)
                 client.getWorldMap().setWorldMapPositionTarget(destination.entrance);
             else
@@ -396,7 +385,8 @@ public class OneManSlayerHelper
             }
             choices.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                access.setText(choice == null ? "No mapped entrance available." : choice.access);
+                access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice));
+                boolean pin=choice!=null&&choice.entrance!=null;centre.setEnabled(pin);track.setEnabled(pin);
             });
             centre.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
@@ -420,8 +410,10 @@ public class OneManSlayerHelper
             for (SlayerLabLocations.Destination destination : locations) choices.addItem(destination);
             boolean hasLocations = !locations.isEmpty();
             choices.setEnabled(hasLocations);
-            centre.setEnabled(hasLocations);
-            track.setEnabled(hasLocations);
+            SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();
+            boolean pin=choice!=null&&choice.entrance!=null;
+            centre.setEnabled(pin);
+            track.setEnabled(pin);
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
         }
