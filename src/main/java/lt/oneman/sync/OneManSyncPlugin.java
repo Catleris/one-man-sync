@@ -748,7 +748,7 @@ public class OneManSyncPlugin extends Plugin
     {
         int value=client.getVarbitValue(varbit);
         JsonObject d=new JsonObject();
-        d.addProperty("area",area);d.addProperty("tier",tier);d.addProperty("value",value);d.addProperty("completed",value==1);out.add(d);
+        d.addProperty("area",area);d.addProperty("tier",tier);d.addProperty("value",value);d.addProperty("completed",DiaryCompletion.complete(area,tier,value));out.add(d);
     }
 
     private JsonArray buildCombatAchievementTiers()
