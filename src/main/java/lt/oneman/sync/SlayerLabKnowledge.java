@@ -67,6 +67,6 @@ final class SlayerLabKnowledge
         return Collections.unmodifiableMap(entries);
     }
     static String normalize(String value) { return value == null ? "" : value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " "); }
-    static Entry find(String task) { return ENTRIES.get(normalize(task)); }
+    static Entry find(String task) { return ENTRIES.get(SlayerLabCatalog.taskKey(task)); }
     static Collection<Entry> all() { return ENTRIES.values(); }
 }

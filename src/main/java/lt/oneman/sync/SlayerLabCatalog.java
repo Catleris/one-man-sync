@@ -54,10 +54,11 @@ final class SlayerLabCatalog
         String wikiUrl() { return wiki(task); }
     }
     private static final Map<String, Guide> GUIDES = new LinkedHashMap<>();
+    private static final Set<String> CURATED = new HashSet<>();
     private static Requirement worn(String label, String... names) { return new Requirement(label, true, names); }
     private static Requirement carried(String label, String... names) { return new Requirement(label, false, names); }
     private static void add(String task, String locations, String advice, Requirement... requirements)
-    { GUIDES.put(normalize(task), new Guide(task, locations, advice, requirements)); }
+    { CURATED.add(normalize(task)); GUIDES.put(normalize(task), new Guide(task, locations, advice, requirements)); }
     static
     {
         add("Blue dragons", "Taverley Dungeon: blue dragon chamber. Enter south of Taverley; dusty key on the long route OR 70 Agility pipe shortcut. Heroes' Guild basement: Heroes' Quest required.",
@@ -102,7 +103,14 @@ final class SlayerLabCatalog
 
     }
     static String normalize(String name) { return name == null ? "" : name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " "); }
-    static Guide find(String name) { return GUIDES.get(normalize(name)); }
+    static String taskKey(String name) {
+        String key=normalize(name);
+        // RuneLite assignment names can be singular while task guides use plurals.
+        if(CURATED.contains(key)) return key;
+        if(!key.endsWith("s") && GUIDES.containsKey(key+"s"))return key+"s";
+        return key;
+    }
+    static Guide find(String name) { return GUIDES.get(taskKey(name)); }
     static Collection<Guide> all() { return Collections.unmodifiableCollection(GUIDES.values()); }
     static String wiki(String name)
     { return "https://oldschool.runescape.wiki/w/Special:Search?search=" + URLEncoder.encode("Slayer task/" + (name == null ? "" : name), StandardCharsets.UTF_8); }

@@ -71,7 +71,7 @@ import okhttp3.Response;
 
 @PluginDescriptor(
     name = "OneMan Sync",
-    description = "Local Slayer preparation, maps and Prayer resources, with optional progression sync to oneman.lt",
+    description = "Local Slayer preparation, maps and Superior alerts, with optional progression sync to oneman.lt",
     tags = {"progress", "quests", "ironman", "sync", "achievements", "collection", "log", "boss", "kc", "pets", "loot", "clue", "stash", "slayer", "storage", "poh"},
     internalName = "one-man-sync"
 )
@@ -133,6 +133,7 @@ public class OneManSyncPlugin extends Plugin
     private static final Map<String, Integer> BOSS_VARPS = loadBossVarps();
 
     @Inject private OneManSlayerHelper slayerHelper;
+    @Inject private OneManCompanion companion;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -146,6 +147,7 @@ public class OneManSyncPlugin extends Plugin
     private int lastKnownTotalLevel = -1;
     private boolean progressDirty = false;
     private volatile boolean requestInFlight = false;
+    private volatile Call activeSyncCall;
 
     private final Map<String, CollectionEntry> observedCollection = new ConcurrentHashMap<>();
     private final Set<String> pendingNewCollection = ConcurrentHashMap.newKeySet();
@@ -184,6 +186,7 @@ public class OneManSyncPlugin extends Plugin
     protected void startUp()
     {
         slayerHelper.startUp();
+        companion.startUp(this::getPluginDirectory);
         if (client.getGameState() == GameState.LOGGED_IN)
         {
             loginCountdown = 10;
@@ -194,6 +197,8 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void shutDown()
     {
+        Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+        companion.shutDown();
         slayerHelper.shutDown();
         loginCountdown=-1;
         progressDirty=false;
@@ -226,11 +231,20 @@ public class OneManSyncPlugin extends Plugin
     public void onGameStateChanged(GameStateChanged event)
     {
         slayerHelper.onGameStateChanged(event);
+        companion.onGameStateChanged(event);
         if(event.getGameState()==GameState.LOGGED_IN){
             loginCountdown=10;
             progressDirty=true;
             clientThread.invokeLater(this::refreshSlayerStateCache);
         } else if(event.getGameState()==GameState.LOGIN_SCREEN){
+            Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+            requestInFlight=false;
+            latestBankItems.clear();bankSnapshotComplete=false;bankSnapshotEpochMs=0L;
+            latestStorageItems.clear();storageSnapshotEpochMs.clear();storageLabels.clear();storageComplete.clear();
+            latestPohFeatures.clear();pohSnapshotEpochMs=0L;
+            observedCollection.clear();pendingNewCollection.clear();pendingCaMeta.clear();
+            pendingLootEvents.clear();pendingPetEvents.clear();pendingPbEvents.clear();
+            pendingPetSignalAt=0L;pendingPetSignalTick=-1;lastLootSource="";lastLootAt=0L;
             loginCountdown=-1;
             progressDirty=false;
             lastKnownTotalLevel=-1;
@@ -374,6 +388,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
+        slayerHelper.onChatMessage(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
         boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;
@@ -484,6 +499,7 @@ public class OneManSyncPlugin extends Plugin
     public void onGameTick(GameTick event)
     {
         slayerHelper.onGameTick(event);
+        companion.onGameTick(event);
         if(!ready()) return;
 
         // Pet message can precede the Collection Log message. If a follower appears,
@@ -602,34 +618,44 @@ public class OneManSyncPlugin extends Plugin
             .post(body)
             .build();
 
+        final String sentProfile=configManager.getRSProfileKey();
         requestInFlight=true;
         lastFullSyncTick=client.getTickCount();
         progressDirty=false;
 
-        http.newCall(request).enqueue(new Callback(){
+        activeSyncCall=http.newCall(request);
+        activeSyncCall.enqueue(new Callback(){
             @Override public void onFailure(Call call,IOException e){
-                requestInFlight=false;
-                progressDirty=true;
-                log.warning("OneMan sync failed: "+e.getMessage());
+                clientThread.invokeLater(() -> {
+                    if(call!=activeSyncCall)return;
+                    requestInFlight=false;progressDirty=true;
+                    companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
+                    log.fine("OneMan sync failed");
+                });
             }
-
             @Override public void onResponse(Call call,Response response)throws IOException{
-                try(Response r=response){
-                    String text=r.body()!=null?r.body().string():"";
-                    if(!r.isSuccessful()){
-                        progressDirty=true;
-                        log.warning("OneMan sync HTTP "+r.code()+": "+text);
-                    }else{
-                        pendingNewCollection.removeAll(sentNewCollection);
-                        for(Integer id:sentCaMeta.keySet()) pendingCaMeta.remove(id,sentCaMeta.get(id));
-                        for(String k:sentLoot.keySet()) pendingLootEvents.remove(k,sentLoot.get(k));
-                        for(String k:sentPets.keySet()) pendingPetEvents.remove(k,sentPets.get(k));
-                        for(String k:sentPb.keySet()) pendingPbEvents.remove(k,sentPb.get(k));
-                        log.fine("OneMan sync OK: "+text);
-                    }
-                }finally{
-                    requestInFlight=false;
+                final boolean success;final int code;final String detail;
+                try(Response r=response){success=r.isSuccessful();code=r.code();
+                    detail=success?"":CompanionSyncError.describe(gson,r.body()!=null?r.body().string():"");
                 }
+                clientThread.invokeLater(() -> {
+                    if(call!=activeSyncCall)return;
+                    try {
+                        if(!success){
+                            progressDirty=true;
+                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code+detail);
+                            log.fine("OneMan sync HTTP "+code);
+                        }else{
+                            companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
+                            pendingNewCollection.removeAll(sentNewCollection);
+                            for(Integer id:sentCaMeta.keySet())pendingCaMeta.remove(id,sentCaMeta.get(id));
+                            for(String k:sentLoot.keySet())pendingLootEvents.remove(k,sentLoot.get(k));
+                            for(String k:sentPets.keySet())pendingPetEvents.remove(k,sentPets.get(k));
+                            for(String k:sentPb.keySet())pendingPbEvents.remove(k,sentPb.get(k));
+                            log.fine("OneMan sync OK");
+                        }
+                    }finally{requestInFlight=false;activeSyncCall=null;}
+                });
             }
         });
     }
@@ -643,6 +669,7 @@ public class OneManSyncPlugin extends Plugin
         JsonObject root=new JsonObject();
         root.addProperty("player",player);
         root.addProperty("clientRevision",client.getRevision());
+        root.addProperty("pluginVersion",OneManCompanion.VERSION);
         root.addProperty("totalLevel",calculateTotalLevel());
         root.addProperty("totalXp",client.getOverallExperience());
         root.addProperty("snapshotEpochMs",System.currentTimeMillis());
@@ -722,7 +749,7 @@ public class OneManSyncPlugin extends Plugin
     {
         int value=client.getVarbitValue(varbit);
         JsonObject d=new JsonObject();
-        d.addProperty("area",area);d.addProperty("tier",tier);d.addProperty("value",value);d.addProperty("completed",value==1);out.add(d);
+        d.addProperty("area",area);d.addProperty("tier",tier);d.addProperty("value",value);d.addProperty("completed",DiaryCompletion.complete(area,tier,value));out.add(d);
     }
 
     private JsonArray buildCombatAchievementTiers()

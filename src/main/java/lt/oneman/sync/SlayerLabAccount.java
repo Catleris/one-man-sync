@@ -67,7 +67,7 @@ final class SlayerLabAccount
     }
     String preparation(SlayerLabCatalog.Guide guide, Set<String> inventory, Set<String> equipment, long now)
     {
-        StringBuilder text = new StringBuilder(bankAge(now) + "\n\n");
+        StringBuilder text = new StringBuilder();
         if (guide != null)
             for (SlayerLabCatalog.Requirement requirement : guide.requirements)
             {

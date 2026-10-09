@@ -28,7 +28,7 @@ dependencies {
 }
 
 group = 'lt.oneman'
-version = '0.6.0'
+version = '0.7.2'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
@@ -42,6 +42,7 @@ tasks.register('run', JavaExec) {
 	jvmArgs "-ea"
 	// Separate RuneLite profile/settings for the development copy.
 	systemProperty "user.home", file("dev-home").absolutePath
+	systemProperty "oneman.devHomeConfigured", "true"
 	args "--developer-mode", "--debug"
 }
 

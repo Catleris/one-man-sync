@@ -22,15 +22,19 @@ final class SlayerLabLocations
             this.aliases.add(normalize(name));
             for (String alias : aliases) this.aliases.add(normalize(alias));
         }
+        Destination(String name,String access,String... aliases) {
+            this.name=name;this.access=access;this.entrance=null;this.wilderness=false;
+            this.aliases=new HashSet<>();this.aliases.add(normalize(name));for(String alias:aliases)this.aliases.add(normalize(alias));
+        }
         @Override public String toString() { return (wilderness ? "[WILDERNESS] " : "") + name; }
         boolean matches(String assigned) { return aliases.contains(normalize(assigned)); }
     }
     private static final Destination TAVERLEY = new Destination("Taverley Dungeon", 2883, 3397, "Blue dragons: dusty key OR 70 Agility pipe. Deeper routes depend on the target chamber.", false);
     private static final Destination HEROES = new Destination("Heroes' Guild", 2891, 3507, "Heroes' Quest required. Blue dragon in the basement.", false, "Heroes' Guild basement");
-    private static final Destination TOWER = new Destination("Slayer Tower", 3416, 3535, "Morytania access. This marker is the tower basement entrance; for upper floors use the tower stairs. See task notes for the floor.", false, "Morytania Slayer Tower");
+    private static final Destination TOWER = new Destination("Slayer Tower", 3416, 3535, "Morytania access. This marker is the tower basement entrance; for upper floors use the tower stairs. See task notes for the floor.", false, "Morytania Slayer Tower", "Slayer Tower basement");
     private static final Destination CATACOMBS = new Destination("Catacombs of Kourend", 1636, 3673, "Enter beneath Kourend Castle statue; use task notes to locate the correct chamber.", false, "Kourend Catacombs", "the Catacombs of Kourend");
     private static final Destination FREMENNIK = new Destination("Fremennik Slayer Dungeon", 2796, 3615, "East of Rellekka. See task notes for the chamber and protective equipment.", false, "Fremennik Slayer Cave");
-    private static final Destination STRONGHOLD = new Destination("Stronghold Slayer Cave", 2427, 3424, "Beneath Gnome Stronghold. Check task-only areas before entering.", false, "Stronghold Slayer Dungeon", "Gnome Stronghold");
+    private static final Destination STRONGHOLD = new Destination("Stronghold Slayer Cave", 2427, 3424, "Beneath Gnome Stronghold. Check task-only areas before entering.", false, "Stronghold Slayer Dungeon", "Gnome Stronghold", "Tree Gnome Stronghold");
     private static final Destination SMOKE = new Destination("Smoke Dungeon", 3309, 2962, "Desert Treasure I started; face protection and desert travel preparation.", false);
     private static final Destination SWAMP = new Destination("Lumbridge Swamp Caves", 3168, 3172, "Bring a safe light source; cave gas and entrance hazards. See task notes.", false, "Lumbridge Swamp Cave");
     private static final Destination HORRORS = new Destination("Mos Le'Harmless Cave", 3747, 2973, "Cabin Fever access; light source and appropriate cave horror protection.", false, "Mos Le'Harmless", "Mos Le Harmless Cave");
@@ -53,6 +57,8 @@ final class SlayerLabLocations
     private static final Destination SPIDER = new Destination("Morytania Spider Cave",3656,3409,"Morytania access; 92 Slayer for araxytes/Araxxor. Venom precautions.",false,"Morytania Spider Nest");
     private static final Destination ANCIENT = new Destination("Ancient Cavern",2511,3508,"Barbarian training access; dangerous dungeon. Appropriate dragonfire protection for dragon targets.",false);
     private static final Destination BRIMHAVEN = new Destination("Brimhaven Dungeon",2743,3154,"Entry fee unless exempt; axe for vines. Chamber access depends on route.",false);
+    private static final Destination GOD_WARS = new Destination("God Wars Dungeon",2917,3747,"Check God Wars Dungeon quest/access and faction-aggression protection. Bloodvelds are in the main dungeon, not a boss room.",false);
+    private static final Destination MEIYERDITCH = new Destination("Meiyerditch Laboratories","Mutated bloodveld section: access during Sins of the Father. See the location guide for entry route. Reference destination only: no verified entrance pin yet.","Meiyerditch","Meiyerditch Laboratory");
     private static final Map<String, List<Destination>> TASKS = new HashMap<>();
     private static void add(String task, Destination... places) { TASKS.put(SlayerLabCatalog.normalize(task), Collections.unmodifiableList(Arrays.asList(places))); }
     static
@@ -70,7 +76,7 @@ final class SlayerLabLocations
         add("Cave horrors", HORRORS);
         add("Wall beasts", SWAMP);
         add("Cave crawlers", FREMENNIK);
-        add("Bloodvelds", TOWER, STRONGHOLD, CATACOMBS);
+        add("Bloodvelds", TOWER, STRONGHOLD, CATACOMBS, IORWERTH, GOD_WARS, MEIYERDITCH);
         add("Nechryael", TOWER, CATACOMBS);
         add("Abyssal demons", TOWER, CATACOMBS);
         add("Hill giants", EDGEVILLE, DEN);
@@ -97,7 +103,7 @@ final class SlayerLabLocations
     }
     static List<Destination> forTask(String task, String assignedLocation)
     {
-        List<Destination> available = TASKS.getOrDefault(SlayerLabCatalog.normalize(task), Collections.emptyList());
+        List<Destination> available = TASKS.getOrDefault(SlayerLabCatalog.taskKey(task), Collections.emptyList());
         if (normalize(assignedLocation).isEmpty()) return available;
         List<Destination> filtered = new ArrayList<>();
         for (Destination destination : available) if (destination.matches(assignedLocation)) filtered.add(destination);

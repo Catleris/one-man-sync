@@ -1,12 +1,17 @@
 package lt.oneman.sync;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import javax.inject.Inject;
 import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RequestFocusType;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.slayer.SlayerPlugin;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.events.NpcLootReceived;
@@ -32,24 +37,24 @@ public class OneManSlayerHelper
     @Inject private Client client;
     @Inject private ConfigManager configManager;
     @Inject private ItemManager itemManager;
-    @Inject private ClientToolbar toolbar;
     @Inject private ClientThread clientThread;
     @Inject private OverlayManager overlayManager;
     @Inject private WorldMapPointManager mapManager;
     @Inject private SlayerLabMinimapOverlay minimapOverlay;
+    @Inject private SlayerRequirementOverlay requirementOverlay;
     @Inject private SlayerLabAccount account;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
+    @Inject private PluginManager pluginManager;
+    private final SuperiorAlert superiorAlert=new SuperiorAlert();
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
     private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
-    private String prayerView = "Log in to view Prayer resources.";
     private int lastXp = -1;
     private String currentTask = "";
     private final java.util.List<SlayerLabMapPoint> mapPoints = new ArrayList<>();
     private java.util.List<SlayerLabLocations.Destination> destinations = Collections.emptyList();
     private volatile SlayerLabLocations.Destination selectedDestination;
     private String taskSignature = "";
-    private NavigationButton navigation;
     private LabPanel panel;
     private String lastView = "";
     private int nextRefresh;
@@ -58,21 +63,15 @@ public class OneManSlayerHelper
     void startUp()
     {
         prayerMonitor.reset();
+        superiorAlert.reset();
         active = true;
         overlayManager.add(minimapOverlay);
+        overlayManager.add(requirementOverlay);
         nextRefresh = 0;
         lastView = "";
         SwingUtilities.invokeLater(() -> {
             if (!active) return;
             panel = new LabPanel();
-            BufferedImage icon = new BufferedImage(24, 24, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = icon.createGraphics();
-            g.setColor(new Color(218, 176, 85));
-            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
-            g.drawString("S", 6, 19);
-            g.dispose();
-            navigation = NavigationButton.builder().tooltip("OneMan Sync").icon(icon).priority(6).panel(panel).build();
-            toolbar.addNavigation(navigation);
             panel.showView("Log in to detect your Slayer task.", "");
         });
     }
@@ -81,21 +80,25 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
+        superiorAlert.reset();
         overlayManager.remove(minimapOverlay);
+        overlayManager.remove(requirementOverlay);
+        requirementOverlay.rows=Collections.emptyList();
         clearLocations();
         SwingUtilities.invokeLater(() -> {
-            if (navigation != null) toolbar.removeNavigation(navigation);
-            navigation = null;
             panel = null;
         });
         lastView = "";
     }
+    PluginPanel companionPanel(){return panel;}
     public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
+        requirementOverlay.rows=Collections.emptyList();
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
-            prayerMonitor.reset(); prayerView="Log in to view Prayer resources.";
+            prayerMonitor.reset();
+            superiorAlert.reset();
             account.pause("Logged out", System.currentTimeMillis());
             lastXp = -1; currentTask = ""; lastWarning = "";
             clearLocations();
@@ -103,13 +106,36 @@ public class OneManSlayerHelper
             publish("Log in to detect your Slayer task.", "");
         }
     }
+    public void onChatMessage(ChatMessage event) {
+        if(!active || client.getGameState()!=GameState.LOGGED_IN)return;
+        Notification alert=config.superiorSpawnAlert();
+        if(alert==null||!alert.isEnabled()||!superiorAlert.accept(event.getType(),event.getMessage(),client.getTickCount()))return;
+        boolean builtIn=pluginManager.getPlugins().stream().anyMatch(p->p instanceof SlayerPlugin&&pluginManager.isPluginEnabled(p))
+            && configManager.getConfig(SlayerConfig.class).showSuperiorNotification().isEnabled();
+        if(builtIn)alert=alert.withInitialized(true).withOverride(true).withTray(false).withSound(NotificationSound.OFF)
+            .withGameMessage(false).withRequestFocus(RequestFocusType.OFF);
+        notifier.notify(alert,"OneMan: A superior foe has appeared!");
+    }
     public void onGameTick(GameTick event)
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN || client.getLocalPlayer() == null) return;
+        requirementOverlay.rows=Collections.emptyList();
         if (!bindAccount(System.currentTimeMillis())) return;
         refreshPrayer();
         for (int i = 0; i < mapPoints.size(); i++)
-            mapPoints.get(i).highlight(destinations.get(i) == selectedDestination, (client.getTickCount() / 2) % 2 == 0);
+            mapPoints.get(i).highlight(selectedDestination!=null && mapPoints.get(i).getWorldPoint().equals(selectedDestination.entrance), (client.getTickCount() / 2) % 2 == 0);
+        // Refresh item hints every tick so equipping an item updates immediately.
+        String hintTask=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_NAME_KEY);
+        SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(hintTask);
+        String hintAmount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.AMOUNT_KEY);
+        int hintRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
+        if(hintRemaining>0 && Integer.toString(hintRemaining).equals(hintAmount) && hintGuide!=null) {
+            Set<String> inv=itemNames(InventoryID.INV), worn=itemNames(InventoryID.WORN);
+            java.util.List<SlayerRequirementOverlay.Row> rows=new ArrayList<>();
+            for(SlayerLabCatalog.Requirement requirement:hintGuide.requirements)
+                rows.add(SlayerRequirementOverlay.row(requirement,inv,worn,account.bank.items,account.bank.seen>0));
+            requirementOverlay.rows=Collections.unmodifiableList(rows);
+        }
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();
@@ -141,6 +167,7 @@ public class OneManSlayerHelper
             destinations = SlayerLabLocations.forTask(name, location);
             for (SlayerLabLocations.Destination destination : destinations)
             {
+                if(destination.entrance==null)continue;
                 SlayerLabMapPoint point = new SlayerLabMapPoint(destination);
                 mapPoints.add(point);
                 mapManager.add(point);
@@ -166,7 +193,7 @@ public class OneManSlayerHelper
             + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER)
             + "\nA variant may require a higher level; protection and exemptions must be checked for that variant.";
         StringBuilder places = new StringBuilder(summary+"\n\nAssigned locations must be respected; generic alternatives are reference only.\n\n");
-        for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination)).append("\n");
+        for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination,name)).append("\n");
         if(destinations.isEmpty()) places.append("No verified entrance for this task/assigned area. Use Task Wiki.\n");
         if(guide != null) places.append("\nSource locations:\n").append(guide.locations);
         SlayerLabLocations.Destination selected=selectedDestination;
@@ -188,7 +215,7 @@ public class OneManSlayerHelper
         final String sessionNote = session.note;
         final long sessionStarted = session.started;
         final String sessionProfile = account.profile;
-        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText(),prayerView};
+        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
         java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
         SwingUtilities.invokeLater(() -> {
             if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile); panel.showLocations(snapshot); }
@@ -212,17 +239,14 @@ public class OneManSlayerHelper
         SlayerLabPrayer.Doses doses=SlayerLabPrayer.doses(inventory);
         java.util.List<String> alerts=prayerMonitor.crossed(points,doses,config);
         if(config.notifyPrayer()) for(String alert:alerts) notifier.notify("OneMan Prayer: "+alert);
-        prayerView=prayerMonitor.describe(points,level,enabled,doses,config);
-        String snapshot=prayerView;
-        boolean low=!prayerMonitor.warnings(points,doses,config).isEmpty();
-        SwingUtilities.invokeLater(() -> { if(active && panel!=null) panel.showPrayer(snapshot,low); });
+
     }
     private boolean bindAccount(long now)
     {
         String profileKey=configManager.getRSProfileKey();
         if(!Objects.equals(profileKey,account.profile))
         {
-            prayerMonitor.reset(); prayerView="Loading Prayer resources…";
+            prayerMonitor.reset();
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
             publish("Loading this account profile…", "");
@@ -296,7 +320,7 @@ public class OneManSlayerHelper
     private void track(SlayerLabLocations.Destination destination, boolean centre)
     {
         clientThread.invokeLater(() -> {
-            if (!active || !destinations.contains(destination)) return;
+            if (!active || !destinations.contains(destination) || destination.entrance==null) return;
             if (centre)
                 client.getWorldMap().setWorldMapPositionTarget(destination.entrance);
             else
@@ -336,7 +360,7 @@ public class OneManSlayerHelper
     private final class LabPanel extends PluginPanel
     {
         private final JTabbedPane tabs = new JTabbedPane();
-        private final JTextArea[] sections = new JTextArea[9];
+        private final JTextArea[] sections = new JTextArea[8];
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
         private final JTextArea note = new JTextArea(3,20);
         private String shownTask = "", shownProfile = "";
@@ -350,15 +374,16 @@ public class OneManSlayerHelper
         private final JButton centre = new JButton("Centre map");
         private final JButton track = new JButton("Track entrance");
         private final JButton clear = new JButton("Stop tracking");
+        private final JButton locationWiki=new JButton("Location guide");
         private java.util.List<SlayerLabLocations.Destination> shown = Collections.emptyList();
         LabPanel()
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN SYNC • SLAYER / PRAYER");
+            JLabel title = new JLabel("ONEMAN SYNC • SLAYER");
             title.setForeground(new Color(218, 176, 85));
 
-            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History","Prayer"};
+            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
@@ -388,7 +413,7 @@ public class OneManSlayerHelper
             access.setWrapStyleWord(true);
             access.setOpaque(false);
             controls.add(access);
-            for (JButton button : new JButton[]{centre, track, clear, wiki})
+            for (JButton button : new JButton[]{centre, track, clear, locationWiki, wiki})
             {
                 button.setAlignmentX(Component.LEFT_ALIGNMENT);
                 button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -396,8 +421,10 @@ public class OneManSlayerHelper
             }
             choices.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                access.setText(choice == null ? "No mapped entrance available." : choice.access);
+                access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice,shownTask));
+                boolean pin=choice!=null&&choice.entrance!=null;centre.setEnabled(pin);track.setEnabled(pin);
             });
+            locationWiki.addActionListener(e->{SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();if(choice!=null)LinkBrowser.browse("https://oldschool.runescape.wiki/w/"+java.net.URLEncoder.encode(choice.name.replace(' ','_'),java.nio.charset.StandardCharsets.UTF_8));});
             centre.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
                 if (choice != null) OneManSlayerHelper.this.track(choice, true);
@@ -419,19 +446,13 @@ public class OneManSlayerHelper
             choices.removeAllItems();
             for (SlayerLabLocations.Destination destination : locations) choices.addItem(destination);
             boolean hasLocations = !locations.isEmpty();
-            choices.setEnabled(hasLocations);
-            centre.setEnabled(hasLocations);
-            track.setEnabled(hasLocations);
+            choices.setEnabled(hasLocations);locationWiki.setEnabled(hasLocations);
+            SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();
+            boolean pin=choice!=null&&choice.entrance!=null;
+            centre.setEnabled(pin);
+            track.setEnabled(pin);
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
-        }
-        void showPrayer(String view,boolean low)
-        {
-            JTextArea section=sections[8];
-            if(!section.getText().equals(view)) {
-                int caret=section.getCaretPosition(); section.setText(view); section.setCaretPosition(Math.min(caret,view.length()));
-            }
-            tabs.setForegroundAt(8,low?new Color(255,120,90):UIManager.getColor("Label.foreground"));
         }
         void showTabs(String[] views,String task,String sessionNote,long started,String profile)
         {
@@ -443,14 +464,13 @@ public class OneManSlayerHelper
                 goals.removeAllItems(); for(SlayerLabAdvice.Goal option:SlayerLabAdvice.goals(task)) goals.addItem(option.item);
                 goals.getEditor().setItem(goal); note.setText(sessionNote);
             }
-            for(int i=0;i<sections.length;i++) { int caret=sections[i].getCaretPosition(); sections[i].setText(views[i]); sections[i].setCaretPosition(Math.min(caret,views[i].length())); }
+            for(int i=0;i<sections.length;i++) CompanionText.update(sections[i],views[i]);
             url=SlayerLabCatalog.wiki(task); wiki.setEnabled(true); updating=false;
         }
         void showView(String view, String link)
         {
             updating=true; shownTask=""; shownProfile=""; shownSession=0;
             for(int i=0;i<8;i++) sections[i].setText(view);
-            showPrayer(prayerView,false);
             variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;
             wiki.setEnabled(!link.isEmpty()); updating=false;
