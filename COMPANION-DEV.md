@@ -1,20 +1,28 @@
-# OneMan Companion 0.7.1-dev
+# OneMan Companion 0.7.2
 
-Development branch: `dev/companion-suite`. The Hub release/pending Slayer PR is unchanged.
+Release candidate: 0.7.2. User requested submission through the existing Plugin Hub PR #18006. In-game validation remains pending.
 
-## 0.7.1 feedback fixes
+## 0.7.2 additions
+
+- Opt-in Superior alert uses the official game message, with red flash and configurable notification settings. Duplicate local spawn signals are suppressed; extra sound/tray output is suppressed when built-in Slayer alerts are enabled.
+- Prayer tab removed; alarm settings retained.
+- Task protection overlay: red missing, purple in last observed bank, green carried/equipped, grey unknown bank.
+- Passive text updates preserve scroll position. Slayer config defaults are declared directly for RuneLite initialization.
+- Karamja Easy/Medium/Hard completion uses raw state 2; Elite and other region completion bits use 1.
+
+## Earlier feedback fixes
 
 - Bloodveld singular assignment now resolves to the full Bloodvelds task facts, entrance list and protection notes. Assigned-area filtering remains strict. Adds Iorwerth / God Wars entrances and a Meiyerditch reference entry without an invented map pin. Stronghold cannon permission is explicit; Bloodveld-specific Iorwerth/Meiyerditch cannon permission is explicit; tower, Catacombs and God Wars prohibition remain explicit; unaudited chambers say unverified.
 - A selected skill/quest goal now controls Next, with actual gaps and prerequisite steps. Slayer targets show real XP remaining, observed task, known eligible master choices filtered by combat/Slayer/quests, and a practical task loop. Other skills use their catalog method. Default roadmap can be restored with its button.
 - Observed Chronicle ownership in inventory/equipment/dated bank is recorded per profile and skips the obtain step. This does not infer remaining charges.
-- C/S navigation merged into a single OneMan shield, with Overview and Slayer & Prayer sections. Existing settings and profile keys remain compatible.
+- C/S navigation merged into a single OneMan shield, with Overview and Slayer sections. Existing settings and profile keys remain compatible.
 - Sync displays a bounded/redacted JSON server error for failed uploads. HTTP 500 is a server failure, not proof of client sync; live root cause remains unconfirmed until the server error is observed. No production change/deployment is made.
 
 Cannon source facts: OSRS Wiki Stronghold Slayer Cave / Dwarf multicannon; Bloodveld chamber coverage cross-checked against https://github.com/FreeArcanes/slayer-best-in-bank/blob/master/CANNON-TASK-COVERAGE.md (audit 2026-07-25). Entrance pins come from RuneLite DungeonLocation. Meiyerditch is deliberately reference-only until a precise entrance is verified. Location guide opens the selected dungeon page.
 
 ## Included
 
-- Single OneMan shield sidebar navigation; Overview / Slayer & Prayer sections. Next tab: three local catalog steps, real level gaps, missing quests and route reasons. Catalog version 2026-10-06.1 matches the website catalog; no projected quest XP or assumed levels. Quest points use the live game QP varp. This is the default Ironman route, not a guarantee of globally optimal routing or combat readiness. Web-only manual selections are not imported into this local planner.
+- Single OneMan shield sidebar navigation; Overview / Slayer sections. Next tab: three local catalog steps, real level gaps, missing quests and route reasons. Catalog version 2026-10-06.1 matches the website catalog; no projected quest XP or assumed levels. Quest points use the live game QP varp. This is the default Ironman route, not a guarantee of globally optimal routing or combat readiness. Web-only manual selections are not imported into this local planner.
 - Prep tab: select a route/catalog goal, compare required quantity with unnoted inventory, equipment and dated bank snapshot, open guide. Bank outlines follow the chosen checklist.
 - Verified starter checklists: Cook's Assistant, Doric's Quest, Druidic Ritual, Sheep Shearer, Goblin Diplomacy, Chronicle; generic mining/woodcutting tools. Goals without a checklist explicitly say unknown. Existing OneMan Sync Slayer Prep covers regular task protection separately. Tool level, charges, encounters and stage-specific extras still need the guide.
 - Slayer tab: observed session start/status, remaining, task credits, attributed loot kills, XP and loot. Existing Session/History tabs retain detailed journal history. Task credits and loot kills are distinct.
@@ -28,9 +36,9 @@ The matching website `dev/companion-suite` adds `runelite_memory_upload.php`, va
 
 ## Run locally
 
-Use Java 11 or newer. From this branch: `./gradlew run` (Windows: `gradlew.bat run`). The task uses a separate `dev-home` RuneLite profile. Enable OneMan Sync in development mode; use the single OneMan shield sidebar button and its Overview / Slayer & Prayer selector.
+Use Java 11 or newer. From this branch: `./gradlew run` (Windows: `gradlew.bat run`). The task uses a separate `dev-home` RuneLite profile. Enable OneMan Sync in development mode; use the single OneMan shield sidebar button and its Overview / Slayer selector.
 
-Alternatively run the CI `one-man-sync-0.7.1-dev-all.jar` with `java -jar <file> --developer-mode --debug`. The packaged development launcher uses a separate RuneLite home; see `OneManSyncPluginTest.java`.
+Alternatively run the CI `one-man-sync-0.7.2-all.jar` with `java -jar <file> --developer-mode --debug`. The packaged development launcher uses a separate RuneLite home; see `OneManSyncPluginTest.java`.
 
 For a Jagex Account follow https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts . Do not run the Hub copy and development plugin against the same session simultaneously.
 
