@@ -12,7 +12,7 @@ public class CompanionFeedbackTest {
         assertTrue(SlayerLabAdvice.comparison(stronghold).contains("Cannon: ALLOWED"));
         assertTrue(SlayerLabAdvice.comparison(a.stream().filter(d->d.name.equals("Slayer Tower")).findFirst().get()).contains("NOT ALLOWED"));
         assertEquals(1,SlayerLabLocations.forTask("Bloodveld","Stronghold Slayer Dungeon").size());
-        assertTrue(SlayerLabLocations.forTask("Bloodveld","Unverified area").isEmpty());
+        assertNull(SlayerLabLocations.forTask("Bloodveld","Unverified area").get(0).entrance);
         SlayerLabLocations.Destination mei=SlayerLabLocations.forTask("Bloodveld","Meiyerditch").get(0);
         assertNull(mei.entrance);assertTrue(SlayerLabAdvice.comparison(mei,"Bloodveld").contains("ALLOWED"));
         SlayerLabLocations.Destination iorwerth=a.stream().filter(d->d.name.equals("Iorwerth Dungeon")).findFirst().get();

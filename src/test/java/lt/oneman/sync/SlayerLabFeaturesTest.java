@@ -24,7 +24,7 @@ public class SlayerLabFeaturesTest
     @Test public void highLevelEntrancesRespectAssignedArea()
     {
         assertEquals("Karuulm Slayer Dungeon",SlayerLabLocations.forTask("Hydras","").get(0).name);
-        assertTrue(SlayerLabLocations.forTask("Hydras","Slayer Tower").isEmpty());
+        assertEquals("Slayer Tower",SlayerLabLocations.forTask("Hydras","Slayer Tower").get(0).name);
         assertEquals(2,SlayerLabLocations.forTask("Basilisks","").size());
         assertEquals(1,SlayerLabLocations.forTask("Basilisks","Fremennik Slayer Dungeon").size());
     }

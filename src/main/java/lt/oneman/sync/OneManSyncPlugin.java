@@ -1389,34 +1389,78 @@ public class OneManSyncPlugin extends Plugin
         JsonObject root=new JsonObject();
         long now=System.currentTimeMillis()/1000L;
 
-        JsonArray birdhouses=new JsonArray();
-        int[] birdVarps={VarPlayerID.BIRDHOUSE_TRANSMIT_A,VarPlayerID.BIRDHOUSE_TRANSMIT_B,VarPlayerID.BIRDHOUSE_TRANSMIT_C,VarPlayerID.BIRDHOUSE_TRANSMIT_D};
-        String[] birdNames={"Mushroom Meadow North","Mushroom Meadow South","Verdant Valley Northeast","Verdant Valley Southwest"};
-        for(int i=0;i<birdVarps.length;i++)
-        {
-            JsonObject b=new JsonObject();
-            String stored=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,TimeTrackingConfig.BIRD_HOUSE+"."+birdVarps[i]);
-            int varp=0;long seen=0L;
-            if(stored!=null)
-            {
-                String[] p=stored.split(":");
-                if(p.length==2)
-                {
-                    varp=safeInt(p[0],0);
-                    seen=safeLong(p[1],0L);
+        JsonArray birdhouses = new JsonArray();
+        int[] birdVarps = new int[]{VarPlayerID.BIRDHOUSE_TRANSMIT_A, VarPlayerID.BIRDHOUSE_TRANSMIT_B, VarPlayerID.BIRDHOUSE_TRANSMIT_C, VarPlayerID.BIRDHOUSE_TRANSMIT_D};
+        String[] birdNames = new String[]{"Mushroom Meadow North", "Mushroom Meadow South", "Verdant Valley Northeast", "Verdant Valley Southwest"};
+        for (int i = 0; i < birdVarps.length; ++i) {
+            String[] p;
+            JsonObject b = new JsonObject();
+            String stored = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, TimeTrackingConfig.BIRD_HOUSE + "." + birdVarps[i]);
+            int varp = -1;
+            long seen = 0L;
+            if (stored != null && (p = stored.split(":")).length == 2) {
+                varp = safeInt(p[0], -1);
+                seen = safeLong(p[1], 0L);
+            }
+            b.addProperty("name", birdNames[i]);
+            b.addProperty("varp", varp);
+            b.addProperty("seenEpochSec", seen);
+            if (varp < 0 || seen <= 0L) {
+                b.addProperty("state", "UNKNOWN");
+                b.addProperty("ready", Boolean.valueOf(false));
+                b.addProperty("empty", Boolean.valueOf(false));
+                b.addProperty("readyEpochSec", 0L);
+            } else {
+                BirdHouseDecoder.State st = BirdHouseDecoder.getState(varp);
+                String bhName = BirdHouseDecoder.getHouseName(varp);
+                b.addProperty("state", st != null ? st.name() : "UNKNOWN");
+                b.addProperty("houseName", bhName != null ? bhName : "");
+                b.addProperty("empty", Boolean.valueOf(st == BirdHouseDecoder.State.EMPTY));
+                if (st == BirdHouseDecoder.State.SEEDED) {
+                    long readyAt = seen + 3000L;
+                    b.addProperty("readyEpochSec", readyAt);
+                    b.addProperty("ready", Boolean.valueOf(now >= readyAt));
+                } else {
+                    b.addProperty("readyEpochSec", 0L);
+                    b.addProperty("ready", Boolean.valueOf(false));
                 }
             }
-            long readyAt=varp>0 && seen>0?seen+3000L:0L;
-            b.addProperty("name",birdNames[i]);
-            b.addProperty("varp",varp);
-            b.addProperty("seenEpochSec",seen);
-            b.addProperty("readyEpochSec",readyAt);
-            b.addProperty("ready",readyAt>0 && now>=readyAt);
-            b.addProperty("empty",varp<=0);
             birdhouses.add(b);
         }
-        root.add("birdHouses",birdhouses);
-
+        root.add("birdHouses", birdhouses);
+        JsonArray patches = new JsonArray();
+        for (FarmingRunTracker.TrackedPatchDef def : FarmingRunTracker.TRACKED_PATCHES) {
+            JsonObject p = new JsonObject();
+            p.addProperty("name", def.getName());
+            p.addProperty("regionId", def.getRegionId());
+            p.addProperty("varbitId", def.getVarbitId());
+            p.addProperty("type", def.getImplementation() == FarmingPatchType.HERB ? "HERB" : "TREE");
+            String stored = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, def.configKey());
+            if (stored != null && !stored.trim().isEmpty()) {
+                FarmingPatchDecoder.DecodedPatch decoded = FarmingPatchDecoder.decode(def.getImplementation(), stored);
+                if (decoded != null) {
+                    p.addProperty("observed", Boolean.valueOf(true));
+                    p.addProperty("crop", decoded.getProduce() != null ? decoded.getProduce().getName() : "");
+                    p.addProperty("cropState", decoded.getCropState() != null ? decoded.getCropState().name() : "UNKNOWN");
+                    p.addProperty("stage", decoded.getStage());
+                    p.addProperty("stages", decoded.getStages());
+                    p.addProperty("tickRate", decoded.getTickRate());
+                    p.addProperty("seenEpochSec", decoded.getUnixTime());
+                    long estReady = decoded.estimateReadyEpochSec();
+                    p.addProperty("readyEpochSec", estReady);
+                    p.addProperty("ready", Boolean.valueOf(decoded.isReady(now)));
+                    p.addProperty("statusText", decoded.getDisplayStatus(now));
+                } else {
+                    p.addProperty("observed", Boolean.valueOf(false));
+                    p.addProperty("statusText", "Unknown");
+                }
+            } else {
+                p.addProperty("observed", Boolean.valueOf(false));
+                p.addProperty("statusText", "Unknown");
+            }
+            patches.add(p);
+        }
+        root.add("farmingPatches", patches);
         JsonObject contract=new JsonObject();
         String contractId=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,"contract");
         int itemId=safeInt(contractId,0);

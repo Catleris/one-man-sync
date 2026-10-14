@@ -93,4 +93,6 @@ public interface OneManSyncConfig extends SlayerLabConfig
             .withFlash(FlashNotification.FLASH_TWO_SECONDS).withFlashColor(new Color(255,0,0,90))
             .withSendWhenFocused(true).withVolume(100).withTimeout(5);
     }
+    @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Optional local notification when an observed birdhouse becomes ready.", position=19)
+    default boolean notifyBirdhousesReady() { return false; }
 }

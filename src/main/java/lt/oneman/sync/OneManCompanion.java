@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.7.2";
+    static final String VERSION = "0.8.0";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -37,6 +37,7 @@ final class OneManCompanion {
     @Inject private CompanionBankOverlay overlay;
     @Inject private SlayerLabAccount account;
     @Inject private OneManSlayerHelper slayerHelper;
+    @Inject private FarmingRunTracker farmingTracker;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -66,6 +67,7 @@ final class OneManCompanion {
         } catch (IOException | RuntimeException error) { throw new IllegalStateException("Cannot load bundled OneMan roadmap", error); }
         active = true; baseline = false; profile = ""; synced.clear();
         screenshots.start(directory);
+        farmingTracker.startUp();
         overlays.add(overlay);
         SwingUtilities.invokeLater(() -> {
             if (!active) return;
@@ -77,22 +79,26 @@ final class OneManCompanion {
             PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer"});
+            cards.add(farmingTracker.companionPanel(),"Farming");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             root.add(sections,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
-            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer").icon(icon).priority(6).panel(root).build();
+            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
     }
     void shutDown() {
+        farmingTracker.shutDown();
         finish(); active=false; screenshots.stop(); overlays.remove(overlay); overlay.needed=Collections.emptySet();
         SwingUtilities.invokeLater(() -> { if(navigation!=null)toolbar.removeNavigation(navigation); navigation=null;panel=null; });
     }
     void onGameStateChanged(GameStateChanged e) {
+        farmingTracker.onGameStateChanged(e);
         if(e.getGameState()==GameState.LOGGED_IN)loginDelay=10;
         if(e.getGameState()==GameState.LOGIN_SCREEN) { finish(); overlay.needed=Collections.emptySet(); baseline=false; levels.clear();completed.clear(); showLoggedOut(); }
     }
     void onGameTick(GameTick e) {
+        farmingTracker.onGameTick(e);
         if(!active || client.getGameState()!=GameState.LOGGED_IN || client.getLocalPlayer()==null) return;
         if(loginDelay>0){loginDelay--;return;}
         if(++ticks%5!=0) return;

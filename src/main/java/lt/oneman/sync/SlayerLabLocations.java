@@ -59,6 +59,13 @@ final class SlayerLabLocations
     private static final Destination BRIMHAVEN = new Destination("Brimhaven Dungeon",2743,3154,"Entry fee unless exempt; axe for vines. Chamber access depends on route.",false);
     private static final Destination GOD_WARS = new Destination("God Wars Dungeon",2917,3747,"Check God Wars Dungeon quest/access and faction-aggression protection. Bloodvelds are in the main dungeon, not a boss room.",false);
     private static final Destination MEIYERDITCH = new Destination("Meiyerditch Laboratories","Mutated bloodveld section: access during Sins of the Father. See the location guide for entry route. Reference destination only: no verified entrance pin yet.","Meiyerditch","Meiyerditch Laboratory");
+    private static final List<Destination> ASSIGNED_ONLY = Arrays.asList(
+        new Destination("Isle of Souls Dungeon",2308,2919,"Enter the dungeon on the Isle of Souls; see the location guide for the assigned chamber.",false),
+        new Destination("Ogre Enclave",2505,3039,"Gu'Tanoth access and Watchtower quest route; check the location guide.",false),
+        new Destination("Witchaven Dungeon",2695,3283,"Entrance west of Witchaven; deeper access depends on quest progress.",false),
+        new Destination("Forthos Dungeon",1701,3574,"East entrance at the Forthos Ruin; use the guide for the assigned chamber.",false),
+        new Destination("Stronghold of Security",3080,3420,"Enter beneath Barbarian Village; use the guide for the correct floor.",false),
+        new Destination("Lizardman Caves",1306,3574,"Check Shayzien protection and the assigned chamber in the location guide.",false));
     private static final Map<String, List<Destination>> TASKS = new HashMap<>();
     private static void add(String task, Destination... places) { TASKS.put(SlayerLabCatalog.normalize(task), Collections.unmodifiableList(Arrays.asList(places))); }
     static
@@ -107,11 +114,20 @@ final class SlayerLabLocations
         if (normalize(assignedLocation).isEmpty()) return available;
         List<Destination> filtered = new ArrayList<>();
         for (Destination destination : available) if (destination.matches(assignedLocation)) filtered.add(destination);
-        return Collections.unmodifiableList(filtered);
+        if (!filtered.isEmpty()) return Collections.unmodifiableList(filtered);
+        // The assignment comes from RuneLite Slayer. Its area remains authoritative
+        // even when our per-monster reference catalogue is incomplete.
+        for (Destination destination : ASSIGNED_ONLY)
+            if (destination.matches(assignedLocation)) return Collections.singletonList(destination);
+        for (List<Destination> known : TASKS.values())
+            for (Destination destination : known)
+                if (destination.matches(assignedLocation)) return Collections.singletonList(destination);
+        return Collections.singletonList(new Destination(assignedLocation.trim(),
+            "Assigned Slayer area. Open Location guide for directions; no verified entrance marker is available."));
     }
     private static String normalize(String value)
     {
-        String s = SlayerLabCatalog.normalize(value).replace("’", "'");
+        String s = SlayerLabCatalog.normalize(value).replace("’", "'").replace("‘", "'");
         return s.startsWith("the ") ? s.substring(4) : s;
     }
     static String direction(WorldPoint from, WorldPoint to)

@@ -63,3 +63,13 @@ Run locally with the Gradle `run` task after following RuneLite's Jagex Account 
 ## License
 
 BSD 2-Clause. See [LICENSE](LICENSE).
+
+## 0.8.0 — assigned Slayer destinations and Farming
+
+- Konar's assigned area stays visible even when the monster/location catalogue is incomplete. Known entrances have map controls; unmapped areas retain a Location guide without invented coordinates. General alternatives are only shown for tasks without an assigned area.
+- The shared OneMan sidebar now has Overview, Slayer and Farming sections. Farming reads profile-scoped RuneLite Time Tracking observations for 10 herb and 6 standard tree patches, four birdhouses and Farming contracts. Keep Time Tracking enabled and visit patches to record observations.
+- Growing crop readiness is an estimate; visit the patch to confirm health and harvestability. Missing observations stay Unknown. Diseased/dead crops and weeds never become ready through elapsed time.
+- Optional local birdhouse notifications are off by default, reset across profiles/logout and suppress notifications for houses already ready at the first observation.
+- Daily farming data is included in the existing opt-in OneMan sync. No separate endpoint or additional network opt-in is introduced.
+
+Validation: all production and test sources compiled for Java 11 against the supplied RuneLite test runtime using ECJ; 69 JUnit tests pass. Gradle verification runs in GitHub Actions. In-game verification remains pending: check a Konar assignment, mapped/unmapped destinations, Farming observations after visiting a patch, and logout/profile switching. Plugin Hub availability requires its own reviewed manifest update.

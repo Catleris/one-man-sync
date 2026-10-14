@@ -19,7 +19,7 @@ public class SlayerLabLocationsTest
         List<SlayerLabLocations.Destination> choices = SlayerLabLocations.forTask("Dust devils", "the Catacombs of Kourend");
         assertEquals(1, choices.size());
         assertEquals("Catacombs of Kourend", choices.get(0).name);
-        assertTrue(SlayerLabLocations.forTask("Dust devils", "unsupported assigned dungeon").isEmpty());
+        assertNull(SlayerLabLocations.forTask("Dust devils", "unsupported assigned dungeon").get(0).entrance);
     }
     @Test public void knownAreaAliasesAreAccepted()
     {
@@ -30,7 +30,7 @@ public class SlayerLabLocationsTest
     {
         assertTrue(SlayerLabLocations.forTask("Unknown monster", "").isEmpty());
         assertTrue(SlayerLabLocations.forTask("Lizards", "").isEmpty());
-        assertTrue(SlayerLabLocations.forTask("Blue dragons", "Wilderness Slayer Cave").isEmpty());
+        assertTrue(SlayerLabLocations.forTask("Blue dragons", "Wilderness Slayer Cave").get(0).wilderness);
     }
     @Test public void wildernessIsExplicitAndNotFirstChoice()
     {
@@ -54,5 +54,19 @@ public class SlayerLabLocationsTest
             fail("Caller must not mutate shared destinations");
         }
         catch (UnsupportedOperationException expected) { }
+    }
+    @Test public void konarAssignmentSurvivesIncompleteMonsterCatalogue() {
+        List<SlayerLabLocations.Destination> choices = SlayerLabLocations.forTask("Uncatalogued task", "the Karuulm Slayer Dungeon");
+        assertEquals(1, choices.size());
+        assertEquals("Karuulm Slayer Dungeon", choices.get(0).name);
+        assertNotNull(choices.get(0).entrance);
+        choices = SlayerLabLocations.forTask("Fire giants", "Isle of Souls Dungeon");
+        assertEquals(new WorldPoint(2308,2919,0), choices.get(0).entrance);
+    }
+    @Test public void unmappedKonarAreaRemainsVisibleWithoutInventedPin() {
+        List<SlayerLabLocations.Destination> choices = SlayerLabLocations.forTask("Fire giants", "Waterfall Dungeon");
+        assertEquals(1, choices.size());
+        assertEquals("Waterfall Dungeon", choices.get(0).name);
+        assertNull(choices.get(0).entrance);
     }
 }
