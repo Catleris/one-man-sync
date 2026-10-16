@@ -86,7 +86,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     default int prayerDosesWarning() { return 2; }
     @ConfigItem(keyName="notifyPrayer", name="Desktop Prayer alerts", description="Optional local alert when your points or carried doses cross their threshold. Rearms after recovery.", position=18)
     default boolean notifyPrayer() { return false; }
-    @ConfigItem(keyName="superiorSpawnAlert", name="Superior spawn alert", description="Optional local Superior alert. Default when enabled: red two-second flash, sound and desktop notification even while focused. Customize notification settings here. If built-in Slayer notifications are enabled, OneMan suppresses its extra sound/desktop alert.", position=8)
+    @ConfigItem(keyName="superiorSpawnAlert", name="Superior spawn alert", description="Optional local Superior alert. Default when enabled: red two-second flash, sound and desktop notification even while focused. Customize notification settings here. Uses your selected settings independently of the built-in Slayer alert. Disable one of the two alerts to avoid duplicate notifications.", position=8)
     default Notification superiorSpawnAlert(){
         return Notification.OFF.withInitialized(true).withOverride(true)
             .withTray(true).withSound(NotificationSound.NATIVE).withRequestFocus(RequestFocusType.TASKBAR)

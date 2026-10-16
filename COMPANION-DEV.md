@@ -4,7 +4,7 @@ Release candidate: 0.7.2. User requested submission through the existing Plugin 
 
 ## 0.7.2 additions
 
-- Opt-in Superior alert uses the official game message, with red flash and configurable notification settings. Duplicate local spawn signals are suppressed; extra sound/tray output is suppressed when built-in Slayer alerts are enabled.
+- Opt-in Superior alert uses the official game message, with red flash and configurable notification settings. Duplicate local spawn signals are suppressed. OneMan honours its own notification settings independently of the built-in Slayer alert; disable one of the two alerts to avoid duplicates.
 - Prayer tab removed; alarm settings retained.
 - Task protection overlay: red missing, purple in last observed bank, green carried/equipped, grey unknown bank.
 - Passive text updates preserve scroll position. Slayer config defaults are declared directly for RuneLite initialization.

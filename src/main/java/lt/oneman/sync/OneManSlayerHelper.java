@@ -8,10 +8,6 @@ import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.client.config.Notification;
-import net.runelite.client.config.NotificationSound;
-import net.runelite.client.config.RequestFocusType;
-import net.runelite.client.plugins.PluginManager;
-import net.runelite.client.plugins.slayer.SlayerPlugin;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.events.NpcLootReceived;
@@ -45,7 +41,6 @@ public class OneManSlayerHelper
     @Inject private SlayerLabAccount account;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
-    @Inject private PluginManager pluginManager;
     private final SuperiorAlert superiorAlert=new SuperiorAlert();
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
     private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
@@ -110,10 +105,8 @@ public class OneManSlayerHelper
         if(!active || client.getGameState()!=GameState.LOGGED_IN)return;
         Notification alert=config.superiorSpawnAlert();
         if(alert==null||!alert.isEnabled()||!superiorAlert.accept(event.getType(),event.getMessage(),client.getTickCount()))return;
-        boolean builtIn=pluginManager.getPlugins().stream().anyMatch(p->p instanceof SlayerPlugin&&pluginManager.isPluginEnabled(p))
-            && configManager.getConfig(SlayerConfig.class).showSuperiorNotification().isEnabled();
-        if(builtIn)alert=alert.withInitialized(true).withOverride(true).withTray(false).withSound(NotificationSound.OFF)
-            .withGameMessage(false).withRequestFocus(RequestFocusType.OFF);
+        // An enabled built-in alert may still be filtered while focused.
+        // Always honour the notification settings explicitly chosen for OneMan.
         notifier.notify(alert,"OneMan: A superior foe has appeared!");
     }
     public void onGameTick(GameTick event)
