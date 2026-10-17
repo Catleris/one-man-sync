@@ -10,7 +10,7 @@ Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pa
 4. Windows PowerShell: `.\gradlew.bat run`; Linux: `./gradlew run`.
 5. Įjunk RuneLite `OneMan Sync` (RuneLite `Slayer` priklausomybė įjungiama kartu); atidaryk auksinę S piktogramą.
 
-Nuo `0.8.1-clue-test.7` įprastas `gradlew.bat run` naudoja tavo įprastą RuneLite profilį, įskaitant jo mastelį ir išsaugotus OneMan nustatymus. Prieš paleisdamas testinį klientą uždaryk įprastą RuneLite. Senas atskiras `dev-home` profilis pasiekiamas su `gradlew.bat run -Poneman.isolatedProfile`; jo netrink. Mygtukas **OneMan Sync settings** atidaro originalų RuneLite nustatymų langą su visais laukais. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
+Nuo `0.8.1-clue-test.8` įprastas `gradlew.bat run` naudoja tavo įprastą RuneLite profilį, įskaitant jo mastelį ir išsaugotus OneMan nustatymus. Prieš paleisdamas testinį klientą uždaryk įprastą RuneLite. Senas atskiras `dev-home` profilis pasiekiamas su `gradlew.bat run -Poneman.isolatedProfile`; jo netrink. Mygtukas **OneMan Sync settings** atidaro originalų RuneLite nustatymų langą su visais laukais. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
 
 Jagex paskyros prisijungimas: oficialus RuneLite vadovas
 https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
@@ -100,3 +100,11 @@ Slayer Lab sujungtas į OneMan Sync: vienas įjungimas, bendri nustatymai ir S s
 Atnaujinant nekeisk ir netrink `dev-home`: jame yra tavo testinės aplinkos prisijungimas, nustatymai ir istorija. Naujas paleidiklis krauna tik OneMan Sync, seno atskiro Lab įjungti nereikia. IntelliJ Gradle → Tasks → other → run arba PowerShell projekto kataloge `./gradlew.bat run`.
 
 Patikrink žaidime: vienas OneMan įskiepis; S skirtukai; tasko pasikeitimas ir likutis; žemėlapio vietos; Prayer perspėjimai; ankstesnė istorija po perkrovimo; vietinis skydelis išjungus svetainės sync. Su įjungtu sync patikrink atsinaujinantį taską svetainėje (svetainės serverio pataisa platinama atskirai).
+
+## STASH ir Farming žemėlapiai (test build 8)
+
+Clue Scroll Hub → STASH: pasirink Beginner, Easy, Medium, Hard, Elite arba Master. S žymekliai pasaulio žemėlapyje ir artimi tos pačios pakopos STASH taškai minimape turi atitikti filtrą. Show STASH markers paslepia abu OneMan žymeklių tipus.
+
+Farming Hub → Patches: pasirink Tree (7 vietos, įskaitant Auburnvale), Herb (10 vietų), Fruit Tree ar kitą tipą. Atidaryk žaidimo pasaulio žemėlapį ir spausk vietą sąraše; jis turi centruotis į pasirinktą vietą. Uždarytame žemėlapyje pasirinktas taikinys laukia atidarymo. Po centravimo žemėlapį turi būti galima laisvai stumdyti.
+
+Gretimi allotment, hardwood ar grape plotai sugrupuoti pagal vietą. Kitų RuneLite priedų ir paties žaidimo ikonų OneMan filtrai nekeičia. Map locations nepatvirtina paskyros unlockų. Požeminėms vietoms gali reikėti pasirinkti tinkamą žemėlapio sritį. Run status skirtuke palikti birdhouse laikmačiai ir contract informacija.

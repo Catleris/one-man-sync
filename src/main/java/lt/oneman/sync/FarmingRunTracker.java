@@ -14,6 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTabbedPane;
+import java.util.Map;
+import java.util.HashMap;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -38,6 +41,7 @@ public class FarmingRunTracker {
     private Notifier notifier;
     @Inject
     private OneManSyncConfig config;
+    @Inject private OneManMapLocations mapLocations;
     private FarmingPanel panel;
     private volatile boolean active;
     private volatile int nextFarmingRefresh = 0;
@@ -173,21 +177,12 @@ public class FarmingRunTracker {
             this.lastBirdhouseReady[i] = false;
         }
         baseline = true;
-        sb.append("\n=== FARMING PATCHES ===\n");
-        sb.append("Uses RuneLite Time Tracking observations; keep Time Tracking enabled.\nVisit patches in-game to refresh observations.\n\n");
+        Map<String,String> patchStatuses=new HashMap<>();
         for (TrackedPatchDef def : TRACKED_PATCHES) {
-            String raw = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, def.configKey());
-            sb.append(def.getName()).append(": ");
-            if (raw == null || raw.trim().isEmpty()) {
-                sb.append("Unknown (visit to detect)\n");
-                continue;
-            }
-            FarmingPatchDecoder.DecodedPatch decoded = FarmingPatchDecoder.decode(def.getImplementation(), raw);
-            if (decoded == null) {
-                sb.append("Unknown data format\n");
-                continue;
-            }
-            sb.append(decoded.getDisplayStatus(now)).append("\n");
+            String raw=this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, def.configKey());
+            FarmingPatchDecoder.DecodedPatch decoded=FarmingPatchDecoder.decode(def.getImplementation(),raw);
+            String status=decoded==null?"Unknown — visit patch with Time Tracking enabled.":decoded.getDisplayStatus(now);
+            patchStatuses.put(def.getName(),status);
         }
         String contractId = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, "contract");
         sb.append("\n=== FARMING CONTRACT ===\n");
@@ -200,7 +195,7 @@ public class FarmingRunTracker {
         String text = sb.toString();
         SwingUtilities.invokeLater(() -> {
             if (this.active && this.panel != null) {
-                this.panel.showStatus(text);
+                this.panel.showStatus(text,patchStatuses);
             }
         });
     }
@@ -223,6 +218,7 @@ public class FarmingRunTracker {
         list.add(new TrackedPatchDef("Tree: Lumbridge", 12594, VarbitID.FARMING_TRANSMIT_A, FarmingPatchType.TREE));
         list.add(new TrackedPatchDef("Tree: Taverley", 11573, VarbitID.FARMING_TRANSMIT_A, FarmingPatchType.TREE));
         list.add(new TrackedPatchDef("Tree: Varrock", 12854, VarbitID.FARMING_TRANSMIT_A, FarmingPatchType.TREE));
+        list.add(new TrackedPatchDef("Tree: Auburnvale", 5427, VarbitID.FARMING_TRANSMIT_A, FarmingPatchType.TREE));
         TRACKED_PATCHES = Collections.unmodifiableList(list);
     }
 
@@ -230,6 +226,7 @@ public class FarmingRunTracker {
     extends JPanel {
         private final JTextArea area = new JTextArea();
         private final JButton refresh = new JButton("Refresh");
+        private final OneManMapPanel patches=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.FARMING);
 
         FarmingPanel() {
             this.setLayout(new BorderLayout(0, 6));
@@ -239,17 +236,23 @@ public class FarmingRunTracker {
             this.area.setEditable(false);
             this.area.setLineWrap(true);
             this.area.setWrapStyleWord(true);
-            this.area.setFont(new Font("Monospaced", 0, 12));
+            this.area.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
             this.refresh.addActionListener(e -> FarmingRunTracker.this.clientThread.invokeLater(() -> {
                 FarmingRunTracker.this.nextFarmingRefresh = 0;
             }));
-            this.add(title, "North");
-            this.add(new JScrollPane(this.area), "Center");
-            this.add(this.refresh, "South");
+            JTabbedPane tabs=new JTabbedPane();tabs.addTab("Patches",patches);
+            JPanel timers=new JPanel(new BorderLayout(0,5));
+            timers.add(new JScrollPane(this.area),BorderLayout.CENTER);timers.add(this.refresh,BorderLayout.SOUTH);
+            tabs.addTab("Run status",timers);
+            this.add(title, BorderLayout.NORTH);this.add(tabs,BorderLayout.CENTER);
         }
 
-        void showStatus(String text) {
+        void showStatus(String text) { showStatus(text,Collections.emptyMap()); }
+        void showStatus(String text,Map<String,String> observed) {
             CompanionText.update(this.area, text);
+            Map<String,String> status=new HashMap<>();
+            observed.forEach((key,value)->status.put(key.replace(": ",":"),value));
+            patches.setStatuses(status);
         }
     }
 

@@ -8,6 +8,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JButton;
+import javax.swing.JTabbedPane;
+import javax.swing.JList;
 import net.runelite.api.MenuAction;
 import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.eventbus.Subscribe;
@@ -108,6 +110,21 @@ public class OneManPluginBootstrapTest
                     for(int pass=0;pass<4;pass++) layoutTree(panel);
                     assertVisibleChildrenFit(panel);
                 }
+                hubs.setSelectedItem("Clue Scroll Hub");
+                assertTrue("STASH needs its own browser tab",selectTab(panel,"STASH"));
+                JComboBox<?> tier=findNamed(panel,"stashTierFilter",JComboBox.class);
+                JList<?> stashList=findNamed(panel,"stashLocations",JList.class);
+                assertNotNull(tier);assertNotNull(stashList);tier.setSelectedItem("Beginner");
+                assertEquals(3,stashList.getModel().getSize());
+                tier.setSelectedItem("Easy");
+                for(int row=0;row<stashList.getModel().getSize();row++) assertEquals("Easy",((OneManMapCatalog.Site)stashList.getModel().getElementAt(row)).category);
+                for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
+                hubs.setSelectedItem("Farming Hub");
+                JComboBox<?> type=findNamed(panel,"farmingTypeFilter",JComboBox.class);
+                JList<?> patchList=findNamed(panel,"farmingLocations",JList.class);
+                assertNotNull(type);assertNotNull(patchList);type.setSelectedItem("Tree");
+                assertEquals(7,patchList.getModel().getSize());patchList.setSelectedIndex(0);
+                for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
                 assertTrue("The sidebar must identify the loaded build",hasBuildLabel(panel));
                 JButton settings=findSettingsButton(panel);
                 assertNotNull("Native settings must be reachable from every hub",settings);
@@ -116,6 +133,7 @@ public class OneManPluginBootstrapTest
             assertNotNull("The actual settings button must dispatch RuneLite's configuration action", settingsRequests.request);
             assertEquals(MenuAction.RUNELITE_OVERLAY_CONFIG, settingsRequests.request.getEntry().getMenuAction());
             assertSame("The native config action must target the loaded plugin", plugin, settingsRequests.request.getOverlay().getPlugin());
+            verify(overlays).add(isA(StashMinimapOverlay.class));
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
         }
@@ -127,6 +145,7 @@ public class OneManPluginBootstrapTest
             SwingUtilities.invokeAndWait(()->{});
         }
         verify(toolbar).removeNavigation(same(navigation.getValue()));
+        verify(overlays).remove(isA(StashMinimapOverlay.class));
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
     }
@@ -134,6 +153,25 @@ public class OneManPluginBootstrapTest
     {
         private OverlayMenuClicked request;
         @Subscribe public void onOverlayMenuClicked(OverlayMenuClicked event) { request=event; }
+    }
+    private static boolean selectTab(Container parent,String title)
+    {
+        for(Component child:parent.getComponents()) {
+            if(child instanceof JTabbedPane) {
+                JTabbedPane tabs=(JTabbedPane)child;
+                for(int index=0;index<tabs.getTabCount();index++) if(title.equals(tabs.getTitleAt(index))) {tabs.setSelectedIndex(index);return true;}
+            }
+            if(child instanceof Container && selectTab((Container)child,title)) return true;
+        }
+        return false;
+    }
+    private static <T extends Component> T findNamed(Container parent,String name,Class<T> type)
+    {
+        for(Component child:parent.getComponents()) {
+            if(name.equals(child.getName())&&type.isInstance(child)) return type.cast(child);
+            if(child instanceof Container) {T found=findNamed((Container)child,name,type);if(found!=null) return found;}
+        }
+        return null;
     }
     private static JButton findSettingsButton(Container parent)
     {

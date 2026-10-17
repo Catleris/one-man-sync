@@ -22,6 +22,7 @@ import net.runelite.client.util.LinkBrowser;
 final class ClueHub
 {
     @Inject private Client client;
+    @Inject private OneManMapLocations mapLocations;
     @Inject private ClientThread clientThread;
     @Inject private ItemManager items;
     @Inject private OneManSyncConfig config;
@@ -238,6 +239,7 @@ final class ClueHub
             result.setRows(5);
             JPanel searchPanel = new JPanel(new BorderLayout(0, 4)); searchPanel.add(lookup, BorderLayout.NORTH); searchPanel.add(scroll(result), BorderLayout.CENTER);
             items.add(searchPanel, BorderLayout.NORTH); items.add(scroll(recent), BorderLayout.CENTER); tabs.addTab("Items", items);
+            tabs.addTab("STASH", new OneManMapPanel(mapLocations,OneManMapCatalog.Group.STASH));
             JPanel options = new JPanel(new GridLayout(0, 1, 0, 4));
             toggle(options, "Enable Clue Hub", "clueHubEnabled", config.clueHubEnabled());
             toggle(options, "Ground labels", "clueGroundMarkers", config.clueGroundMarkers());

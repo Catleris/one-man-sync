@@ -138,6 +138,9 @@ public class OneManSyncPlugin extends Plugin
     @Inject private OneManSlayerHelper slayerHelper;
     @Inject private OneManCompanion companion;
     @Inject private ClueHub clueHub;
+    @Inject private OneManMapLocations mapLocations;
+    @Inject private StashMinimapOverlay stashMinimapOverlay;
+    @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -191,6 +194,8 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void startUp()
     {
+        mapLocations.startUp();
+        mapOverlays.add(stashMinimapOverlay);
         clueHub.startUp();
         slayerHelper.startUp(this::localSlayerState);
         companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
@@ -205,6 +210,8 @@ public class OneManSyncPlugin extends Plugin
     protected void shutDown()
     {
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+        mapOverlays.remove(stashMinimapOverlay);
+        mapLocations.shutDown();
         clueHub.shutDown();
         companion.shutDown();
         slayerHelper.shutDown();
@@ -519,6 +526,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameTick(GameTick event)
     {
+        mapLocations.tick();
         clueHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
