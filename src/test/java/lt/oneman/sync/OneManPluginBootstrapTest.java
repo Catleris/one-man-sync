@@ -8,7 +8,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JButton;
-import net.runelite.client.plugins.config.NativeConfigTestSupport;
+import net.runelite.api.MenuAction;
+import net.runelite.client.events.OverlayMenuClicked;
+import net.runelite.client.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Container;
 import net.runelite.client.ui.NavigationButton;
@@ -80,7 +82,9 @@ public class OneManPluginBootstrapTest
         assertSame(plugin,child.getInstance(OneManSyncPlugin.class));
         assertNotNull(child.getInstance(OneManSyncConfig.class));
         ArgumentCaptor<NavigationButton> navigation=ArgumentCaptor.forClass(NavigationButton.class);
-        try (NativeConfigTestSupport nativeSettings=new NativeConfigTestSupport(bus))
+        SettingsRequests settingsRequests=new SettingsRequests();
+        bus.register(settingsRequests);
+        try
         {
             plugin.startUp();
             bus.register(plugin);
@@ -109,19 +113,27 @@ public class OneManPluginBootstrapTest
                 assertNotNull("Native settings must be reachable from every hub",settings);
                 settings.doClick();
             });
-            nativeSettings.assertOpened("OneMan Sync");
+            assertNotNull("The actual settings button must dispatch RuneLite's configuration action", settingsRequests.request);
+            assertEquals(MenuAction.RUNELITE_OVERLAY_CONFIG, settingsRequests.request.getEntry().getMenuAction());
+            assertSame("The native config action must target the loaded plugin", plugin, settingsRequests.request.getOverlay().getPlugin());
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
         }
         finally
         {
             bus.unregister(plugin);
+            bus.unregister(settingsRequests);
             plugin.shutDown();
             SwingUtilities.invokeAndWait(()->{});
         }
         verify(toolbar).removeNavigation(same(navigation.getValue()));
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
+    }
+    private static final class SettingsRequests
+    {
+        private OverlayMenuClicked request;
+        @Subscribe public void onOverlayMenuClicked(OverlayMenuClicked event) { request=event; }
     }
     private static JButton findSettingsButton(Container parent)
     {
