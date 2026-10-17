@@ -6,7 +6,7 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.10
+## OneMan Sync 0.8.1 — Clue and Farming hubs
 
 **Selected STASH requirements:** Below each STASH selector, required items turn green when carried or equipped, yellow when found in the last observed bank contents, and red when absent from both. Before the bank is observed, missing items remain grey (Bank unknown). Open your bank to refresh; the bank snapshot is session-only and cleared on logout/account changes. Bank placeholders do not count. Accepted item alternatives use RuneLite's clue requirements. Contents already deposited inside a STASH are not checked.
 
@@ -24,7 +24,7 @@ Open the world map and click a location in either list to centre the map. If it 
 
 The sidebar fills the available height. Clue Hub separates Items, Options and About into compact tabs. The **OneMan Sync settings** button opens RuneLite's original OneMan configuration panel, including Sync Key and all Slayer/notification/Clue options. The temporary custom settings form has been removed. The Plugin Hub installer list is separate from this configuration panel.
 
-Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
+Release source branch: `master`. Plugin Hub availability requires RuneLite maintainers to approve the pinned source commit; publishing source to this repository alone does not update installed clients. The development work is retained in `dev/clue-scroll-hub`.
 Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
 
 - Grey Beginner, green Easy, blue Medium, red Hard, purple Elite, gold Master.
@@ -127,7 +127,7 @@ Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugi
 
 The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
 
-Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.10`.
+Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1`.
 
 ### Event registration validation (test build 5)
 

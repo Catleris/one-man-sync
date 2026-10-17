@@ -238,12 +238,12 @@ final class ClueHub
         List<Seen> snapshot = new ArrayList<>(recent.values()); Collections.reverse(snapshot); StringBuilder text = new StringBuilder();
         for (Seen seen : snapshot) text.append(describe(seen.name, seen.tags)).append("\n").append(seen.origin).append("\n\n");
         String value = text.length() == 0 ? "No clue-related drops observed in this session yet." : text.toString();
-        SwingUtilities.invokeLater(() -> { if (active && panel != null) { panel.recent.setText(value); panel.status.setText(config.clueHubEnabled() ? "Clue Hub — TEST" : "Clue Hub — disabled"); } });
+        SwingUtilities.invokeLater(() -> { if (active && panel != null) { panel.recent.setText(value); panel.status.setText(config.clueHubEnabled() ? "Clue Hub" : "Clue Hub — disabled"); } });
     }
     private final class Panel extends JPanel
     {
         final OneManMapPanel stash=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.STASH);
-        final JLabel status = new JLabel("Clue Hub — TEST");
+        final JLabel status = new JLabel("Clue Hub");
         final JTextArea recent = area(), result = area();
         Panel()
         {
