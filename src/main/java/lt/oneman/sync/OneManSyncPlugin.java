@@ -134,6 +134,7 @@ public class OneManSyncPlugin extends Plugin
 
     @Inject private OneManSlayerHelper slayerHelper;
     @Inject private OneManCompanion companion;
+    @Inject private ClueHub clueHub;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -185,6 +186,7 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void startUp()
     {
+        clueHub.startUp();
         slayerHelper.startUp();
         companion.startUp(this::getPluginDirectory);
         if (client.getGameState() == GameState.LOGGED_IN)
@@ -198,6 +200,7 @@ public class OneManSyncPlugin extends Plugin
     protected void shutDown()
     {
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+        clueHub.shutDown();
         companion.shutDown();
         slayerHelper.shutDown();
         loginCountdown=-1;
@@ -228,8 +231,22 @@ public class OneManSyncPlugin extends Plugin
     }
 
     @Subscribe
+    public void onClueItemSpawned(ItemSpawned event) { clueHub.onItemSpawned(event); }
+    @Subscribe
+    public void onClueItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
+    @Subscribe
+    public void onClueMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
+    @Subscribe
+    public void onClueConfigChanged(net.runelite.client.events.ConfigChanged event)
+    {
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("clue"))
+            clientThread.invokeLater(clueHub::onConfigChanged);
+    }
+
+    @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        clueHub.onGameStateChanged(event);
         slayerHelper.onGameStateChanged(event);
         companion.onGameStateChanged(event);
         if(event.getGameState()==GameState.LOGGED_IN){
@@ -306,6 +323,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onNpcLootReceived(NpcLootReceived event)
     {
+        clueHub.onNpcLootReceived(event);
         slayerHelper.onNpcLootReceived(event);
         if(!ready() || event.getNpc()==null) return;
 
@@ -339,6 +357,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
@@ -388,6 +407,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
+        clueHub.onChatMessage(event);
         slayerHelper.onChatMessage(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
@@ -498,6 +518,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameTick(GameTick event)
     {
+        clueHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
         if(!ready()) return;

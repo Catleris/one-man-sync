@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master, dev/slayer-helper-lab, dev/companion-suite ]
+    branches: [ master, dev/slayer-helper-lab, dev/companion-suite, dev/clue-scroll-hub ]
   pull_request:
     branches: [ master ]
 
@@ -28,10 +28,14 @@ jobs:
       - name: Build
         run: ./gradlew clean build shadowJar
 
+      - name: Package test source
+        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Clue-Hub-TEST.zip
+
       - name: Upload development build
         uses: actions/upload-artifact@v4
         with:
-          name: oneman-companion-dev
+          name: oneman-clue-hub-test
           path: |
             build/libs/*-all.jar
+            build/OneMan-Sync-Clue-Hub-TEST.zip
             build/reports/tests/test/

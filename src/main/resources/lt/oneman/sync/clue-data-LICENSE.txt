@@ -1,0 +1,43 @@
+Clue Hub data snapshot: 2026-10-17
+
+clue-emote-steps.tsv: lookup texts adapted from RuneLite EmoteClue.java.
+Source: https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/cluescrolls/clues/EmoteClue.java
+Requirements are resolved with the installed RuneLite API (including accepted item alternatives).
+/*
+ * Copyright (c) 2018, Lotto <https://github.com/devLotto>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+clue-rewards.tsv: factual item-name / tier membership extracted from the Rewards sections of OSRS Wiki contributors' pages:
+https://oldschool.runescape.wiki/w/Reward_casket_(beginner)
+https://oldschool.runescape.wiki/w/Reward_casket_(easy)
+https://oldschool.runescape.wiki/w/Reward_casket_(medium)
+https://oldschool.runescape.wiki/w/Reward_casket_(hard)
+https://oldschool.runescape.wiki/w/Reward_casket_(elite)
+https://oldschool.runescape.wiki/w/Reward_casket_(master)
+License: Creative Commons Attribution-NonCommercial-ShareAlike 3.0
+https://creativecommons.org/licenses/by-nc-sa/3.0/
+https://oldschool.runescape.wiki/w/RuneScape:Copyrights
+Changes: extracted names and tier membership, removed rates/prose, classified common vs special/shared rewards. No wiki prose or images included.
+The above data license applies to clue-rewards.tsv; it does not replace the code repository's BSD license.
+Reward membership is not proof of the actual source of a particular item. Common rewards are hidden by default.

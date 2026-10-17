@@ -6,6 +6,33 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
+## Clue Hub test build — 0.8.1-clue-test.1
+
+Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
+Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
+
+- Grey Beginner, green Easy, blue Medium, red Hard, purple Elite, gold Master.
+- Ground labels and item-menu names end with coloured tier dots and tier abbreviations. Inventory, equipment and bank icons use dots in the lower-right corner.
+- `Req` means an item used in emote clues or beginner Charlie tasks. It does not mean the current clue is complete. All matching tiers and accepted RuneLite item alternatives are retained. Sherlock skill challenges are not indexed in this first test.
+- `Reward table` means a possible reward source; it never proves the actual origin of an item. Common supplies such as runes/coins are hidden by default and can be enabled separately.
+- An observed casket opening is recorded only when a server clue-completion message correlates with a fresh reward container; recent NPC drops are labelled separately. The session history is bounded and cleared on account/world changes. No new network service or sync setting is needed.
+- Ground labels are a separate overlay; use **Clue ground label height** if they overlap RuneLite Ground Items labels.
+- Item ID lookup is available in the hub. Bundled data attribution is shown in the panel; source details and licenses are in `src/main/resources/lt/oneman/sync/clue-data-LICENSE.txt`.
+
+### Testing in the development client
+
+Build/run with JDK 11: `./gradlew clean test shadowJar` then `./gradlew run` (Windows: `gradlew.bat`). The existing development profile is retained.
+For Jagex accounts follow [RuneLite's development-client login instructions](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
+
+1. Disable website sync; Clue Hub must still work alongside Slayer and Farming.
+2. Put a gold ring / bronze axe (Beginner) and an abyssal whip (Master) in inventory, then bank them. Check coloured dots and item menu suffixes. Leather chaps should have multiple tiers.
+3. Drop and pick up a marked item, then obtain a marked NPC drop during Slayer or ordinary combat. Check name + dots, no stale ground label after pickup, and NPC source in the hub. Test with Ground Items enabled and disabled, multiple items on the same tile, region changes and hopping.
+4. Open a casket; the hub should record **Opened [tier] casket (observed)** with the actual reward items. Reopening the reward interface must not duplicate an event; a Barrows reward must not be recorded as a clue reward.
+5. Check Ranger boots (Medium) and Mole slippers (Beginner). An ordinary coin/rune stack should not show reward dots unless **Include common rewards** is enabled; noted versions should share the base item's classification.
+6. Toggle settings while logged in, log out/switch account, and disable/re-enable the plugin. Check that no old session history or overlays leak across accounts or survive shutdown.
+
+GitHub Actions produces `oneman-clue-hub-test`, containing the runnable development JAR, test source ZIP and test reports.
+
 ## Slayer and Prayer tools (0.6)
 
 OneMan Slayer Lab is now part of this single plugin. The S sidebar contains preparation, static tactics, locations, travel, supplies, session, loot, history and Prayer resource tabs. These tools work with website sync disabled. They do not predict attacks or select/switch prayers. Existing Lab preferences are migrated once; per-account bank snapshots, goals and journals retain their original profile storage.

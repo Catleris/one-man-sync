@@ -46,3 +46,6 @@ OneMan users can revoke RuneLite devices/keys, export their OneMan data, deactiv
 Full website privacy policy and retention periods: https://oneman.lt/privacy.php
 
 Terms and copyright notice: https://oneman.lt/terms.php
+## Test Clue Hub
+
+Clue item classification uses bundled offline data and RuneLite's local clue definitions. Its bounded, in-memory drop/casket history is cleared when changing accounts/worlds or disabling the plugin. Clue Hub adds no network request or new upload fields. Opening the guide explicitly opens the OSRS Wiki in the browser. Existing optional OneMan Sync data collection is controlled separately.
