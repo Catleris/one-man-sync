@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Perspective;
@@ -20,11 +21,13 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 final class ClueGroundOverlay extends Overlay
 {
     @Inject private Client client;
-    @Inject private ClueHub hub;
+    // Resolve only during rendering: eager hub -> overlay -> hub injection prevents plugin loading.
+    @Inject private Provider<ClueHub> hubProvider;
     @Inject private OneManSyncConfig config;
     ClueGroundOverlay() { setPosition(OverlayPosition.DYNAMIC); setLayer(OverlayLayer.ABOVE_SCENE); }
     @Override public Dimension render(Graphics2D graphics)
     {
+        ClueHub hub=hubProvider.get();
         if (!hub.enabled() || !config.clueGroundMarkers() || client.getGameState() != GameState.LOGGED_IN) return null;
         Map<Tile, Integer> rows = new HashMap<>();
         Map<Tile, Set<String>> names = new HashMap<>();

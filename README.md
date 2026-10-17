@@ -6,7 +6,7 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.2
+## Clue Hub test build — 0.8.1-clue-test.3
 
 Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
 Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
@@ -104,3 +104,7 @@ Validation: all production and test sources compiled for Java 11 against the sup
 ### Test build 2: Slayer task source and navigation
 
 The hub now uses OneMan's direct game-DB/chat Slayer state even with website sync disabled. Unconfirmed/stale labels cannot choose a destination, and unknown assignments show a visible refresh message. Konar area filtering uses the same current assignment as sync. The sidebar shows the test build version above the hub selector; Farming Hub and Clue Scroll Hub share this selector. Slayer assignment/count/area are visible above destination controls, with narrow-panel alignment corrected.
+
+### Test build 3: plugin injection failure
+
+Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugin instantiation. Both clue overlays now obtain the singleton hub lazily through `Provider<ClueHub>`, breaking the eager Guice construction cycle. A dedicated Guice binding-graph regression test checks the hub and both overlays without starting the game. Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.3`.
