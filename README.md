@@ -6,7 +6,9 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.9
+## Clue Hub test build — 0.8.1-clue-test.10
+
+**Selected STASH requirements:** Below each STASH selector, required items turn green when carried or equipped, yellow when found in the last observed bank contents, and red when absent from both. Before the bank is observed, missing items remain grey (Bank unknown). Open your bank to refresh; the bank snapshot is session-only and cleared on logout/account changes. Bank placeholders do not count. Accepted item alternatives use RuneLite's clue requirements. Contents already deposited inside a STASH are not checked.
 
 **Compact cards, fixed-mode sizing and seed lookup:** Farming and STASH browsers share a card design with an item/tier icon, category, location count and dropdown plus Map button. Search filters the displayed cards. Farming tabs are Patches / Seeds / Runs; other hub tab bars stay on one line with native scroll controls.
 
@@ -125,7 +127,7 @@ Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugi
 
 The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
 
-Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.9`.
+Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.10`.
 
 ### Event registration validation (test build 5)
 

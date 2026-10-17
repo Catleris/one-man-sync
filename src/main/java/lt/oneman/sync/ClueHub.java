@@ -31,6 +31,9 @@ final class ClueHub
     @Inject private ClueGroundOverlay groundOverlay;
     @Inject private ClueWidgetOverlay widgetOverlay;
     private ClueItemCatalog catalog;
+    private StashRequirements stashRequirements;
+    private volatile Map<String,List<StashRequirements.Row>> stashSnapshot=Collections.emptyMap();
+    private boolean stashPending;
     private Panel panel;
     private volatile boolean active;
     private boolean scanPending;
@@ -55,12 +58,14 @@ final class ClueHub
     void startUp()
     {
         catalog = new ClueItemCatalog();
+        stashRequirements=new StashRequirements();stashSnapshot=Collections.emptyMap();stashPending=true;
         groundOverlay.setHub(this); widgetOverlay.setHub(this);
         active = true; profile = ""; scanPending = true;
         ground.clear(); recent.clear(); overlays.add(groundOverlay); overlays.add(widgetOverlay);
     }
     void shutDown()
     {
+        stashRequirements.clear();stashSnapshot=Collections.emptyMap();
         active = false; caskets.clear(); ground.clear(); recent.clear(); overlays.remove(groundOverlay); overlays.remove(widgetOverlay);
         groundOverlay.setHub(null); widgetOverlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
@@ -80,6 +85,8 @@ final class ClueHub
     void onGameStateChanged(GameStateChanged event)
     {
         GameState state = event.getGameState();
+        if(state==GameState.LOGGED_IN) stashPending=true;
+        if(state==GameState.LOGIN_SCREEN) {stashRequirements.clear();publishStash(Collections.emptyMap());}
         if (state != GameState.LOGGED_IN) ground.clear();
         if (state == GameState.LOGGED_IN) scanPending = true;
         if (state == GameState.LOGIN_SCREEN || state == GameState.HOPPING)
@@ -93,6 +100,7 @@ final class ClueHub
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         String next = Objects.toString(configs.getRSProfileKey(), "");
         if (!next.equals(profile)) { profile = next; recent.clear(); caskets.clear(); ground.clear(); scanPending = true; refresh(); }
+        if(stashPending) {stashPending=false;updateStash(false);}
         caskets.tick(client.getTickCount());
         // Once on enabling/login/region load; never scan the scene each tick or frame.
         if (enabled() && scanPending)
@@ -134,8 +142,21 @@ final class ClueHub
         if (!enabled() || (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM && event.getType() != ChatMessageType.MESBOX)) return;
         if (caskets.completion(net.runelite.client.util.Text.removeTags(event.getMessage()), client.getTickCount())) captureCasket();
     }
+    private void updateStash(boolean bankChanged)
+    {
+        publishStash(stashRequirements.snapshot(client,Objects.toString(configs.getRSProfileKey(),""),bankChanged));
+    }
+    private void publishStash(Map<String,List<StashRequirements.Row>> snapshot)
+    {
+        stashSnapshot=snapshot;
+        SwingUtilities.invokeLater(()-> {if(active && panel!=null) panel.stash.setRequirements(stashSnapshot);});
+    }
     void onItemContainerChanged(ItemContainerChanged event)
     {
+        if(active && (event.getContainerId()==net.runelite.api.gameval.InventoryID.BANK
+            || event.getContainerId()==net.runelite.api.gameval.InventoryID.INV
+            || event.getContainerId()==net.runelite.api.gameval.InventoryID.WORN))
+            updateStash(event.getContainerId()==net.runelite.api.gameval.InventoryID.BANK);
         if (!enabled() || event.getContainerId() != net.runelite.api.gameval.InventoryID.TRAIL_REWARDINV) return;
         if (caskets.containerChanged(client.getTickCount())) captureCasket();
     }
@@ -221,6 +242,7 @@ final class ClueHub
     }
     private final class Panel extends JPanel
     {
+        final OneManMapPanel stash=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.STASH);
         final JLabel status = new JLabel("Clue Hub — TEST");
         final JTextArea recent = area(), result = area();
         Panel()
@@ -239,7 +261,7 @@ final class ClueHub
             result.setRows(5);
             JPanel searchPanel = new JPanel(new BorderLayout(0, 4)); searchPanel.add(lookup, BorderLayout.NORTH); searchPanel.add(scroll(result), BorderLayout.CENTER);
             items.add(searchPanel, BorderLayout.NORTH); items.add(scroll(recent), BorderLayout.CENTER); tabs.addTab("Items", items);
-            tabs.addTab("STASH", new OneManMapPanel(mapLocations,OneManMapCatalog.Group.STASH));
+            stash.setRequirements(stashSnapshot);tabs.addTab("STASH", stash);
             JPanel options = new JPanel(new GridLayout(0, 1, 0, 4));
             toggle(options, "Enable Clue Hub", "clueHubEnabled", config.clueHubEnabled());
             toggle(options, "Ground labels", "clueGroundMarkers", config.clueGroundMarkers());

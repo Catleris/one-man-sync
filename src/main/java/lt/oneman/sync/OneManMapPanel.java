@@ -20,6 +20,8 @@ final class OneManMapPanel extends JPanel
     private final Map<String,String> selected=new HashMap<>();
     private final Map<String,JComboBox<OneManMapCatalog.Site>> selectors=new HashMap<>();
     private final Map<String,JTextArea> descriptions=new HashMap<>();
+    private Map<String,List<StashRequirements.Row>> requirements=Collections.emptyMap();
+    private final Map<String,OneManCards> requirementPanels=new HashMap<>();
     private Map<String,String> statuses=Collections.emptyMap();
 
     OneManMapPanel(OneManMapLocations maps,OneManMapCatalog.Group group)
@@ -46,6 +48,11 @@ final class OneManMapPanel extends JPanel
         });
         reload();
     }
+    void setRequirements(Map<String,List<StashRequirements.Row>> requirements)
+    {
+        this.requirements=requirements;
+        selectors.forEach((category,selector)->describe(category,(OneManMapCatalog.Site)selector.getSelectedItem()));
+    }
     void chooseCategory(String category)
     {
         show.setSelected(true);search.setText("");filter.setSelectedItem(category);
@@ -65,7 +72,7 @@ final class OneManMapPanel extends JPanel
             if(!query.isEmpty() && !(site.category+" "+site.name).toLowerCase(Locale.ROOT).contains(query)) continue;
             grouped.get(site.category).add(site);locations++;
         }
-        cards.removeAll();selectors.clear();descriptions.clear();int types=0;
+        cards.removeAll();selectors.clear();descriptions.clear();requirementPanels.clear();int types=0;
         for(Map.Entry<String,List<OneManMapCatalog.Site>> row:grouped.entrySet()) if(!row.getValue().isEmpty()) {addCard(row.getKey(),row.getValue());types++;}
         if(types==0) cards.card(OneManCards.text("No matching locations. Try another type or place name."));
         count.setText(locations+" locations • "+types+" "+(types==1?"type":"types"));count.setForeground(OneManCards.MUTED);cards.finish();
@@ -86,6 +93,10 @@ final class OneManMapPanel extends JPanel
         JTextArea status=OneManCards.text("");
         selectors.put(category,selector);descriptions.put(category,status);
         JPanel body=new JPanel(new BorderLayout(0,5));body.setOpaque(false);body.add(selector,BorderLayout.NORTH);body.add(status,BorderLayout.CENTER);card.add(body,BorderLayout.CENTER);
+        if(group==OneManMapCatalog.Group.STASH) {
+            OneManCards required=new OneManCards();
+            required.setName("stashRequirements:"+category);requirementPanels.put(category,required);body.add(required,BorderLayout.SOUTH);
+        }
         Runnable focus=()-> {
             OneManMapCatalog.Site site=(OneManMapCatalog.Site)selector.getSelectedItem();if(site==null) return;
             selected.put(category,site.id);describe(category,site);maps.focus(group,site);
@@ -99,6 +110,21 @@ final class OneManMapPanel extends JPanel
         selectors.get(category).setToolTipText(site.name);
         String status=statuses.get(site.id);
         String hint=site.points.get(0).getY()>6400?"Underground map area":site.points.get(0).getPlane()>0?"Floor "+site.points.get(0).getPlane():"Surface location";
+        OneManCards required=requirementPanels.get(category);
+        if(required!=null) {
+            required.removeAll();
+            JLabel title=new JLabel("Required items");title.setForeground(OneManCards.ACCENT);required.card(title);
+            List<StashRequirements.Row> rows=requirements.get(site.id);
+            if(rows==null) required.card(OneManCards.text("Log in to check items. Items stored inside a STASH are not checked."));
+            else {
+                for(StashRequirements.Row row:rows) {
+                    JTextArea item=OneManCards.text("• "+row.name+"\n"+row.state.label);
+                    item.setForeground(row.state.color);required.card(item);
+                }
+                required.card(OneManCards.text("Bank = last observed contents. Open your bank to refresh. Items inside the STASH are not checked."));
+            }
+            required.finish();
+        }
         descriptions.get(category).setText(status==null?(group==OneManMapCatalog.Group.STASH?site.name+"\n":"")+hint:status);
     }
 }
