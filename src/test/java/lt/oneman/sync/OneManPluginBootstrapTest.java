@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.client.Notifier;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -29,6 +30,14 @@ import static org.mockito.Mockito.*;
 /** Real OneMan injection/module and lifecycle, with only RuneLite services replaced by test doubles. */
 public class OneManPluginBootstrapTest
 {
+    @Test public void subscribersMeetRuneLiteEventBusContract()
+    {
+        EventBus bus=new EventBus();
+        OneManSyncPlugin plugin=new OneManSyncPlugin();
+        try { bus.register(plugin); }
+        finally { bus.unregister(plugin); }
+    }
+
     @Test public void pluginLoadsAndCreatesSidebarWithoutLoggingIntoGame() throws Exception
     {
         Client client=mock(Client.class);
@@ -67,9 +76,11 @@ public class OneManPluginBootstrapTest
         assertSame(plugin,child.getInstance(OneManSyncPlugin.class));
         assertNotNull(child.getInstance(OneManSyncConfig.class));
         ArgumentCaptor<NavigationButton> navigation=ArgumentCaptor.forClass(NavigationButton.class);
+        EventBus bus=new EventBus();
         try
         {
             plugin.startUp();
+            bus.register(plugin);
             SwingUtilities.invokeAndWait(()->{});
             verify(toolbar).addNavigation(navigation.capture());
             SwingUtilities.invokeAndWait(()->{
@@ -87,6 +98,7 @@ public class OneManPluginBootstrapTest
         }
         finally
         {
+            bus.unregister(plugin);
             plugin.shutDown();
             SwingUtilities.invokeAndWait(()->{});
         }

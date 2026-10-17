@@ -11,6 +11,7 @@ public class OneManSyncPluginTest
         {
             System.setProperty("user.home", java.nio.file.Paths.get(System.getProperty("user.home"), ".oneman-companion-dev").toString());
         }
+        System.out.println("OneMan Sync development build " + OneManCompanion.VERSION);
         ExternalPluginManager.loadBuiltin(OneManSyncPlugin.class);
         RuneLite.main(args);
     }

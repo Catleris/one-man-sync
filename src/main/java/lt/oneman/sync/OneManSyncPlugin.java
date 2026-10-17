@@ -234,13 +234,13 @@ public class OneManSyncPlugin extends Plugin
     }
 
     @Subscribe
-    public void onClueItemSpawned(ItemSpawned event) { clueHub.onItemSpawned(event); }
+    public void onItemSpawned(ItemSpawned event) { clueHub.onItemSpawned(event); }
     @Subscribe
-    public void onClueItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
+    public void onItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
     @Subscribe
-    public void onClueMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
+    public void onMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
     @Subscribe
-    public void onClueConfigChanged(net.runelite.client.events.ConfigChanged event)
+    public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
     {
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("clue"))
             clientThread.invokeLater(clueHub::onConfigChanged);
