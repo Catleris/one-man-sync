@@ -6,7 +6,9 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.5
+## Clue Hub test build — 0.8.1-clue-test.6
+
+The sidebar fills the available height. Clue Hub separates Items, Options and About into compact tabs. Select **Settings** in the OneMan hub dropdown to enter the masked Sync Key, choose the upload interval and explicitly enable/save website sync. These controls use the original RuneLite config keys; all other original options remain in RuneLite Configuration → Plugins → OneMan Sync (return from the Plugin Hub installer list).
 
 Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
 Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
@@ -111,7 +113,7 @@ Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugi
 
 The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
 
-Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.5`.
+Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.6`.
 
 ### Event registration validation (test build 5)
 

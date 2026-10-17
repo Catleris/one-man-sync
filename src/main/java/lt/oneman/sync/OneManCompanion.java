@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.1-clue-test.5";
+    static final String VERSION = "0.8.1-clue-test.6";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -77,12 +77,13 @@ final class OneManCompanion {
             Graphics2D g = icon.createGraphics(); g.setColor(new Color(218,176,85));
             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
             g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
-            PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
+            PluginPanel root=new PluginPanel(false){};root.setLayout(new BorderLayout(0,6));root.setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
             cards.add(farmingTracker.companionPanel(),"Farming Hub");
             cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub"});
+            cards.add(new OneManSettingsPanel(configs,config),"Settings");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub","Settings"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
             JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
@@ -263,7 +264,7 @@ final class OneManCompanion {
     private void showLoggedOut() {
         SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan → Slayer → History."); } });
     }
-    private final class Panel extends PluginPanel {
+    private final class Panel extends JPanel {
         final JTextArea next=area(),prep=area(),slayer=area(),fresh=area(),summary=area(),memories=area();
         final JComboBox<CompanionPlanner.Step> goals=new JComboBox<>();boolean updating;
         Panel() {

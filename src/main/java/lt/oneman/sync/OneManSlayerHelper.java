@@ -89,7 +89,7 @@ public class OneManSlayerHelper
         });
         lastView = "";
     }
-    PluginPanel companionPanel(){return panel;}
+    JPanel companionPanel(){return panel;}
     public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
@@ -346,7 +346,7 @@ public class OneManSlayerHelper
             }
         });
     }
-    private final class LabPanel extends PluginPanel
+    private final class LabPanel extends JPanel
     {
         private final JTabbedPane tabs = new JTabbedPane();
         private final JTextArea[] sections = new JTextArea[8];

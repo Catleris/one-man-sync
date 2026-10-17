@@ -2,6 +2,8 @@ package lt.oneman.sync;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.*;
 import java.util.List;
 import javax.inject.Inject;
@@ -12,7 +14,6 @@ import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.LinkBrowser;
 
@@ -63,7 +64,7 @@ final class ClueHub
         groundOverlay.setHub(null); widgetOverlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
     }
-    PluginPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }
+    JPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }
     boolean enabled() { return active && config.clueHubEnabled(); }
     Set<ClueTier> tiers(ClueItemCatalog.Tags tags) { return tags.visible(config.clueRequiredItems(), config.clueRewardItems(), config.clueCommonRewards()); }
     String kind(ClueItemCatalog.Tags tags) { return tags.kind(config.clueRequiredItems(), config.clueRewardItems(), config.clueCommonRewards()); }
@@ -217,7 +218,7 @@ final class ClueHub
         String value = text.length() == 0 ? "No clue-related drops observed in this session yet." : text.toString();
         SwingUtilities.invokeLater(() -> { if (active && panel != null) { panel.recent.setText(value); panel.status.setText(config.clueHubEnabled() ? "Clue Hub — TEST" : "Clue Hub — disabled"); } });
     }
-    private final class Panel extends PluginPanel
+    private final class Panel extends JPanel
     {
         final JLabel status = new JLabel("Clue Hub — TEST");
         final JTextArea recent = area(), result = area();
@@ -225,23 +226,36 @@ final class ClueHub
         {
             setLayout(new BorderLayout(0, 8));
             recent.setText("No clue-related drops observed in this session yet.");
-            JPanel header = new JPanel(); header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS)); header.add(status);
-            for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("● " + tier.label); label.setForeground(tier.color); header.add(label); }
-            JTextArea help = area(); help.setText("Req = needed for an emote / Charlie clue.\nReward table = possible clue source, not proof of where this copy came from.\nMultiple colours = multiple tiers.\nCommon rewards are hidden by default.\nSherlock skill tasks are not indexed in this test.\nGround labels are separate from Ground Items."); header.add(help);
-            JPanel options = new JPanel(); options.setLayout(new BoxLayout(options, BoxLayout.Y_AXIS));
+            JPanel header = new JPanel(new BorderLayout(0, 4)); header.add(status, BorderLayout.NORTH);
+            JPanel legend = new JPanel(new GridLayout(2, 3, 3, 2));
+            for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("• " + tier.label); label.setForeground(tier.color); label.setFont(label.getFont().deriveFont(11f)); label.setToolTipText(tier.label); legend.add(label); }
+            header.add(legend, BorderLayout.CENTER); add(header, BorderLayout.NORTH);
+            JTabbedPane tabs = new JTabbedPane();
+            JPanel items = new JPanel(new BorderLayout(0, 6));
+            JTextField query = new JTextField(); query.setToolTipText("Item name or ID"); JButton search = new JButton("Look up");
+            search.addActionListener(e -> { if (!query.getText().trim().isEmpty()) lookup(query.getText()); }); query.addActionListener(e -> search.doClick());
+            JPanel lookup = new JPanel(new BorderLayout(4, 4)); lookup.add(query, BorderLayout.CENTER); lookup.add(search, BorderLayout.EAST);
+            result.setRows(5);
+            JPanel searchPanel = new JPanel(new BorderLayout(0, 4)); searchPanel.add(lookup, BorderLayout.NORTH); searchPanel.add(scroll(result), BorderLayout.CENTER);
+            items.add(searchPanel, BorderLayout.NORTH); items.add(scroll(recent), BorderLayout.CENTER); tabs.addTab("Items", items);
+            JPanel options = new JPanel(new GridLayout(0, 1, 0, 4));
             toggle(options, "Enable Clue Hub", "clueHubEnabled", config.clueHubEnabled());
             toggle(options, "Ground labels", "clueGroundMarkers", config.clueGroundMarkers());
             toggle(options, "Inventory / bank dots", "clueWidgetMarkers", config.clueWidgetMarkers());
             toggle(options, "Item menu labels", "clueMenuMarkers", config.clueMenuMarkers());
             toggle(options, "Required items", "clueRequiredItems", config.clueRequiredItems());
             toggle(options, "Reward table items", "clueRewardItems", config.clueRewardItems());
-            toggle(options, "Include common rewards", "clueCommonRewards", config.clueCommonRewards()); header.add(options);
-            JTextField query = new JTextField(); JButton search = new JButton("Look up item");
-            search.addActionListener(e -> { if (!query.getText().trim().isEmpty()) lookup(query.getText()); }); query.addActionListener(e -> search.doClick());
-            header.add(query); header.add(search); header.add(result);
-            JButton guide = new JButton("Open clue guide"); guide.addActionListener(e -> LinkBrowser.browse("https://oldschool.runescape.wiki/w/Treasure_Trails")); header.add(guide);
-            JTextArea source = area(); source.setText("Data: RuneLite emote clues (BSD-2-Clause), OSRS Wiki reward tables (CC BY-NC-SA 3.0), snapshot 2026-10-17. Offline data can change after game updates."); header.add(source);
-            JPanel contents = new JPanel(new BorderLayout(0,8)); contents.add(header,BorderLayout.NORTH); contents.add(recent,BorderLayout.CENTER); add(new JScrollPane(contents),BorderLayout.CENTER);
+            toggle(options, "Include common rewards", "clueCommonRewards", config.clueCommonRewards());
+            JPanel optionsPage = new JPanel(new BorderLayout()); optionsPage.add(options, BorderLayout.NORTH); tabs.addTab("Options", scroll(optionsPage));
+            JTextArea help = area(); help.setText("Req = needed for an emote / Charlie clue.\n\nReward table = possible clue source, not proof of where this copy came from.\n\nMultiple colours = multiple tiers. Common rewards are hidden by default.\n\nSherlock skill tasks are not indexed in this test. Ground labels are separate from Ground Items.\n\nData: RuneLite emote clues (BSD-2-Clause), OSRS Wiki reward tables (CC BY-NC-SA 3.0), snapshot 2026-10-17. Offline data can change after game updates.");
+            JButton guide = new JButton("Open clue guide"); guide.addActionListener(e -> LinkBrowser.browse("https://oldschool.runescape.wiki/w/Treasure_Trails"));
+            JPanel about = new JPanel(new BorderLayout(0, 4)); about.add(scroll(help), BorderLayout.CENTER); about.add(guide, BorderLayout.SOUTH); tabs.addTab("About", about);
+            add(tabs, BorderLayout.CENTER);
+        }
+        private JScrollPane scroll(JComponent content)
+        {
+            JScrollPane scroll = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scroll.setMinimumSize(new Dimension(0, 0)); return scroll;
         }
         private void toggle(JPanel target, String label, String key, boolean selected)
         {

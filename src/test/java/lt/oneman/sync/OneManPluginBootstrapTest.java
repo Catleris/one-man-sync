@@ -86,11 +86,25 @@ public class OneManPluginBootstrapTest
             SwingUtilities.invokeAndWait(()->{
                 Container panel=navigation.getValue().getPanel();
                 JComboBox<?> hubs=findHubSelector(panel);
-                assertNotNull("The real sidebar must expose all four hubs",hubs);
+                assertNotNull("The real sidebar must expose all hubs and sync settings",hubs);
                 assertEquals("Overview",hubs.getItemAt(0));
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
+                assertEquals("Settings",hubs.getItemAt(4));
+                assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
+                panel.setSize(242, 700);
+                hubs.setSelectedItem("Clue Scroll Hub");
+                for(int pass=0;pass<4;pass++) layoutTree(panel);
+                assertVisibleChildrenFit(panel);
+                hubs.setSelectedItem("Settings");
+                for(int pass=0;pass<4;pass++) layoutTree(panel);
+                assertVisibleChildrenFit(panel);
+                for(int section=0;section<hubs.getItemCount();section++) {
+                    hubs.setSelectedIndex(section);
+                    for(int pass=0;pass<4;pass++) layoutTree(panel);
+                    assertVisibleChildrenFit(panel);
+                }
                 assertTrue("The sidebar must identify the loaded build",hasBuildLabel(panel));
             });
             verify(overlays).add(isA(ClueGroundOverlay.class));
@@ -106,6 +120,21 @@ public class OneManPluginBootstrapTest
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
     }
+    private static void layoutTree(Container parent)
+    {
+        // Wrapped text changes preferred height after width is known.
+        parent.doLayout();
+        for(Component child:parent.getComponents()) if(child instanceof Container) layoutTree((Container)child);
+    }
+    private static void assertVisibleChildrenFit(Container parent)
+    {
+        for(Component child:parent.getComponents()) {
+            if(!child.isVisible()) continue;
+            assertTrue(child.getClass()+" extends past the sidebar's right edge", child.getX()+child.getWidth()<=parent.getWidth());
+            assertTrue(child.getClass()+" extends past the sidebar's left edge",child.getX()>=0);
+            if(child instanceof Container) assertVisibleChildrenFit((Container)child);
+        }
+    }
     private static JComboBox<?> findHubSelector(Container parent)
     {
         for(Component component:parent.getComponents())
@@ -113,7 +142,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==4 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==5 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {

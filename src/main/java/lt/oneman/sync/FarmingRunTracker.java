@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -24,8 +25,6 @@ import net.runelite.api.events.GameTick;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
-
-import net.runelite.client.ui.PluginPanel;
 
 @Singleton
 public class FarmingRunTracker {
@@ -69,7 +68,7 @@ public class FarmingRunTracker {
         });
     }
 
-    PluginPanel companionPanel() {
+    JPanel companionPanel() {
         if (this.panel == null) {
             this.panel = new FarmingPanel();
         }
@@ -228,7 +227,7 @@ public class FarmingRunTracker {
     }
 
     private final class FarmingPanel
-    extends PluginPanel {
+    extends JPanel {
         private final JTextArea area = new JTextArea();
         private final JButton refresh = new JButton("Refresh");
 
