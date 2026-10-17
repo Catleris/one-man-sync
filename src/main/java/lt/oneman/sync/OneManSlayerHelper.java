@@ -348,7 +348,7 @@ public class OneManSlayerHelper
     }
     private final class LabPanel extends JPanel
     {
-        private final JTabbedPane tabs = new JTabbedPane();
+        private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
         private final JTextArea[] sections = new JTextArea[8];
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
         private final JTextArea note = new JTextArea(3,20);

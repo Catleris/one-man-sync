@@ -43,6 +43,10 @@ public class OneManMapLocationsTest
     @Test public void filtersReplacePinsPersistAndNeverRemoveForeignMarkers()
     {
         Fixture f=new Fixture();f.maps.startUp();
+        for(WorldMapPoint point:f.points) if(point!=f.foreign) {
+            assertFalse("One clean tooltip, without a second Focus-on label",point.isJumpOnClick());
+            assertFalse(point.getTooltip().contains("\n"));assertTrue(point.getTooltip().contains("<br>"));
+        }
         f.maps.configure(OneManMapCatalog.Group.STASH,"Beginner",true);
         assertEquals(3,f.maps.minimapStashes().size());
         assertEquals(3,f.points.stream().filter(p->p.getName()!=null&&p.getName().startsWith("OneMan Beginner:")).count());
@@ -114,6 +118,7 @@ public class OneManMapLocationsTest
                 @Override protected void configure() {
                     bind(Client.class).toInstance(client);bind(ClientThread.class).toInstance(thread);
                     bind(ConfigManager.class).toInstance(configs);bind(WorldMapPointManager.class).toInstance(manager);
+                    bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
                 }
             }).getInstance(OneManMapLocations.class);
         }

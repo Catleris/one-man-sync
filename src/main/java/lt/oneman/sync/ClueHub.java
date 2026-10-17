@@ -231,7 +231,7 @@ final class ClueHub
             JPanel legend = new JPanel(new GridLayout(2, 3, 3, 2));
             for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("• " + tier.label); label.setForeground(tier.color); label.setFont(label.getFont().deriveFont(11f)); label.setToolTipText(tier.label); legend.add(label); }
             header.add(legend, BorderLayout.CENTER); add(header, BorderLayout.NORTH);
-            JTabbedPane tabs = new JTabbedPane();
+            JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
             JPanel items = new JPanel(new BorderLayout(0, 6));
             JTextField query = new JTextField(); query.setToolTipText("Item name or ID"); JButton search = new JButton("Look up");
             search.addActionListener(e -> { if (!query.getText().trim().isEmpty()) lookup(query.getText()); }); query.addActionListener(e -> search.doClick());

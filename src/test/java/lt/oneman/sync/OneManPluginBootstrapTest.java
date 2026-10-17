@@ -9,7 +9,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTabbedPane;
-import javax.swing.JList;
+import javax.swing.JTextField;
 import net.runelite.api.MenuAction;
 import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.eventbus.Subscribe;
@@ -113,18 +113,32 @@ public class OneManPluginBootstrapTest
                 hubs.setSelectedItem("Clue Scroll Hub");
                 assertTrue("STASH needs its own browser tab",selectTab(panel,"STASH"));
                 JComboBox<?> tier=findNamed(panel,"stashTierFilter",JComboBox.class);
-                JList<?> stashList=findNamed(panel,"stashLocations",JList.class);
-                assertNotNull(tier);assertNotNull(stashList);tier.setSelectedItem("Beginner");
-                assertEquals(3,stashList.getModel().getSize());
+                JComboBox<?> stashList=findNamed(panel,"stashLocation:Beginner",JComboBox.class);
+                assertNotNull(tier);tier.setSelectedItem("Beginner");
+                stashList=findNamed(panel,"stashLocation:Beginner",JComboBox.class);assertNotNull(stashList);
+                assertEquals(3,stashList.getItemCount());
                 tier.setSelectedItem("Easy");
-                for(int row=0;row<stashList.getModel().getSize();row++) assertEquals("Easy",((OneManMapCatalog.Site)stashList.getModel().getElementAt(row)).category);
+                stashList=findNamed(panel,"stashLocation:Easy",JComboBox.class);assertNotNull(stashList);
+                for(int row=0;row<stashList.getItemCount();row++) assertEquals("Easy",((OneManMapCatalog.Site)stashList.getItemAt(row)).category);
                 for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
                 hubs.setSelectedItem("Farming Hub");
                 JComboBox<?> type=findNamed(panel,"farmingTypeFilter",JComboBox.class);
-                JList<?> patchList=findNamed(panel,"farmingLocations",JList.class);
-                assertNotNull(type);assertNotNull(patchList);type.setSelectedItem("Tree");
-                assertEquals(7,patchList.getModel().getSize());patchList.setSelectedIndex(0);
+                assertNotNull(type);type.setSelectedItem("Tree");
+                JComboBox<?> patchList=findNamed(panel,"farmingLocation:Tree",JComboBox.class);
+                assertNotNull(patchList);assertEquals(7,patchList.getItemCount());patchList.setSelectedIndex(0);
                 for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
+                assertTrue("Seeds needs its own lookup tab",selectTab(panel,"Seeds"));
+                JTextField seedQuery=findNamed(panel,"farmingSeedSearch",JTextField.class);assertNotNull(seedQuery);
+                seedQuery.setText("ranarr seed");
+                JButton browse=findNamed(panel,"seedBrowse:RANARR",JButton.class);assertNotNull(browse);browse.doClick();
+                assertEquals("Herb",type.getSelectedItem());
+                JComboBox<?> herbs=findNamed(panel,"farmingLocation:Herb",JComboBox.class);assertNotNull(herbs);assertEquals(10,herbs.getItemCount());
+                type.setSelectedItem("All");
+                assertTrue(selectTab(panel,"Seeds"));seedQuery.setText("a");
+                assertEquals("A long card list must not enlarge the fixed-mode game frame",0,panel.getPreferredSize().height);
+                assertEquals(0,panel.getMinimumSize().height);
+                panel.setSize(242,503);
+                for(int pass=0;pass<6;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
                 assertTrue("The sidebar must identify the loaded build",hasBuildLabel(panel));
                 JButton settings=findSettingsButton(panel);
                 assertNotNull("Native settings must be reachable from every hub",settings);
@@ -191,6 +205,9 @@ public class OneManPluginBootstrapTest
     {
         for(Component child:parent.getComponents()) {
             if(!child.isVisible()) continue;
+            // Native scroll-tab headers intentionally pan horizontally behind their arrow controls.
+            // Content viewports still have to fit the sidebar width.
+            if(parent instanceof javax.swing.JViewport && parent.getParent() instanceof JTabbedPane) continue;
             assertTrue(child.getClass()+" extends past the sidebar's right edge", child.getX()+child.getWidth()<=parent.getWidth());
             assertTrue(child.getClass()+" extends past the sidebar's left edge",child.getX()>=0);
             if(child instanceof Container) assertVisibleChildrenFit((Container)child);

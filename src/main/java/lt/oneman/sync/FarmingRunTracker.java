@@ -1,7 +1,6 @@
 package lt.oneman.sync;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,7 +9,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -230,9 +228,7 @@ public class FarmingRunTracker {
 
         FarmingPanel() {
             this.setLayout(new BorderLayout(0, 6));
-            this.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            JLabel title = new JLabel("ONEMAN SYNC \u2022 FARMING");
-            title.setForeground(new Color(218, 176, 85));
+            this.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
             this.area.setEditable(false);
             this.area.setLineWrap(true);
             this.area.setWrapStyleWord(true);
@@ -240,11 +236,12 @@ public class FarmingRunTracker {
             this.refresh.addActionListener(e -> FarmingRunTracker.this.clientThread.invokeLater(() -> {
                 FarmingRunTracker.this.nextFarmingRefresh = 0;
             }));
-            JTabbedPane tabs=new JTabbedPane();tabs.addTab("Patches",patches);
+            JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);tabs.addTab("Patches",patches);
+            tabs.addTab("Seeds",new FarmingSeedPanel(mapLocations,category->{patches.chooseCategory(category);tabs.setSelectedIndex(0);}));
             JPanel timers=new JPanel(new BorderLayout(0,5));
             timers.add(new JScrollPane(this.area),BorderLayout.CENTER);timers.add(this.refresh,BorderLayout.SOUTH);
-            tabs.addTab("Run status",timers);
-            this.add(title, BorderLayout.NORTH);this.add(tabs,BorderLayout.CENTER);
+            tabs.addTab("Runs",timers);
+            this.add(tabs,BorderLayout.CENTER);
         }
 
         void showStatus(String text) { showStatus(text,Collections.emptyMap()); }

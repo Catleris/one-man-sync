@@ -10,7 +10,7 @@ Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pa
 4. Windows PowerShell: `.\gradlew.bat run`; Linux: `./gradlew run`.
 5. Įjunk RuneLite `OneMan Sync` (RuneLite `Slayer` priklausomybė įjungiama kartu); atidaryk auksinę S piktogramą.
 
-Nuo `0.8.1-clue-test.8` įprastas `gradlew.bat run` naudoja tavo įprastą RuneLite profilį, įskaitant jo mastelį ir išsaugotus OneMan nustatymus. Prieš paleisdamas testinį klientą uždaryk įprastą RuneLite. Senas atskiras `dev-home` profilis pasiekiamas su `gradlew.bat run -Poneman.isolatedProfile`; jo netrink. Mygtukas **OneMan Sync settings** atidaro originalų RuneLite nustatymų langą su visais laukais. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
+Nuo `0.8.1-clue-test.9` įprastas `gradlew.bat run` naudoja tavo įprastą RuneLite profilį, įskaitant jo mastelį ir išsaugotus OneMan nustatymus. Prieš paleisdamas testinį klientą uždaryk įprastą RuneLite. Senas atskiras `dev-home` profilis pasiekiamas su `gradlew.bat run -Poneman.isolatedProfile`; jo netrink. Mygtukas **OneMan Sync settings** atidaro originalų RuneLite nustatymų langą su visais laukais. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
 
 Jagex paskyros prisijungimas: oficialus RuneLite vadovas
 https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
@@ -107,4 +107,12 @@ Clue Scroll Hub → STASH: pasirink Beginner, Easy, Medium, Hard, Elite arba Mas
 
 Farming Hub → Patches: pasirink Tree (7 vietos, įskaitant Auburnvale), Herb (10 vietų), Fruit Tree ar kitą tipą. Atidaryk žaidimo pasaulio žemėlapį ir spausk vietą sąraše; jis turi centruotis į pasirinktą vietą. Uždarytame žemėlapyje pasirinktas taikinys laukia atidarymo. Po centravimo žemėlapį turi būti galima laisvai stumdyti.
 
-Gretimi allotment, hardwood ar grape plotai sugrupuoti pagal vietą. Kitų RuneLite priedų ir paties žaidimo ikonų OneMan filtrai nekeičia. Map locations nepatvirtina paskyros unlockų. Požeminėms vietoms gali reikėti pasirinkti tinkamą žemėlapio sritį. Run status skirtuke palikti birdhouse laikmačiai ir contract informacija.
+Gretimi allotment, hardwood ar grape plotai sugrupuoti pagal vietą. Kitų RuneLite priedų ir paties žaidimo ikonų OneMan filtrai nekeičia. Map locations nepatvirtina paskyros unlockų. Požeminėms vietoms gali reikėti pasirinkti tinkamą žemėlapio sritį. Runs skirtuke palikti birdhouse laikmačiai ir contract informacija.
+
+## Kortelės ir sėklų paieška (test build 9)
+
+Farming Patches ir Clue STASH turi bendrą kortelių dizainą: ikona, tipas, vietų skaičius, vietos pasirinkimas ir Map. Ilgi sąrašai slenka juostoje; jos turinys nebeturi didinti Fixed režimo lango aukščio.
+
+Farming → Seeds: įrašyk ranarr seed, acorn, maple sapling, jute seed arba seaweed spore. Rezultatas rodo patch tipą ir sodinimo pastabą. Show ... patches atveria Patches su atitinkamu tipu ir įjungia jo OneMan žymeklius; vietą pasirink kortelėje. Runs palikti birdhouse laikmačiai ir contract būsena.
+
+Žemėlapyje užvedus ant S arba F turi būti vienas į eilutes suskaidytas užrašas. Dubliuojamas Focus-on užrašas pašalintas; žemėlapio centravimas iš Hub išliko.

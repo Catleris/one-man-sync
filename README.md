@@ -6,11 +6,19 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.8
+## Clue Hub test build — 0.8.1-clue-test.9
+
+**Compact cards, fixed-mode sizing and seed lookup:** Farming and STASH browsers share a card design with an item/tier icon, category, location count and dropdown plus Map button. Search filters the displayed cards. Farming tabs are Patches / Seeds / Runs; other hub tab bars stay on one line with native scroll controls.
+
+The sidebar reports no required/preferred height to RuneLite's frame layout. Long card lists scroll within the existing viewport, so opening a hub must no longer stretch a Fixed-mode client to the screen's bottom. This changes sidebar sizing only.
+
+World-map pins now show one wrapped native tooltip using `<br>` separators. Their duplicate Focus-on action is disabled; centre a location from its Hub card instead. Pins retain their tier/type colours.
+
+Seeds accepts seed, sapling, spore and tuber names. It resolves crop patch types from the installed RuneLite Produce metadata, handles acorn/crystal acorn/gout tuber and other material-name exceptions, and links to matching patch-type locations. Potted trees show the plant-pot → sapling step; crystal acorns are handled separately. Unrecognised items receive no guessed planting location. Levels, quests and individual-site access still need checking in-game. This lookup adds no web requests or game actions.
 
 **New map browsers:** Clue Hub → STASH filters all installed RuneLite STASH units by Beginner / Easy / Medium / Hard / Elite / Master. Coloured S pins appear on the world map; nearby same-floor units also get clipped minimap dots. The checkbox hides both OneMan STASH marker types. Farming Hub → Patches filters RuneLite's farming sites by type (Tree, Fruit Tree, Herb, Allotment, etc.). The current snapshot contains 7 regular-tree locations, including Auburnvale, and 10 herb locations. Nearby plots such as allotment pairs, hardwood trees and grape vines are grouped as locations, rather than counted as individual plots. RuneLite's standard map icons remain independent of OneMan's filters.
 
-Open the world map and click a location in either list to centre the map. If it is closed, the selected target waits until it opens. Focus happens once, so subsequent manual panning remains free. Underground locations may require choosing the relevant map area. Locations do not prove account access/unlocks. Filters and marker visibility are saved locally. Farming herb/tree observations appear in selected-location details; birdhouse/contract information remains in Run status. Other farming types currently provide locations, not decoded crop timers. Source/attribution: `src/main/resources/lt/oneman/sync/map-data-LICENSE.txt`.
+Open the world map and click a location in either list to centre the map. If it is closed, the selected target waits until it opens. Focus happens once, so subsequent manual panning remains free. Underground locations may require choosing the relevant map area. Locations do not prove account access/unlocks. Filters and marker visibility are saved locally. Farming herb/tree observations appear in selected-location details; birdhouse/contract information remains in Runs. Other farming types currently provide locations, not decoded crop timers. Source/attribution: `src/main/resources/lt/oneman/sync/map-data-LICENSE.txt`.
 
 The sidebar fills the available height. Clue Hub separates Items, Options and About into compact tabs. The **OneMan Sync settings** button opens RuneLite's original OneMan configuration panel, including Sync Key and all Slayer/notification/Clue options. The temporary custom settings form has been removed. The Plugin Hub installer list is separate from this configuration panel.
 
@@ -117,7 +125,7 @@ Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugi
 
 The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
 
-Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.8`.
+Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.9`.
 
 ### Event registration validation (test build 5)
 

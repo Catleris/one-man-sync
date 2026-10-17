@@ -21,6 +21,7 @@ import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
 final class OneManMapLocations
 {
     @Inject private Client client;
+    @Inject private net.runelite.client.game.ItemManager items;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
     @Inject private WorldMapPointManager manager;
@@ -61,6 +62,22 @@ final class OneManMapLocations
     String category(OneManMapCatalog.Group group) { return categories.get(group); }
     boolean visible(OneManMapCatalog.Group group) { return Boolean.TRUE.equals(visible.get(group)); }
     List<OneManMapCatalog.Site> sites(OneManMapCatalog.Group group,String filter) { return OneManMapCatalog.filter(catalog.get(group),filter); }
+    void icon(javax.swing.JLabel label,String category)
+    {
+        for(net.runelite.client.plugins.timetracking.farming.Produce produce:net.runelite.client.plugins.timetracking.farming.Produce.values()) {
+            if(produce.getPatchImplementation()!=null && FarmingSeedCatalog.category(produce.getPatchImplementation().name()).equals(category)) {
+                cropIcon(label,produce);return;
+            }
+        }
+        Color color=new Color(180,195,125);
+        for(ClueTier tier:ClueTier.values()) if(tier.label.equals(category)) color=tier.color;
+        label.setIcon(new javax.swing.ImageIcon(icon(color,"S",false)));
+    }
+    void cropIcon(javax.swing.JLabel label,net.runelite.client.plugins.timetracking.farming.Produce produce)
+    {
+        net.runelite.client.util.AsyncBufferedImage image=items.getImage(produce.getItemID());
+        if(image!=null) image.addTo(label);else label.setIcon(new javax.swing.ImageIcon(icon(new Color(120,185,105),"F",false)));
+    }
     List<OneManMapCatalog.Site> minimapStashes() { return minimapStashes; }
     void configure(OneManMapCatalog.Group group,String category,boolean show)
     {
@@ -104,10 +121,22 @@ final class OneManMapLocations
             WorldMapPoint point=new WorldMapPoint(location,icon(site.color,group==OneManMapCatalog.Group.STASH?"S":"F",site.id.equals(selected)));
             point.setImagePoint(new net.runelite.api.Point(11,25));
             point.setName("OneMan "+site.category+": "+site.name);
-            point.setTooltip((group==OneManMapCatalog.Group.STASH?"STASH • ":"Farming • ")+site.category+"\n"+site.name+"\nFloor "+location.getPlane());
-            point.setJumpOnClick(true);point.setSnapToEdge(site.id.equals(selected));points.add(point);manager.add(point);
+            point.setTooltip(tooltip(group,site,location.getPlane()));
+            point.setJumpOnClick(false);point.setSnapToEdge(site.id.equals(selected));points.add(point);manager.add(point);
         }
         pins.put(group,points);
+    }
+    static String tooltip(OneManMapCatalog.Group group,OneManMapCatalog.Site site,int plane)
+    {
+        StringBuilder text=new StringBuilder(group==OneManMapCatalog.Group.STASH?"STASH | ":"Farming | ").append(site.category).append("<br>");
+        int line=0;
+        for(String word:site.name.split(" ")) {
+            if(line>0 && line+word.length()+1>32) {text.append("<br>");line=0;}
+            if(line>0) {text.append(' ');line++;}
+            text.append(word);line+=word.length();
+        }
+        if(plane>0) text.append("<br>Floor ").append(plane);
+        return text.toString();
     }
     private static BufferedImage icon(Color color,String letter,boolean selected)
     {
