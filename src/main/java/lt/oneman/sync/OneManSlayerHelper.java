@@ -1,6 +1,7 @@
 package lt.oneman.sync;
 
 import java.awt.*;
+import com.google.gson.JsonObject;
 import java.util.*;
 import javax.inject.Inject;
 import javax.swing.*;
@@ -23,7 +24,6 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.plugins.slayer.SlayerConfig;
 import net.runelite.client.ui.*;
 import net.runelite.client.util.LinkBrowser;
 
@@ -55,8 +55,11 @@ public class OneManSlayerHelper
     private int nextRefresh;
     private volatile boolean active;
 
-    void startUp()
+    private java.util.function.Supplier<JsonObject> taskState=JsonObject::new;
+
+    void startUp(java.util.function.Supplier<JsonObject> taskState)
     {
+        this.taskState=taskState;
         prayerMonitor.reset();
         superiorAlert.reset();
         active = true;
@@ -75,6 +78,7 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
+        taskState=JsonObject::new;
         superiorAlert.reset();
         overlayManager.remove(minimapOverlay);
         overlayManager.remove(requirementOverlay);
@@ -118,11 +122,10 @@ public class OneManSlayerHelper
         for (int i = 0; i < mapPoints.size(); i++)
             mapPoints.get(i).highlight(selectedDestination!=null && mapPoints.get(i).getWorldPoint().equals(selectedDestination.entrance), (client.getTickCount() / 2) % 2 == 0);
         // Refresh item hints every tick so equipping an item updates immediately.
-        String hintTask=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_NAME_KEY);
-        SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(hintTask);
-        String hintAmount=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.AMOUNT_KEY);
-        int hintRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
-        if(hintRemaining>0 && Integer.toString(hintRemaining).equals(hintAmount) && hintGuide!=null) {
+        int liveRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
+        OneManSlayerState.LocalTask task=OneManSlayerState.localTask(taskState.get(),liveRemaining);
+        SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(task.name);
+        if(task.known() && hintGuide!=null) {
             Set<String> inv=itemNames(InventoryID.INV), worn=itemNames(InventoryID.WORN);
             java.util.List<SlayerRequirementOverlay.Row> rows=new ArrayList<>();
             for(SlayerLabCatalog.Requirement requirement:hintGuide.requirements)
@@ -134,23 +137,18 @@ public class OneManSlayerHelper
         long now = System.currentTimeMillis();
         goal = Optional.ofNullable(configManager.getConfiguration(SlayerLabConfig.GROUP, account.profile, "lootGoal")).orElse("");
         if (lastXp < 0) lastXp = client.getSkillExperience(Skill.SLAYER);
-        // Built-in Slayer handles assignment DB decoding, messages and profile changes.
-        String name = configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_NAME_KEY);
-        String location = configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.TASK_LOC_KEY);
-        int remaining = client.getVarpValue(VarPlayerID.SLAYER_COUNT);
-        if (remaining <= 0 || name == null || name.trim().isEmpty())
+        String name=task.name, location=task.location;
+        int remaining=task.remaining;
+        if (remaining <= 0 || !task.known())
         {
             if (account.journal.active != null && remaining == 0)
                 account.journal.observe(account.journal.active.task, account.journal.active.assignedArea, 0, account.journal.active.initial, now);
-            account.pause("Task completed / cleared", now);
-            currentTask = ""; lastWarning = "";
-            clearLocations();
-            publish("No active task detected. Ask a Slayer master or check your enchanted gem. Keep RuneLite's Slayer plugin enabled.", "");
+            account.pause(remaining>0?"Assignment label not yet confirmed":"Task completed / cleared", now);
+            currentTask = ""; lastWarning = ""; clearLocations();
+            publish(remaining>0 ? "Slayer count: "+remaining+". Task/area not confirmed yet. Check your enchanted gem or Slayer master to refresh the assignment."
+                : "No active task detected. Ask a Slayer master or check your enchanted gem.", "");
             return;
         }
-        // Do not display an old profile name while the built-in plugin catches up.
-        String profileAmount = configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME, SlayerConfig.AMOUNT_KEY);
-        if (!Integer.toString(remaining).equals(profileAmount)) return;
         String signature = SlayerLabCatalog.normalize(name) + "|" + SlayerLabCatalog.normalize(location);
         if (!signature.equals(taskSignature))
         {
@@ -167,9 +165,7 @@ public class OneManSlayerHelper
             }
         }
         currentTask = name;
-        String initialText=configManager.getRSProfileConfiguration(SlayerConfig.GROUP_NAME,SlayerConfig.INIT_AMOUNT_KEY);
-        int initial=0;
-        try { initial=Integer.parseInt(initialText); } catch(NumberFormatException ignored) { }
+        int initial=task.initial;
         account.journal.observe(name, location, remaining, initial, now);
         SlayerLabJournal.Session session = account.journal.active;
         session.variant = variant;
@@ -364,6 +360,7 @@ public class OneManSlayerHelper
         private String url = "";
         private final JComboBox<SlayerLabLocations.Destination> choices = new JComboBox<>();
         private final JTextArea access = new JTextArea();
+        private final JTextArea taskSummary = new JTextArea(3,0);
         private final JButton centre = new JButton("Centre map");
         private final JButton track = new JButton("Track entrance");
         private final JButton clear = new JButton("Stop tracking");
@@ -397,10 +394,15 @@ public class OneManSlayerHelper
             wiki.addActionListener(e -> { if (!url.isEmpty()) LinkBrowser.browse(url); });
             JPanel controls = new JPanel();
             controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
-            controls.add(new JLabel("DESTINATION / ENTRANCE"));
+            taskSummary.setEditable(false); taskSummary.setLineWrap(true); taskSummary.setWrapStyleWord(true);
+            taskSummary.setOpaque(false); taskSummary.setAlignmentX(Component.LEFT_ALIGNMENT);
+            taskSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE,95)); controls.add(taskSummary);
+            JLabel destinationLabel=new JLabel("DESTINATION / ENTRANCE"); destinationLabel.setAlignmentX(Component.LEFT_ALIGNMENT); controls.add(destinationLabel);
+            choices.setAlignmentX(Component.LEFT_ALIGNMENT);
             choices.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
             controls.add(choices);
-            access.setColumns(20);
+            access.setColumns(0); access.setRows(3); access.setAlignmentX(Component.LEFT_ALIGNMENT);
+            access.setMaximumSize(new Dimension(Integer.MAX_VALUE,100));
             access.setEditable(false);
             access.setLineWrap(true);
             access.setWrapStyleWord(true);
@@ -449,6 +451,8 @@ public class OneManSlayerHelper
         }
         void showTabs(String[] views,String task,String sessionNote,long started,String profile)
         {
+            String[] summaryLines=views[0].split("\n",4);
+            taskSummary.setText(String.join("\n",java.util.Arrays.copyOf(summaryLines,Math.min(3,summaryLines.length))));
             updating=true;
             shownProfile=profile;
             if(shownSession!=started) { shownSession=started; note.setText(sessionNote); }
@@ -463,6 +467,7 @@ public class OneManSlayerHelper
         void showView(String view, String link)
         {
             updating=true; shownTask=""; shownProfile=""; shownSession=0;
+            taskSummary.setText(view);
             for(int i=0;i<8;i++) sections[i].setText(view);
             variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;

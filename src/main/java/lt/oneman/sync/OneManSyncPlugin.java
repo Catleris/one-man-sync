@@ -190,7 +190,7 @@ public class OneManSyncPlugin extends Plugin
     protected void startUp()
     {
         clueHub.startUp();
-        slayerHelper.startUp();
+        slayerHelper.startUp(this::localSlayerState);
         companion.startUp(this::getPluginDirectory);
         if (client.getGameState() == GameState.LOGGED_IN)
         {
@@ -286,13 +286,13 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
-        if(config.enabled() && client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
+        if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
         {
             // Match RuneLite's Slayer plugin behaviour: read the assignment after
             // the var/DB update has settled on the client thread.
             clientThread.invokeLater(() -> {
                 refreshSlayerStateCache();
-                syncSoon();
+                if(config.enabled()) syncSoon();
             });
         }
         if(ready()) progressDirty=true;
@@ -412,7 +412,7 @@ public class OneManSyncPlugin extends Plugin
     {
         clueHub.onChatMessage(event);
         slayerHelper.onChatMessage(event);
-        if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
+        if(client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
         boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;
         boolean slayerDialog=type==ChatMessageType.DIALOG || type==ChatMessageType.MESBOX || type==ChatMessageType.NPC_SAY;
@@ -421,12 +421,8 @@ public class OneManSyncPlugin extends Plugin
         String message=cleanMessage(event.getMessage());
         long now=System.currentTimeMillis();
 
-        if(captureSlayerMessage(message))
-        {
-            syncSoon();
-        }
-
-        if(!normalGameMessage) return;
+        if(captureSlayerMessage(message) && config.enabled()) syncSoon();
+        if(!config.enabled() || !normalGameMessage) return;
 
         for(String petMessage:PET_MESSAGES){
             if(message.contains(petMessage)){
@@ -1095,6 +1091,16 @@ public class OneManSyncPlugin extends Plugin
             out.add(o);
         }
         return out;
+    }
+
+    private JsonObject localSlayerState()
+    {
+        JsonObject cached=slayerStateCache;
+        if(cached==null || client.getTickCount()-lastSlayerRefreshTick>=5
+            || jsonInt(cached,"rawTaskCount")!=client.getVarpValue(VarPlayerID.SLAYER_COUNT)
+            || jsonInt(cached,"rawTaskTarget")!=client.getVarpValue(VarPlayerID.SLAYER_TARGET)
+            || jsonInt(cached,"rawTaskArea")!=client.getVarpValue(VarPlayerID.SLAYER_AREA)) refreshSlayerStateCache();
+        return slayerStateCache;
     }
 
     private JsonObject buildSlayerState()

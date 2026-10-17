@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.1-clue-test.1";
+    static final String VERSION = "0.8.1-clue-test.2";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -80,11 +80,14 @@ final class OneManCompanion {
             PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
-            cards.add(farmingTracker.companionPanel(),"Farming");
-            cards.add(clueHub.companionPanel(),"Clue Hub");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming","Clue Hub"});
+            cards.add(farmingTracker.companionPanel(),"Farming Hub");
+            cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
-            root.add(sections,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
+            JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
+            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
+            hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
+            root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
             navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
