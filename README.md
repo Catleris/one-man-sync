@@ -17,7 +17,7 @@ Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer /
 - `Reward table` means a possible reward source; it never proves the actual origin of an item. Common supplies such as runes/coins are hidden by default and can be enabled separately.
 - An observed casket opening is recorded only when a server clue-completion message correlates with a fresh reward container; recent NPC drops are labelled separately. The session history is bounded and cleared on account/world changes. No new network service or sync setting is needed.
 - Ground labels are a separate overlay; use **Clue ground label height** if they overlap RuneLite Ground Items labels.
-- Item ID lookup is available in the hub. Bundled data attribution is shown in the panel; source details and licenses are in `src/main/resources/lt/oneman/sync/clue-data-LICENSE.txt`.
+- Item name / ID lookup is available in the hub. Bundled data attribution is shown in the panel; source details and licenses are in `src/main/resources/lt/oneman/sync/clue-data-LICENSE.txt`.
 
 ### Testing in the development client
 

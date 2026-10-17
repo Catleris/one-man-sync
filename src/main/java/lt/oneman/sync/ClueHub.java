@@ -34,7 +34,6 @@ final class ClueHub
     private boolean scanPending;
     private String profile = "";
     private final ClueRewardCapture caskets = new ClueRewardCapture();
-    private final Map<Integer, Set<ClueTier>> observedRewards = new HashMap<>();
     private final Map<TileItem, GroundItem> ground = new IdentityHashMap<>();
     private final Map<Integer, Seen> recent = new LinkedHashMap<>();
     static final class GroundItem
@@ -58,7 +57,7 @@ final class ClueHub
     }
     void shutDown()
     {
-        active = false; caskets.clear(); observedRewards.clear(); ground.clear(); recent.clear(); overlays.remove(groundOverlay); overlays.remove(widgetOverlay);
+        active = false; caskets.clear(); ground.clear(); recent.clear(); overlays.remove(groundOverlay); overlays.remove(widgetOverlay);
         SwingUtilities.invokeLater(() -> panel = null);
     }
     PluginPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }
@@ -70,10 +69,8 @@ final class ClueHub
     {
         ItemComposition definition = items.getItemComposition(id);
         if (definition.getNote() != -1) { id = definition.getLinkedNoteId(); definition = items.getItemComposition(id); }
-        ClueItemCatalog.Tags base = catalog.classify(id, definition.getName());
-        if (!observedRewards.containsKey(id)) return base;
-        Set<ClueTier> reward = EnumSet.noneOf(ClueTier.class); reward.addAll(base.reward); reward.addAll(observedRewards.get(id));
-        return new ClueItemCatalog.Tags(base.required, reward, base.common, base.scroll);
+        if (definition.getPlaceholderTemplateId() != -1) { id = definition.getPlaceholderId(); definition = items.getItemComposition(id); }
+        return catalog.classify(id, definition.getName());
     }
     void onGameStateChanged(GameStateChanged event)
     {
@@ -82,7 +79,7 @@ final class ClueHub
         if (state == GameState.LOGGED_IN) scanPending = true;
         if (state == GameState.LOGIN_SCREEN || state == GameState.HOPPING)
         {
-            recent.clear(); observedRewards.clear(); caskets.clear(); profile = ""; catalog.clearCache(); refresh();
+            recent.clear(); caskets.clear(); profile = ""; catalog.clearCache(); refresh();
         }
     }
     void onConfigChanged() { if (!active) return; caskets.clear(); ground.clear(); catalog.clearCache(); scanPending = true; refresh(); }
@@ -90,7 +87,7 @@ final class ClueHub
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         String next = Objects.toString(configs.getRSProfileKey(), "");
-        if (!next.equals(profile)) { profile = next; recent.clear(); observedRewards.clear(); caskets.clear(); ground.clear(); scanPending = true; refresh(); }
+        if (!next.equals(profile)) { profile = next; recent.clear(); caskets.clear(); ground.clear(); scanPending = true; refresh(); }
         caskets.tick(client.getTickCount());
         // Once on enabling/login/region load; never scan the scene each tick or frame.
         if (enabled() && scanPending)
@@ -112,7 +109,7 @@ final class ClueHub
     }
     void onNpcLootReceived(net.runelite.client.events.NpcLootReceived event)
     {
-        if (!enabled()) return;
+        if (!enabled() || event.getNpc() == null) return;
         for (net.runelite.client.game.ItemStack item : event.getItems())
         {
             ClueItemCatalog.Tags tags = classify(item.getId());
@@ -147,8 +144,10 @@ final class ClueHub
         {
             if (item.getId() < 0 || item.getQuantity() <= 0) continue;
             int id = items.canonicalize(item.getId());
-            observedRewards.computeIfAbsent(id, k -> EnumSet.noneOf(ClueTier.class)).add(tier);
-            remember(id, items.getItemComposition(id).getName(), "Opened " + tier.label + " casket (observed)", classify(id));
+            ClueItemCatalog.Tags base = classify(id);
+            Set<ClueTier> reward = EnumSet.noneOf(ClueTier.class); reward.addAll(base.reward); reward.add(tier);
+            remember(id, items.getItemComposition(id).getName(), "Opened " + tier.label + " casket (observed)",
+                new ClueItemCatalog.Tags(base.required, reward, base.common, base.scroll));
             found = true;
         }
         if (found) caskets.consumed();
@@ -171,13 +170,25 @@ final class ClueHub
     {
         clientThread.invokeLater(() -> {
             if (!active) return;
-            String result = "Enter an item ID.";
+            String result = "Enter an item name or item ID.";
             try
             {
                 int id = Integer.parseInt(query.trim());
                 if (id >= 0 && id < 100000) result = describe(items.getItemComposition(id).getName(), classify(id));
             }
-            catch (NumberFormatException ignored) { result = "Use the numeric in-game item ID for this test build."; }
+            catch (NumberFormatException ignored)
+            {
+                List<net.runelite.http.api.item.ItemPrice> matches = new ArrayList<>(items.search(query.trim()));
+                matches.sort(Comparator.comparing((net.runelite.http.api.item.ItemPrice item) -> !item.getName().equalsIgnoreCase(query.trim()))
+                    .thenComparing(net.runelite.http.api.item.ItemPrice::getName));
+                StringBuilder text = new StringBuilder(); int count = 0;
+                for (net.runelite.http.api.item.ItemPrice item : matches)
+                {
+                    text.append(describe(item.getName(), classify(item.getId()))).append("\n\n");
+                    if (++count >= 8) break;
+                }
+                result = count == 0 ? "No local name match. Try an item ID for untradeable items." : text.toString();
+            }
             final String text = result;
             SwingUtilities.invokeLater(() -> { if (active && panel != null) panel.result.setText(text); });
         });
@@ -222,7 +233,7 @@ final class ClueHub
             toggle(options, "Required items", "clueRequiredItems", config.clueRequiredItems());
             toggle(options, "Reward table items", "clueRewardItems", config.clueRewardItems());
             toggle(options, "Include common rewards", "clueCommonRewards", config.clueCommonRewards()); header.add(options);
-            JTextField query = new JTextField(); JButton search = new JButton("Look up item ID");
+            JTextField query = new JTextField(); JButton search = new JButton("Look up item");
             search.addActionListener(e -> { if (!query.getText().trim().isEmpty()) lookup(query.getText()); }); query.addActionListener(e -> search.doClick());
             header.add(query); header.add(search); header.add(result);
             JButton guide = new JButton("Open clue guide"); guide.addActionListener(e -> LinkBrowser.browse("https://oldschool.runescape.wiki/w/Treasure_Trails")); header.add(guide);

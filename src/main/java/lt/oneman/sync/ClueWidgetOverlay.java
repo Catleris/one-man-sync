@@ -15,7 +15,7 @@ final class ClueWidgetOverlay extends WidgetItemOverlay
     ClueWidgetOverlay() { showOnInventory(); showOnBank(); showOnEquipment(); }
     @Override public void renderItemOverlay(Graphics2D graphics, int id, WidgetItem item)
     {
-        if (!hub.enabled() || !config.clueWidgetMarkers()) return;
+        if (id < 0 || !hub.enabled() || !config.clueWidgetMarkers()) return;
         Set<ClueTier> tiers = hub.tiers(hub.classify(id));
         Rectangle bounds = item.getCanvasBounds(); int x = bounds.x + bounds.width - 7;
         for (ClueTier tier : tiers)
