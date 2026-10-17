@@ -61,6 +61,24 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="slayerRequirementsOverlay", name="Slayer item hints", description="Show task protection and finishing items on the left: red missing, purple in last observed bank, green carried/equipped, grey bank unknown.", position=7)
     default boolean slayerRequirementsOverlay(){return true;}
 
+    @ConfigItem(keyName="clueHubEnabled", name="Clue Hub (test)", description="Local clue item tiers and hub. Does not require website sync.", position=80)
+    default boolean clueHubEnabled() { return true; }
+    @ConfigItem(keyName="clueGroundMarkers", name="Clue ground labels", description="Separate ground labels with tier dots after item names. Adjust height if Ground Items overlaps.", position=81)
+    default boolean clueGroundMarkers() { return true; }
+    @ConfigItem(keyName="clueWidgetMarkers", name="Clue inventory / bank dots", description="Tier dots on inventory, equipment and bank item icons.", position=82)
+    default boolean clueWidgetMarkers() { return true; }
+    @ConfigItem(keyName="clueMenuMarkers", name="Clue item menu labels", description="Append clue role and coloured tier dots to item menu text.", position=83)
+    default boolean clueMenuMarkers() { return true; }
+    @ConfigItem(keyName="clueRequiredItems", name="Clue required items", description="Mark items needed for emote steps and beginner Charlie tasks. Sherlock skill tasks are not indexed in this test.", position=84)
+    default boolean clueRequiredItems() { return true; }
+    @ConfigItem(keyName="clueRewardItems", name="Clue reward table items", description="Mark items in special/shared clue reward tables. Possible sources, not the actual origin of an individual item.", position=85)
+    default boolean clueRewardItems() { return true; }
+    @ConfigItem(keyName="clueCommonRewards", name="Include common clue rewards", description="Also mark ordinary supplies such as coins and runes listed in clue reward tables; can be noisy.", position=86)
+    default boolean clueCommonRewards() { return false; }
+    @Range(min=0, max=200)
+    @ConfigItem(keyName="clueGroundLabelHeight", name="Clue ground label height", description="Height above a ground item's layer; adjust to separate from Ground Items labels.", position=87)
+    default int clueGroundLabelHeight() { return 70; }
+
     // RuneLite initializes defaults only for methods declared on this config.
     @ConfigItem(keyName="combatStyle", name="Supplies combat style", description="Controls ammunition or rune quantity warnings; does not select combat actions.", position=10)
     default CombatStyle combatStyle() { return CombatStyle.MELEE; }

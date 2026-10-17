@@ -28,6 +28,24 @@ final class OneManSlayerState
         }
         return current;
     }
+    static final class LocalTask
+    {
+        final String name, location;
+        final int remaining, initial;
+        LocalTask(String name, String location, int remaining, int initial)
+        { this.name=name; this.location=location; this.remaining=remaining; this.initial=initial; }
+        boolean known() { return !name.isEmpty(); }
+    }
+    /** Only confirmed/reconciled labels with the current live count reach local tools. */
+    static LocalTask localTask(JsonObject state,int liveCount)
+    {
+        if(state==null || liveCount<=0) return new LocalTask("","",Math.max(0,liveCount),0);
+        boolean verified=bool(state,"taskSignalValid") || "last-known".equals(string(state,"taskStatus"));
+        String name=verified && integer(state,"amount")==liveCount ? string(state,"taskName").trim() : "";
+        if(integer(state,"rawTaskArea")>0 && string(state,"location").trim().isEmpty()) name="";
+        return new LocalTask(name,name.isEmpty()?"":string(state,"location"),liveCount,
+            name.isEmpty()?0:Math.max(liveCount,integer(state,"initialAmount")));
+    }
     private static boolean bool(JsonObject o,String key)
     { try { return o.has(key) && o.get(key).getAsBoolean(); } catch(RuntimeException e) { return false; } }
     private static String string(JsonObject o,String key)

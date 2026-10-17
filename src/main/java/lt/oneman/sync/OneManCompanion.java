@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.0";
+    static final String VERSION = "0.8.1-clue-test.9";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -38,6 +38,7 @@ final class OneManCompanion {
     @Inject private SlayerLabAccount account;
     @Inject private OneManSlayerHelper slayerHelper;
     @Inject private FarmingRunTracker farmingTracker;
+    @Inject private ClueHub clueHub;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -60,7 +61,7 @@ final class OneManCompanion {
     private int qp;
     private String player = "";
 
-    void startUp(CompanionScreenshots.Directory directory) {
+    void startUp(CompanionScreenshots.Directory directory, Runnable openSettings) {
         ticks=0;loginDelay=10;levels.clear();completed.clear();lastSession="No active session.";
         try (Reader r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("efficiency-catalog.json")), StandardCharsets.UTF_8)) {
             planner = new CompanionPlanner(gson.fromJson(r, CompanionPlanner.Catalog.class));
@@ -76,14 +77,21 @@ final class OneManCompanion {
             Graphics2D g = icon.createGraphics(); g.setColor(new Color(218,176,85));
             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
             g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
-            PluginPanel root=new PluginPanel(){};root.setLayout(new BorderLayout(0,6));
+            PluginPanel root=new OneManSidebarPanel();
             JPanel cards=new JPanel(new CardLayout());cards.add(panel,"Overview");
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
-            cards.add(farmingTracker.companionPanel(),"Farming");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming"});
+            cards.add(farmingTracker.companionPanel(),"Farming Hub");
+            cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
-            root.add(sections,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
-            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming").icon(icon).priority(6).panel(root).build();
+            JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
+            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
+            hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
+            JButton settings=new JButton("OneMan Sync settings");
+            settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
+            settings.addActionListener(event->openSettings.run()); hubNavigation.add(settings,BorderLayout.SOUTH);
+            root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
+            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
     }
@@ -258,11 +266,11 @@ final class OneManCompanion {
     private void showLoggedOut() {
         SwingUtilities.invokeLater(()-> { if(active&&panel!=null) { panel.next.setText("Log in to calculate your next steps.");panel.prep.setText("Log in and open your bank.");panel.summary.setText(lastSummary);panel.slayer.setText("Logged out. The last observed Slayer session is archived in OneMan → Slayer → History."); } });
     }
-    private final class Panel extends PluginPanel {
+    private final class Panel extends JPanel {
         final JTextArea next=area(),prep=area(),slayer=area(),fresh=area(),summary=area(),memories=area();
         final JComboBox<CompanionPlanner.Step> goals=new JComboBox<>();boolean updating;
         Panel() {
-            setLayout(new BorderLayout());JTabbedPane tabs=new JTabbedPane();
+            setLayout(new BorderLayout());JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
             tabs.addTab("Next",new JScrollPane(next));
             JPanel preparation=new JPanel(new BorderLayout());preparation.add(goals,BorderLayout.NORTH);preparation.add(new JScrollPane(prep),BorderLayout.CENTER);
             JPanel actions=new JPanel(new GridLayout(0,1));JButton guide=new JButton("Open goal guide"),mark=new JButton("Confirm manual unlock"),capture=new JButton("Save progress screenshot");

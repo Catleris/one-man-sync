@@ -39,6 +39,9 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.DecorativeObjectSpawned;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.ItemSpawned;
+import net.runelite.api.events.ItemDespawned;
+import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
@@ -134,6 +137,10 @@ public class OneManSyncPlugin extends Plugin
 
     @Inject private OneManSlayerHelper slayerHelper;
     @Inject private OneManCompanion companion;
+    @Inject private ClueHub clueHub;
+    @Inject private OneManMapLocations mapLocations;
+    @Inject private StashMinimapOverlay stashMinimapOverlay;
+    @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private OkHttpClient http;
@@ -175,6 +182,8 @@ public class OneManSyncPlugin extends Plugin
     private volatile String lastLootSource = "";
     private volatile long lastLootAt = 0L;
 
+    @Inject private net.runelite.client.eventbus.EventBus eventBus;
+
     @Provides
     OneManSyncConfig provideConfig(ConfigManager configManager)
     {
@@ -185,8 +194,11 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void startUp()
     {
-        slayerHelper.startUp();
-        companion.startUp(this::getPluginDirectory);
+        mapLocations.startUp();
+        mapOverlays.add(stashMinimapOverlay);
+        clueHub.startUp();
+        slayerHelper.startUp(this::localSlayerState);
+        companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
         if (client.getGameState() == GameState.LOGGED_IN)
         {
             loginCountdown = 10;
@@ -198,6 +210,9 @@ public class OneManSyncPlugin extends Plugin
     protected void shutDown()
     {
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+        mapOverlays.remove(stashMinimapOverlay);
+        mapLocations.shutDown();
+        clueHub.shutDown();
         companion.shutDown();
         slayerHelper.shutDown();
         loginCountdown=-1;
@@ -228,8 +243,22 @@ public class OneManSyncPlugin extends Plugin
     }
 
     @Subscribe
+    public void onItemSpawned(ItemSpawned event) { clueHub.onItemSpawned(event); }
+    @Subscribe
+    public void onItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
+    @Subscribe
+    public void onMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
+    @Subscribe
+    public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
+    {
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("clue"))
+            clientThread.invokeLater(clueHub::onConfigChanged);
+    }
+
+    @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        clueHub.onGameStateChanged(event);
         slayerHelper.onGameStateChanged(event);
         companion.onGameStateChanged(event);
         if(event.getGameState()==GameState.LOGGED_IN){
@@ -266,13 +295,13 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
-        if(config.enabled() && client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
+        if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
         {
             // Match RuneLite's Slayer plugin behaviour: read the assignment after
             // the var/DB update has settled on the client thread.
             clientThread.invokeLater(() -> {
                 refreshSlayerStateCache();
-                syncSoon();
+                if(config.enabled()) syncSoon();
             });
         }
         if(ready()) progressDirty=true;
@@ -306,6 +335,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onNpcLootReceived(NpcLootReceived event)
     {
+        clueHub.onNpcLootReceived(event);
         slayerHelper.onNpcLootReceived(event);
         if(!ready() || event.getNpc()==null) return;
 
@@ -339,6 +369,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
@@ -388,8 +419,9 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
+        clueHub.onChatMessage(event);
         slayerHelper.onChatMessage(event);
-        if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
+        if(client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
         boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;
         boolean slayerDialog=type==ChatMessageType.DIALOG || type==ChatMessageType.MESBOX || type==ChatMessageType.NPC_SAY;
@@ -398,12 +430,8 @@ public class OneManSyncPlugin extends Plugin
         String message=cleanMessage(event.getMessage());
         long now=System.currentTimeMillis();
 
-        if(captureSlayerMessage(message))
-        {
-            syncSoon();
-        }
-
-        if(!normalGameMessage) return;
+        if(captureSlayerMessage(message) && config.enabled()) syncSoon();
+        if(!config.enabled() || !normalGameMessage) return;
 
         for(String petMessage:PET_MESSAGES){
             if(message.contains(petMessage)){
@@ -498,6 +526,8 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameTick(GameTick event)
     {
+        mapLocations.tick();
+        clueHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
         if(!ready()) return;
@@ -1071,6 +1101,16 @@ public class OneManSyncPlugin extends Plugin
             out.add(o);
         }
         return out;
+    }
+
+    private JsonObject localSlayerState()
+    {
+        JsonObject cached=slayerStateCache;
+        if(cached==null || client.getTickCount()-lastSlayerRefreshTick>=5
+            || jsonInt(cached,"rawTaskCount")!=client.getVarpValue(VarPlayerID.SLAYER_COUNT)
+            || jsonInt(cached,"rawTaskTarget")!=client.getVarpValue(VarPlayerID.SLAYER_TARGET)
+            || jsonInt(cached,"rawTaskArea")!=client.getVarpValue(VarPlayerID.SLAYER_AREA)) refreshSlayerStateCache();
+        return slayerStateCache;
     }
 
     private JsonObject buildSlayerState()

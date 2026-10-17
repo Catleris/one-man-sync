@@ -52,4 +52,29 @@ public class OneManSlayerStateTest
         assertEquals("Drakes",OneManSlayerState.reconcile(fresh,old,2000).get("taskName").getAsString());
         assertEquals("",OneManSlayerState.reconcile(state(60,10,0,false),old,2000).get("taskName").getAsString());
     }
+    @Test public void localHubUsesConfirmedKonarAreaWithoutBuiltinProfile()
+    {
+        JsonObject live=state(45,10,1000,true); live.addProperty("taskName","Bloodvelds");
+        live.addProperty("location","Stronghold Slayer Dungeon");
+        OneManSlayerState.LocalTask task=OneManSlayerState.localTask(live,45);
+        assertTrue(task.known()); assertEquals("Bloodvelds",task.name); assertEquals(100,task.initial);
+        assertEquals("Stronghold Slayer Cave",SlayerLabLocations.forTask(task.name,task.location).get(0).name);
+    }
+    @Test public void localHubNeverUsesStaleUnverifiedOrCompletedAssignment()
+    {
+        JsonObject live=state(45,10,1000,true);
+        assertFalse(OneManSlayerState.localTask(live,44).known());
+        assertFalse(OneManSlayerState.localTask(live,0).known());
+        live.addProperty("taskSignalValid",false);live.addProperty("taskStatus","unknown");
+        assertFalse(OneManSlayerState.localTask(live,45).known());
+        live.addProperty("taskStatus","last-known");
+        assertTrue(OneManSlayerState.localTask(live,45).known());
+    }
+    @Test public void missingKonarAreaCannotBecomeAnUnrestrictedTask()
+    {
+        JsonObject live=state(45,10,1000,true);live.addProperty("location","");
+        assertFalse(OneManSlayerState.localTask(live,45).known());
+        live.addProperty("rawTaskArea",0);
+        assertTrue(OneManSlayerState.localTask(live,45).known());
+    }
 }

@@ -23,12 +23,13 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
 	testImplementation 'junit:junit:4.12'
+	testImplementation 'org.mockito:mockito-core:4.11.0'
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
 }
 
 group = 'lt.oneman'
-version = '0.8.0'
+version = '0.8.1-clue-test.10'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
@@ -40,9 +41,10 @@ tasks.register('run', JavaExec) {
 	mainClass = pluginMainClass
 
 	jvmArgs "-ea"
-	// Separate RuneLite profile/settings for the development copy.
-	systemProperty "user.home", file("dev-home").absolutePath
-	systemProperty "oneman.devHomeConfigured", "true"
+	// Match the installed client's display/configuration by default. Isolation remains opt-in.
+	if (providers.gradleProperty("oneman.isolatedProfile").isPresent()) {
+		systemProperty "user.home", file("dev-home").absolutePath
+	}
 	args "--developer-mode", "--debug"
 }
 

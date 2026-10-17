@@ -55,7 +55,7 @@ public class FarmingRunTrackerTest {
     }
     @Test public void patchKeysUseRuneLiteRegionAndVarbit() {
         assertEquals("10548.4774",FarmingRunTracker.TRACKED_PATCHES.get(0).configKey());
-        assertEquals(16,FarmingRunTracker.TRACKED_PATCHES.size());
+        assertEquals(17,FarmingRunTracker.TRACKED_PATCHES.size());
         assertEquals("6967.4774",FarmingRunTracker.TRACKED_PATCHES.stream().filter(p->p.getName().equals("Herb: Hosidius")).findFirst().get().configKey());
     }
 }
