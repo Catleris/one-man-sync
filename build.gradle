@@ -29,7 +29,7 @@ dependencies {
 }
 
 group = 'lt.oneman'
-version = '0.8.1-clue-test.6'
+version = '0.8.1-clue-test.7'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
@@ -41,9 +41,10 @@ tasks.register('run', JavaExec) {
 	mainClass = pluginMainClass
 
 	jvmArgs "-ea"
-	// Separate RuneLite profile/settings for the development copy.
-	systemProperty "user.home", file("dev-home").absolutePath
-	systemProperty "oneman.devHomeConfigured", "true"
+	// Match the installed client's display/configuration by default. Isolation remains opt-in.
+	if (providers.gradleProperty("oneman.isolatedProfile").isPresent()) {
+		systemProperty "user.home", file("dev-home").absolutePath
+	}
 	args "--developer-mode", "--debug"
 }
 

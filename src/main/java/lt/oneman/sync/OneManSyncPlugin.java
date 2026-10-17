@@ -179,6 +179,8 @@ public class OneManSyncPlugin extends Plugin
     private volatile String lastLootSource = "";
     private volatile long lastLootAt = 0L;
 
+    @Inject private net.runelite.client.eventbus.EventBus eventBus;
+
     @Provides
     OneManSyncConfig provideConfig(ConfigManager configManager)
     {
@@ -191,7 +193,7 @@ public class OneManSyncPlugin extends Plugin
     {
         clueHub.startUp();
         slayerHelper.startUp(this::localSlayerState);
-        companion.startUp(this::getPluginDirectory);
+        companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
         if (client.getGameState() == GameState.LOGGED_IN)
         {
             loginCountdown = 10;

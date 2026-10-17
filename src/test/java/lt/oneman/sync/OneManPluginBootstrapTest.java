@@ -7,6 +7,8 @@ import com.google.inject.Injector;
 import javax.swing.SwingUtilities;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JButton;
+import net.runelite.client.plugins.config.NativeConfigTestSupport;
 import java.awt.Component;
 import java.awt.Container;
 import net.runelite.client.ui.NavigationButton;
@@ -46,11 +48,13 @@ public class OneManPluginBootstrapTest
         when(configs.getConfig(OneManSyncConfig.class)).thenReturn(new OneManSyncConfig(){});
         ClientToolbar toolbar=mock(ClientToolbar.class);
         OverlayManager overlays=mock(OverlayManager.class);
+        EventBus bus=new EventBus();
         Injector parent=Guice.createInjector(new AbstractModule()
         {
             @Override protected void configure()
             {
                 bind(Client.class).toInstance(client);
+                bind(EventBus.class).toInstance(bus);
                 bind(ConfigManager.class).toInstance(configs);
                 bind(ClientThread.class).toInstance(mock(ClientThread.class));
                 bind(ItemManager.class).toInstance(mock(ItemManager.class));
@@ -76,8 +80,7 @@ public class OneManPluginBootstrapTest
         assertSame(plugin,child.getInstance(OneManSyncPlugin.class));
         assertNotNull(child.getInstance(OneManSyncConfig.class));
         ArgumentCaptor<NavigationButton> navigation=ArgumentCaptor.forClass(NavigationButton.class);
-        EventBus bus=new EventBus();
-        try
+        try (NativeConfigTestSupport nativeSettings=new NativeConfigTestSupport(bus))
         {
             plugin.startUp();
             bus.register(plugin);
@@ -91,13 +94,9 @@ public class OneManPluginBootstrapTest
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
-                assertEquals("Settings",hubs.getItemAt(4));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
                 hubs.setSelectedItem("Clue Scroll Hub");
-                for(int pass=0;pass<4;pass++) layoutTree(panel);
-                assertVisibleChildrenFit(panel);
-                hubs.setSelectedItem("Settings");
                 for(int pass=0;pass<4;pass++) layoutTree(panel);
                 assertVisibleChildrenFit(panel);
                 for(int section=0;section<hubs.getItemCount();section++) {
@@ -106,7 +105,11 @@ public class OneManPluginBootstrapTest
                     assertVisibleChildrenFit(panel);
                 }
                 assertTrue("The sidebar must identify the loaded build",hasBuildLabel(panel));
+                JButton settings=findSettingsButton(panel);
+                assertNotNull("Native settings must be reachable from every hub",settings);
+                settings.doClick();
             });
+            nativeSettings.assertOpened("OneMan Sync");
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
         }
@@ -119,6 +122,14 @@ public class OneManPluginBootstrapTest
         verify(toolbar).removeNavigation(same(navigation.getValue()));
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
+    }
+    private static JButton findSettingsButton(Container parent)
+    {
+        for(Component child:parent.getComponents()) {
+            if(child instanceof JButton && "OneMan Sync settings".equals(((JButton)child).getText())) return (JButton)child;
+            if(child instanceof Container) { JButton found=findSettingsButton((Container)child); if(found!=null) return found; }
+        }
+        return null;
     }
     private static void layoutTree(Container parent)
     {
@@ -142,7 +153,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==5 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==4 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {

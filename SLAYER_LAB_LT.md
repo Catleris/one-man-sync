@@ -10,7 +10,7 @@ Darbo šaka: `dev/slayer-helper-lab`. Originali `master` šaka ir OneMan Sync pa
 4. Windows PowerShell: `.\gradlew.bat run`; Linux: `./gradlew run`.
 5. Įjunk RuneLite `OneMan Sync` (RuneLite `Slayer` priklausomybė įjungiama kartu); atidaryk auksinę S piktogramą.
 
-Gradle run naudoja atskirą `user.home=dev-home`. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
+Nuo `0.8.1-clue-test.7` įprastas `gradlew.bat run` naudoja tavo įprastą RuneLite profilį, įskaitant jo mastelį ir išsaugotus OneMan nustatymus. Prieš paleisdamas testinį klientą uždaryk įprastą RuneLite. Senas atskiras `dev-home` profilis pasiekiamas su `gradlew.bat run -Poneman.isolatedProfile`; jo netrink. Mygtukas **OneMan Sync settings** atidaro originalų RuneLite nustatymų langą su visais laukais. OneMan Sync serverio sinchronizacija pagal nutylėjimą išjungta; Slayer pagalbininkui sync key nereikia.
 
 Jagex paskyros prisijungimas: oficialus RuneLite vadovas
 https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts

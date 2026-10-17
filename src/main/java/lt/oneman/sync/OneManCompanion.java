@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.1-clue-test.6";
+    static final String VERSION = "0.8.1-clue-test.7";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -61,7 +61,7 @@ final class OneManCompanion {
     private int qp;
     private String player = "";
 
-    void startUp(CompanionScreenshots.Directory directory) {
+    void startUp(CompanionScreenshots.Directory directory, Runnable openSettings) {
         ticks=0;loginDelay=10;levels.clear();completed.clear();lastSession="No active session.";
         try (Reader r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("efficiency-catalog.json")), StandardCharsets.UTF_8)) {
             planner = new CompanionPlanner(gson.fromJson(r, CompanionPlanner.Catalog.class));
@@ -82,12 +82,14 @@ final class OneManCompanion {
             if(slayerHelper.companionPanel()!=null)cards.add(slayerHelper.companionPanel(),"Slayer");
             cards.add(farmingTracker.companionPanel(),"Farming Hub");
             cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
-            cards.add(new OneManSettingsPanel(configs,config),"Settings");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub","Settings"});
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub"});
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
             JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
+            JButton settings=new JButton("OneMan Sync settings");
+            settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
+            settings.addActionListener(event->openSettings.run()); hubNavigation.add(settings,BorderLayout.SOUTH);
             root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
             navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);

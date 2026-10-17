@@ -6,9 +6,9 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.6
+## Clue Hub test build — 0.8.1-clue-test.7
 
-The sidebar fills the available height. Clue Hub separates Items, Options and About into compact tabs. Select **Settings** in the OneMan hub dropdown to enter the masked Sync Key, choose the upload interval and explicitly enable/save website sync. These controls use the original RuneLite config keys; all other original options remain in RuneLite Configuration → Plugins → OneMan Sync (return from the Plugin Hub installer list).
+The sidebar fills the available height. Clue Hub separates Items, Options and About into compact tabs. The **OneMan Sync settings** button opens RuneLite's original OneMan configuration panel, including Sync Key and all Slayer/notification/Clue options. The temporary custom settings form has been removed. The Plugin Hub installer list is separate from this configuration panel.
 
 Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
 Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
@@ -23,7 +23,7 @@ Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer /
 
 ### Testing in the development client
 
-Build/run with JDK 11: `./gradlew clean test shadowJar` then `./gradlew run` (Windows: `gradlew.bat`). The existing development profile is retained.
+Build/run with JDK 11: `./gradlew clean test shadowJar` then `./gradlew run` (Windows: `gradlew.bat`). The default launcher uses your normal RuneLite home/profile, including existing client display/scaling settings and OneMan configuration. Close the normal client before starting the development copy. To use the old isolated development home instead: `./gradlew run -Poneman.isolatedProfile` (Windows: `.\gradlew.bat run -Poneman.isolatedProfile`). Keep `dev-home` for that optional mode; no files are deleted or copied. The runnable JAR also uses the normal RuneLite home unless explicitly launched with a different `-Duser.home`.
 For Jagex accounts follow [RuneLite's development-client login instructions](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
 
 1. Disable website sync; Clue Hub must still work alongside Slayer and Farming.
@@ -39,7 +39,7 @@ GitHub Actions produces `oneman-clue-hub-test`, containing the runnable developm
 
 OneMan Slayer Lab is now part of this single plugin. The S sidebar contains preparation, static tactics, locations, travel, supplies, session, loot, history and Prayer resource tabs. These tools work with website sync disabled. They do not predict attacks or select/switch prayers. Existing Lab preferences are migrated once; per-account bank snapshots, goals and journals retain their original profile storage.
 
-Developer launch: `./gradlew run` (`./gradlew.bat run` on Windows). Keep your existing `dev-home` directory when updating to preserve login and local account data. See [Lithuanian setup and test checklist](SLAYER_LAB_LT.md).
+Developer launch: `./gradlew run` (`./gradlew.bat run` on Windows) now uses the normal RuneLite profile. Optional isolated mode: `./gradlew run -Poneman.isolatedProfile`; this continues to use the preserved `dev-home` directory. See [Lithuanian setup and test checklist](SLAYER_LAB_LT.md).
 
 ## Data sent when sync is enabled
 
@@ -113,8 +113,14 @@ Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugi
 
 The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
 
-Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.6`.
+Keep the existing `dev-home` folder for optional isolated launches. The default launch uses your normal RuneLite home. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.7`.
 
 ### Event registration validation (test build 5)
 
 All @Subscribe entry points follow RuneLite's mandatory `on<EventClass>` naming contract. The four clue event forwards are `onItemSpawned`, `onItemDespawned`, `onMenuEntryAdded` and `onConfigChanged`. Both an isolated subscriber-contract test and the full bootstrap test register the real plugin with RuneLite's real EventBus; startup tests that omit registration cannot catch this failure. The development launcher prints the loaded OneMan version before starting RuneLite.
+
+### Native settings and client display (test build 7)
+
+The always-visible settings button posts RuneLite's public RUNELITE_OVERLAY_CONFIG action with the real owning plugin. The active ConfigPlugin opens its own complete configuration panel; no reflection, private UI access or duplicate form is used. The bootstrap test clicks the actual Swing button through a real EventBus and real RuneLite ConfigPlugin startup/subscriber; destination UI and core services are test doubles. It verifies navigation to the OneMan Sync configuration, not in-game rendering.
+
+Earlier launchers forced a fresh user.home and therefore could not inherit the installed client's Stretched Mode, scaling, plugin preferences or stored OneMan settings. Default launches now keep the JVM's normal home. This restores access to the same saved client configuration; it does not reset game widgets, minimap positions, camera or account settings. Rendering must be confirmed by the user.
