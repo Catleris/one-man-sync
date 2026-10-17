@@ -6,7 +6,7 @@ OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracke
 
 > **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
 
-## Clue Hub test build — 0.8.1-clue-test.3
+## Clue Hub test build — 0.8.1-clue-test.4
 
 Development branch: `dev/clue-scroll-hub`. This test does not update the official Plugin Hub build.
 Choose **Clue Hub** in the existing OneMan sidebar selector (Overview / Slayer / Farming / Clue Hub).
@@ -105,6 +105,10 @@ Validation: all production and test sources compiled for Java 11 against the sup
 
 The hub now uses OneMan's direct game-DB/chat Slayer state even with website sync disabled. Unconfirmed/stale labels cannot choose a destination, and unknown assignments show a visible refresh message. Konar area filtering uses the same current assignment as sync. The sidebar shows the test build version above the hub selector; Farming Hub and Clue Scroll Hub share this selector. Slayer assignment/count/area are visible above destination controls, with narrow-panel alignment corrected.
 
-### Test build 3: plugin injection failure
+### Plugin startup validation (test build 4)
 
-Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugin instantiation. Both clue overlays now obtain the singleton hub lazily through `Provider<ClueHub>`, breaking the eager Guice construction cycle. A dedicated Guice binding-graph regression test checks the hub and both overlays without starting the game. Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.3`.
+Fixes `Recursive load of: lt.oneman.sync.ClueHub.<init>()` during RuneLite plugin instantiation. Both clue overlays are injected independently and connected to their hub only after injection completes; shutdown detaches both references. There is no Guice-injected hub back-reference, including through a Provider.
+
+The full plugin bootstrap regression test mirrors RuneLite PluginModuleFactory: bind the real plugin instance and install its real configuration provider in a child injector. Only RuneLite services are test doubles. It runs the plugin lifecycle, constructs the actual Swing sidebar, checks Overview / Slayer / Farming Hub / Clue Scroll Hub plus the build label, checks configuration availability, and verifies sidebar/overlay cleanup. It does not start or control the game. Simpler graph tests alone do not prove plugin initialization works.
+
+Keep the existing `dev-home` folder when replacing project source files. Restart with `gradlew.bat clean run` and verify the sidebar build label is `0.8.1-clue-test.4`.

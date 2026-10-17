@@ -52,12 +52,15 @@ final class ClueHub
     }
     void startUp()
     {
-        catalog = new ClueItemCatalog(); active = true; profile = ""; scanPending = true;
+        catalog = new ClueItemCatalog();
+        groundOverlay.setHub(this); widgetOverlay.setHub(this);
+        active = true; profile = ""; scanPending = true;
         ground.clear(); recent.clear(); overlays.add(groundOverlay); overlays.add(widgetOverlay);
     }
     void shutDown()
     {
         active = false; caskets.clear(); ground.clear(); recent.clear(); overlays.remove(groundOverlay); overlays.remove(widgetOverlay);
+        groundOverlay.setHub(null); widgetOverlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
     }
     PluginPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }

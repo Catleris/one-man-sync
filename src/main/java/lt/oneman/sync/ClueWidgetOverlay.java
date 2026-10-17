@@ -5,20 +5,20 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 final class ClueWidgetOverlay extends WidgetItemOverlay
 {
-    // Resolve only during rendering: eager hub -> overlay -> hub injection prevents plugin loading.
-    @Inject private Provider<ClueHub> hubProvider;
+    // Connected after injection completes; no Guice back-reference to the constructing hub.
+    private volatile ClueHub hub;
+    void setHub(ClueHub hub) { this.hub=hub; }
     @Inject private OneManSyncConfig config;
     ClueWidgetOverlay() { showOnInventory(); showOnBank(); showOnEquipment(); }
     @Override public void renderItemOverlay(Graphics2D graphics, int id, WidgetItem item)
     {
-        ClueHub hub=hubProvider.get();
-        if (id < 0 || !hub.enabled() || !config.clueWidgetMarkers()) return;
+        ClueHub hub=this.hub;
+        if (hub==null || id < 0 || !hub.enabled() || !config.clueWidgetMarkers()) return;
         Set<ClueTier> tiers = hub.tiers(hub.classify(id));
         Rectangle bounds = item.getCanvasBounds(); int x = bounds.x + bounds.width - 7;
         for (ClueTier tier : tiers)
