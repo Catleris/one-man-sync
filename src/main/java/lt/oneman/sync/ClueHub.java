@@ -163,7 +163,7 @@ final class ClueHub
         if (id < 0 || entry.getTarget().contains("[Clue:")) return;
         ClueItemCatalog.Tags tags = classify(id); Set<ClueTier> tiers = tiers(tags); if (tiers.isEmpty()) return;
         StringBuilder suffix = new StringBuilder(" <col=aaaaaa>[Clue: " + kind(tags) + "</col>");
-        for (ClueTier tier : tiers) suffix.append(" <col=").append(tier.hex()).append(">● ").append(tier.shortName).append("</col>");
+        for (ClueTier tier : tiers) suffix.append(" <col=").append(tier.hex()).append(">• ").append(tier.shortName).append("</col>");
         entry.setTarget(entry.getTarget() + suffix + "<col=aaaaaa>]</col>");
     }
     private void lookup(String query)

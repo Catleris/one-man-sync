@@ -88,6 +88,7 @@ EASY	COMMON	Black platelegs
 EASY	COMMON	Body rune
 EASY	COMMON	Chaos rune
 EASY	COMMON	Coif
+EASY	COMMON	Coins
 EASY	COMMON	Earth rune
 EASY	COMMON	Fire rune
 EASY	COMMON	Law rune
@@ -187,7 +188,6 @@ EASY	SPECIAL	Bronze plateskirt (g)
 EASY	SPECIAL	Bronze plateskirt (t)
 EASY	SPECIAL	Cape of skulls
 EASY	SPECIAL	Charge dragonstone jewellery scroll
-EASY	SPECIAL	Coins
 EASY	SPECIAL	Digsite teleport
 EASY	SPECIAL	Feldip hills teleport
 EASY	SPECIAL	Flared trousers
@@ -287,6 +287,7 @@ EASY	SPECIAL	Zamorak robe legs
 EASY	SPECIAL	Zamorak robe top
 ELITE	COMMON	Battlestaff
 ELITE	COMMON	Blood rune
+ELITE	COMMON	Coins
 ELITE	COMMON	Crystal key
 ELITE	COMMON	Death rune
 ELITE	COMMON	Dragon dagger
@@ -368,7 +369,6 @@ ELITE	SPECIAL	Briefcase
 ELITE	SPECIAL	Bronze dragon mask
 ELITE	SPECIAL	Bucket helm
 ELITE	SPECIAL	Charge dragonstone jewellery scroll
-ELITE	SPECIAL	Coins
 ELITE	SPECIAL	Dark bow tie
 ELITE	SPECIAL	Dark infinity colour kit
 ELITE	SPECIAL	Dark trousers
@@ -476,6 +476,7 @@ HARD	COMMON	Antifire potion(4)
 HARD	COMMON	Black d'hide body
 HARD	COMMON	Black d'hide chaps
 HARD	COMMON	Blood rune
+HARD	COMMON	Coins
 HARD	COMMON	Law rune
 HARD	COMMON	Lobster
 HARD	COMMON	Magic longbow
@@ -567,7 +568,6 @@ HARD	SPECIAL	Blue d'hide chaps (t)
 HARD	SPECIAL	Blue dragon mask
 HARD	SPECIAL	Blue firelighter
 HARD	SPECIAL	Charge dragonstone jewellery scroll
-HARD	SPECIAL	Coins
 HARD	SPECIAL	Cyclops head
 HARD	SPECIAL	Dark cavalier
 HARD	SPECIAL	Digsite teleport
@@ -713,6 +713,7 @@ MASTER	COMMON	Black dragonhide
 MASTER	COMMON	Blood rune
 MASTER	COMMON	Bucket helm (g)
 MASTER	COMMON	Cabbage
+MASTER	COMMON	Coins
 MASTER	COMMON	Death rune
 MASTER	COMMON	Dragon battleaxe
 MASTER	COMMON	Dragon dagger
@@ -791,7 +792,6 @@ MASTER	SPECIAL	Blue firelighter
 MASTER	SPECIAL	Boots of darkness
 MASTER	SPECIAL	Bowl wig
 MASTER	SPECIAL	Charge dragonstone jewellery scroll
-MASTER	SPECIAL	Coins
 MASTER	SPECIAL	Digsite teleport
 MASTER	SPECIAL	Dragon defender ornament kit
 MASTER	SPECIAL	Dragon kiteshield ornament kit
@@ -894,6 +894,7 @@ MEDIUM	COMMON	Adamant platelegs
 MEDIUM	COMMON	Air rune
 MEDIUM	COMMON	Amulet of power
 MEDIUM	COMMON	Chaos rune
+MEDIUM	COMMON	Coins
 MEDIUM	COMMON	Death rune
 MEDIUM	COMMON	Earth rune
 MEDIUM	COMMON	Fire battlestaff
@@ -975,7 +976,6 @@ MEDIUM	SPECIAL	Cat mask
 MEDIUM	SPECIAL	Charge dragonstone jewellery scroll
 MEDIUM	SPECIAL	Climbing boots (g)
 MEDIUM	SPECIAL	Clueless scroll
-MEDIUM	SPECIAL	Coins
 MEDIUM	SPECIAL	Crier bell
 MEDIUM	SPECIAL	Crier coat
 MEDIUM	SPECIAL	Crier hat
