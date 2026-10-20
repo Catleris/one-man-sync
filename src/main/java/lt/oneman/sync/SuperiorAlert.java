@@ -6,7 +6,7 @@ final class SuperiorAlert {
  private int lastTick=Integer.MIN_VALUE;
  boolean accept(ChatMessageType type,String message,int tick) {
   if(type!=ChatMessageType.GAMEMESSAGE&&type!=ChatMessageType.SPAM)return false;
-  if(message==null||!Text.removeTags(message).trim().equals("A superior foe has appeared..."))return false;
+  if(message==null||!Text.removeTags(message).contains("A superior foe has appeared..."))return false;
   if(lastTick!=Integer.MIN_VALUE&&tick>=lastTick&&tick-lastTick<=2)return false;
   lastTick=tick;return true;
  }
