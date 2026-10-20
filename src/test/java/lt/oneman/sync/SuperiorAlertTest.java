@@ -11,6 +11,13 @@ public class SuperiorAlertTest {
   assertTrue(s.accept(ChatMessageType.GAMEMESSAGE,message,20));
   s.reset();assertTrue(s.accept(ChatMessageType.GAMEMESSAGE,message,20));
  }
+ @Test public void acceptsExtendedGameSignalButNotPlayerChat(){
+  SuperiorAlert s=new SuperiorAlert();
+  String message="<col=ff0000>A superior foe has appeared...</col> Additional game text";
+  assertFalse(s.accept(ChatMessageType.PUBLICCHAT,message,10));
+  assertTrue(s.accept(ChatMessageType.GAMEMESSAGE,message,10));
+  assertFalse(s.accept(ChatMessageType.SPAM,message,10));
+ }
  @Test public void defaultsAreOptInAndFlashWhileFocused(){
   OneManSyncConfig c=new OneManSyncConfig(){};
   assertFalse(c.superiorSpawnAlert().isEnabled());
