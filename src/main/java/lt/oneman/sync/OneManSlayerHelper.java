@@ -107,7 +107,7 @@ public class OneManSlayerHelper
     }
     public void onChatMessage(ChatMessage event) {
         if(!active || client.getGameState()!=GameState.LOGGED_IN)return;
-        Notification alert=config.superiorSpawnAlert();
+        Notification alert=OneManConfigMigration.superiorNotification(config.superiorSpawnAlert());
         if(alert==null||!alert.isEnabled()||!superiorAlert.accept(event.getType(),event.getMessage(),client.getTickCount()))return;
         // An enabled built-in alert may still be filtered while focused.
         // Always honour the notification settings explicitly chosen for OneMan.
