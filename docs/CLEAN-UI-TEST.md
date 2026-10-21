@@ -4,7 +4,7 @@
 
 The first Hub is now **Tools**, a compact set of buttons for Slayer, Farming, Clue, Monsters and Unlocks. It contains no account name/type, XP summary, session timestamps or upload history. The duplicate permanent Monsters button has moved into this tools list; the existing shared selector and settings button remain available.
 
-The old Overview is removed. Its useful Next/Prep planner is available as **Roadmap**, initially hidden. Enable **Optional views → Show Roadmap** in native settings to add it to the selector. Toggle updates immediately. Roadmap no longer prints player identity, combat/quest-point introduction, Chronicle ownership commentary, duplicate Slayer analytics, Sync, Memories or Summary tabs.
+The old Overview is removed. Its useful Next/Prep planner is available as **Roadmap**, initially hidden. Enable **Optional views → Show Roadmap** in native settings to add it to the selector. Toggle updates immediately. Roadmap-specific bank highlighting is also inactive while the Roadmap is hidden. Roadmap no longer prints player identity, combat/quest-point introduction, Chronicle ownership commentary, duplicate Slayer analytics, Sync, Memories or Summary tabs.
 
 The removed Overview daily/session summary is no longer generated, read or written. Existing saved `companionDay` / `companionSummary` records are retained untouched. Screenshot milestone options, per-account goals, existing Slayer journals and the optional website-sync functionality are preserved. Removing a status page does not change the website upload permission, scope or API behaviour; website sync remains controlled by its existing opt-in setting and key. Sync errors remain in existing debug logging without a player-facing feed.
 

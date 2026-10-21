@@ -194,6 +194,7 @@ final class OneManCompanion {
     }
     private static int count(Map<String,Integer> map,String need) { return map.entrySet().stream().filter(e->CompanionSupplies.matches(e.getKey(),need)).mapToInt(Map.Entry::getValue).sum(); }
     private void render() {
+        if(!config.companionRoadmapVisible()){overlay.needed=Collections.emptySet();return;}
         CompanionPlanner.Step selectedGoal=goal();
         Set<String> confirmed=new HashSet<>(manual);confirmed.addAll(observedUnlocks);
         List<CompanionPlanner.Step> visible=focusedGoal&&selectedGoal!=null?planner.forGoal(selectedGoal,levels,completed,confirmed,qp):route;
