@@ -171,7 +171,7 @@ public class FarmingRunTracker {
                 this.lastBirdhouseReady[i] = ready;
                 continue;
             }
-            sb.append("Unknown state (varp=").append(varp).append(")\n");
+            sb.append("Visit this birdhouse to refresh its status.\n");
             this.lastBirdhouseReady[i] = false;
         }
         baseline = true;

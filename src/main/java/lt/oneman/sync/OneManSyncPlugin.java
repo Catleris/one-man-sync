@@ -138,6 +138,8 @@ public class OneManSyncPlugin extends Plugin
     @Inject private OneManSlayerHelper slayerHelper;
     @Inject private OneManCompanion companion;
     @Inject private ClueHub clueHub;
+    @Inject private MonstersHub monstersHub;
+    @Inject private UnlocksHub unlocksHub;
     @Inject private OneManMapLocations mapLocations;
     @Inject private StashMinimapOverlay stashMinimapOverlay;
     @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
@@ -197,6 +199,8 @@ public class OneManSyncPlugin extends Plugin
         mapLocations.startUp();
         mapOverlays.add(stashMinimapOverlay);
         clueHub.startUp();
+        monstersHub.startUp(this::localSlayerState);
+        unlocksHub.startUp();
         slayerHelper.startUp(this::localSlayerState);
         companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
         if (client.getGameState() == GameState.LOGGED_IN)
@@ -212,6 +216,8 @@ public class OneManSyncPlugin extends Plugin
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
         mapOverlays.remove(stashMinimapOverlay);
         mapLocations.shutDown();
+        unlocksHub.shutDown();
+        monstersHub.shutDown();
         clueHub.shutDown();
         companion.shutDown();
         slayerHelper.shutDown();
@@ -243,6 +249,12 @@ public class OneManSyncPlugin extends Plugin
     }
 
     @Subscribe
+    public void onNpcSpawned(net.runelite.api.events.NpcSpawned event) { monstersHub.onNpcSpawned(event); }
+    @Subscribe
+    public void onNpcDespawned(net.runelite.api.events.NpcDespawned event) { monstersHub.onNpcDespawned(event); }
+    @Subscribe
+    public void onNpcChanged(net.runelite.api.events.NpcChanged event) { monstersHub.onNpcChanged(event); }
+    @Subscribe
     public void onItemSpawned(ItemSpawned event) { clueHub.onItemSpawned(event); }
     @Subscribe
     public void onItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
@@ -251,6 +263,14 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
     {
+        if ("one-man-sync".equals(event.getGroup()) && "companionRoadmapVisible".equals(event.getKey()))
+            companion.refreshViews();
+        if ("one-man-sync".equals(event.getGroup()) && "slayerHistoryVisible".equals(event.getKey()))
+            slayerHelper.refreshOptionalViews();
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("unlocks"))
+            unlocksHub.onConfigChanged();
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("monsters"))
+            clientThread.invokeLater(monstersHub::onConfigChanged);
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("clue"))
             clientThread.invokeLater(clueHub::onConfigChanged);
     }
@@ -258,6 +278,8 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        unlocksHub.onGameStateChanged(event);
+        monstersHub.onGameStateChanged(event);
         clueHub.onGameStateChanged(event);
         slayerHelper.onGameStateChanged(event);
         companion.onGameStateChanged(event);
@@ -285,6 +307,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onStatChanged(StatChanged event)
     {
+        unlocksHub.changed();
         slayerHelper.onStatChanged(event);
         if(!ready()) return;
         int total=calculateTotalLevel();
@@ -295,6 +318,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        unlocksHub.changed();
         if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
         {
             // Match RuneLite's Slayer plugin behaviour: read the assignment after
@@ -369,6 +393,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        unlocksHub.onItemContainerChanged(event);
         clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
@@ -528,6 +553,8 @@ public class OneManSyncPlugin extends Plugin
     {
         mapLocations.tick();
         clueHub.onGameTick();
+        monstersHub.onGameTick();
+        unlocksHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
         if(!ready()) return;
@@ -648,7 +675,6 @@ public class OneManSyncPlugin extends Plugin
             .post(body)
             .build();
 
-        final String sentProfile=configManager.getRSProfileKey();
         requestInFlight=true;
         lastFullSyncTick=client.getTickCount();
         progressDirty=false;
@@ -659,24 +685,23 @@ public class OneManSyncPlugin extends Plugin
                 clientThread.invokeLater(() -> {
                     if(call!=activeSyncCall)return;
                     requestInFlight=false;progressDirty=true;
-                    companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
+
                     log.fine("OneMan sync failed");
                 });
             }
             @Override public void onResponse(Call call,Response response)throws IOException{
-                final boolean success;final int code;final String detail;
+                final boolean success;final int code;
                 try(Response r=response){success=r.isSuccessful();code=r.code();
-                    detail=success?"":CompanionSyncError.describe(gson,r.body()!=null?r.body().string():"");
                 }
                 clientThread.invokeLater(() -> {
                     if(call!=activeSyncCall)return;
                     try {
                         if(!success){
                             progressDirty=true;
-                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code+detail);
+
                             log.fine("OneMan sync HTTP "+code);
                         }else{
-                            companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
+
                             pendingNewCollection.removeAll(sentNewCollection);
                             for(Integer id:sentCaMeta.keySet())pendingCaMeta.remove(id,sentCaMeta.get(id));
                             for(String k:sentLoot.keySet())pendingLootEvents.remove(k,sentLoot.get(k));

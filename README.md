@@ -138,3 +138,18 @@ All @Subscribe entry points follow RuneLite's mandatory `on<EventClass>` naming 
 The always-visible settings button posts RuneLite's public RUNELITE_OVERLAY_CONFIG action with the real owning plugin. The active ConfigPlugin opens its own complete configuration panel; no reflection, private UI access or duplicate form is used. The bootstrap test clicks the actual Swing button through a real EventBus and verifies RUNELITE_OVERLAY_CONFIG with the exact loaded OneMan plugin as owner. This checks the supported request contract; the native configuration UI and game rendering still require user confirmation. A separate local smoke check of the real ConfigPlugin lifecycle/subscriber with UI doubles also passed. Test helpers must stay outside RuneLite packages, because dependency JARs are signed.
 
 Earlier launchers forced a fresh user.home and therefore could not inherit the installed client's Stretched Mode, scaling, plugin preferences or stored OneMan settings. Default launches now keep the JVM's normal home. This restores access to the same saved client configuration; it does not reset game widgets, minimap positions, camera or account settings. Rendering must be confirmed by the user.
+
+
+## Monsters Hub test branch
+
+The `test/monsters-hub-shaman` branch adds a local Lizardman Shaman profile with current minion tiles, model outlines, silhouette fill and Spawn labels, plus independent colours and opacity. A permanent Monsters Hub button appears beneath the shared Hub selector. Explosion countdowns are unavailable because their exact timing could not be verified. See [test instructions, rules and timing decision](docs/MONSTERS-HUB-TEST.md).
+
+
+## Unlocks Hub test
+
+Test build `0.9.0-unlocks-test` adds a searchable, collapsible account unlock registry with favourites, explicit evidence states, optional quest journal and account-scoped confirmations/item observations. See [coverage and game test checklist](docs/UNLOCKS-HUB-TEST.md).
+
+
+## Clean interface test
+
+`0.9.1-clean-ui-test` starts on a compact Tools home. Roadmap and Slayer session/history views are optional; Unlocks use short actionable instructions. See [changes and manual checks](docs/CLEAN-UI-TEST.md).

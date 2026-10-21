@@ -1,0 +1,206 @@
+# id	category	title	mode	signal	quests	skills	note	wiki-page
+SPIRIT_TREES	Travel networks	Spirit tree network	QUEST	TREE_GNOME_VILLAGE			Network access; individual planted trees have additional requirements.	Spirit_tree
+GNOME_GLIDERS	Travel networks	Gnome glider network	QUEST	THE_GRAND_TREE			Some destinations have additional quest restrictions.	Gnome_glider
+BALLOON_INITIAL	Travel networks	Balloon transport: initial route	QUEST	ENLIGHTENED_JOURNEY			Quest route only. Other destinations require separate route unlocks and fuel.	Balloon_transport_system
+ARDY_TELE	Travel networks	Ardougne Teleport quest gate	QUEST	PLAGUE_CITY			Casting also requires 51 Magic and runes.	Ardougne_Teleport
+WATCHTOWER_TELE	Travel networks	Watchtower Teleport quest gate	QUEST	WATCHTOWER			Casting also requires 58 Magic and runes.	Watchtower_Teleport
+TROLLHEIM_TELE	Travel networks	Trollheim Teleport quest gate	QUEST	EADGARS_RUSE			Casting also requires 61 Magic and runes.	Trollheim_Teleport
+APE_ATOLL_TELE	Travel networks	Ape Atoll Teleport quest gate	QUEST	RECIPE_FOR_DISASTER__KING_AWOWOGEI			Casting also requires 64 Magic, runes and a banana.	Ape_Atoll_Teleport
+ECTOPHIAL_GATE	Travel networks	Ectophial reward access	QUEST	GHOSTS_AHOY			Quest reward access; possession and charges are not inferred.	Ectophial
+DRAKAN_GATE	Travel networks	Drakan medallion reward access	QUEST	A_TASTE_OF_HOPE			Reward access only; physical ownership and destination restrictions are separate.	Drakan%27s_medallion
+DIGSITE_PENDANT	Travel networks	Digsite pendant learning	CHECK		THE_DIG_SITE		Learn enchantment from the Varrock Museum clean-necklace activity; quest completion alone does not prove it.	Digsite_pendant
+XERICS_TALISMAN	Travel networks	Xeric talisman transport	CHECK				Obtain the talisman and charge it. Destinations can have additional unlocks.	Xeric%27s_talisman
+FAIRY_RINGS	Travel networks	Fairy rings permission	FLAG	FAIRY_RINGS			Permission during Fairytale II, not full quest completion. Carry the required staff unless exempt.	Fairy_ring
+BALLOON_ROUTES	Travel networks	Additional balloon routes	CHECK				Unlock each destination separately; the initial quest route does not prove all routes.	Balloon_transport_system
+CANOE	Travel networks	Canoe travel	CHECK				Canoe type depends on Woodcutting level; confirm your travel setup.	Canoe
+EAGLE_TRAVEL	Travel networks	Eagle transport	CHECK				Eagles Peak plus the relevant eagle and rope; confirm destinations separately.	Eagle_transport_system
+KARAMJA_CART	Travel networks	Shilo cart travel	CHECK				Route access, fares and diary discounts are separate.	Shilo_Village
+CHARTERS	Travel networks	Charter ship routes	CHECK				Routes, fares and quest restrictions vary by destination.	Charter_ship
+QUETZAL	Travel networks	Quetzal landing sites	CHECK				Build and unlock landing sites individually; access to Varlamore does not build every site.	Quetzal_Transport_System
+ANCIENTS	Spellbooks & spells	Ancient Magicks	QUEST	DESERT_TREASURE_I			Spellbook access; individual spells require Magic levels and runes.	Ancient_Magicks
+LUNARS	Spellbooks & spells	Lunar spellbook	QUEST	LUNAR_DIPLOMACY			Spellbook access; casting requirements remain separate.	Lunar_spellbook
+DREAM_SPELLS	Spellbooks & spells	Dream Mentor spell expansion	QUEST	DREAM_MENTOR			Additional Lunar spells; individual levels and runes still apply.	Dream_Mentor
+ARCEUUS	Spellbooks & spells	Arceuus spellbook switch	CHECK				Speak to Tyss by the Dark Altar. No Kourend favour requirement. Confirm access after speaking to him.	Arceuus_spellbook
+THRALLS	Spellbooks & spells	Resurrection spell quest gate	QUEST	A_KINGDOM_DIVIDED			Thralls still require the appropriate Magic level, runes, Prayer points and Book of the dead.	Resurrection_spells
+IBAN_GATE	Spellbooks & spells	Iban Blast quest gate	QUEST	UNDERGROUND_PASS			Casting also requires 50 Magic and an appropriate charged staff.	Iban_Blast
+GOD_SPELLS	Spellbooks & spells	Mage Arena I completion	QUEST	MAGE_ARENA_I			Casting god spells outside the Arena requires separate spell practice; not inferred here.	Mage_Arena_I
+GOD_OUTSIDE	Spellbooks & spells	God spells outside the Arena	CHECK		MAGE_ARENA_I		Complete the required casts for each spell separately; quest completion alone is insufficient.	Mage_Arena_I
+BONES_PEACHES	Spellbooks & spells	Bones to Peaches	CHECK				Purchase the spell from Mage Training Arena.	Bones_to_Peaches
+AUTOCAST_IBAN	Spellbooks & spells	Upgraded Iban staff	CHECK		UNDERGROUND_PASS		Upgrade and charge the staff; this is not awarded by quest completion alone.	Iban%27s_staff_(u)
+CHARGE_GATE	Spellbooks & spells	Charge spell level	CHECK			Magic:80	80 Magic plus spell runes; does not unlock god spells outside the Arena.	Charge
+RIGOUR	Prayers	Rigour learned	FLAG	RIGOUR			Learned scroll flag only. Using it also requires 74 Prayer and 70 Defence.	Rigour
+AUGURY	Prayers	Augury learned	FLAG	AUGURY			Learned scroll flag only. Using it also requires 77 Prayer and 70 Defence.	Augury
+PRESERVE	Prayers	Preserve learned	FLAG	PRESERVE			Learned scroll flag only. Using it also requires 55 Prayer.	Preserve
+DEADEYE	Prayers	Deadeye learned	FLAG	DEADEYE			Learned prayer flag; check its level requirement before use.	Deadeye
+MYSTIC_VIGOUR	Prayers	Mystic Vigour learned	FLAG	MYSTIC_VIGOUR			Learned prayer flag; check its level requirement before use.	Mystic_Vigour
+CHIVALRY	Prayers	Chivalry access	CHECK		KINGS_RANSOM	Prayer:60;Defence:65	Finish Knight Waves training too; quest completion alone does not confirm access.	Chivalry
+PIETY	Prayers	Piety access	CHECK		KINGS_RANSOM	Prayer:70;Defence:70	Finish Knight Waves training too; quest completion alone does not confirm access.	Piety
+MORYTANIA	Areas & activities	Morytania quest gate	QUEST	PRIEST_IN_PERIL			Passage and any remaining Drezel dialogue must be completed.	Morytania
+ZANARIS	Areas & activities	Zanaris	QUEST	LOST_CITY			Dramen or Lunar staff is normally needed for initial access.	Zanaris
+FOSSIL_ISLAND	Areas & activities	Fossil Island	QUEST	BONE_VOYAGE			Camp facilities and transport nodes are separate upgrades.	Fossil_Island
+PRIF	Areas & activities	Prifddinas	QUEST	SONG_OF_THE_ELVES			City access. Crystal equipment ownership is separate.	Prifddinas
+DARKMEYER	Areas & activities	Darkmeyer	QUEST	SINS_OF_THE_FATHER			Disguise and individual facilities can have further requirements.	Darkmeyer
+VYRES	Areas & activities	Vyre pickpocket quest gate	QUEST	SINS_OF_THE_FATHER			82 Thieving is still required to pickpocket vyres.	Vyrewatch
+GAUNTLET	Areas & activities	The Gauntlet quest gate	QUEST	SONG_OF_THE_ELVES			Access only; not an assessment of combat readiness.	The_Gauntlet
+ZULRAH	Areas & activities	Zulrah full quest route	QUEST	REGICIDE			Completion is sufficient for the quest gate; partial quest access can occur earlier.	Zulrah
+VORKATH	Areas & activities	Vorkath post-quest access	QUEST	DRAGON_SLAYER_II			Post-quest access only; not a gear or readiness recommendation.	Vorkath
+DEMONICS	Areas & activities	Demonic gorillas quest gate	QUEST	MONKEY_MADNESS_II			Access does not mean zenyte ownership.	Demonic_gorilla
+BASILISK_AREA	Areas & activities	Basilisk Knights quest gate	QUEST	THE_FREMENNIK_EXILES			60 Slayer and any task/unlock requirements remain separate.	Basilisk_Knight
+DAGANNOTH_ROUTE	Areas & activities	Waterbirth quest route	QUEST	THE_FREMENNIK_TRIALS			Quest completion is a sufficient route condition; boat fares and earlier routes vary.	Waterbirth_Island
+PISCATORIS	Areas & activities	Piscatoris monkfish access	QUEST	SWAN_SONG			Fishing monkfish also requires 62 Fishing.	Piscatoris_Fishing_Colony
+MOS	Areas & activities	Mos Le Harmless	QUEST	CABIN_FEVER			Individual creatures and activities may require levels or equipment.	Mos_Le%27Harmless
+SHILO	Areas & activities	Shilo Village	QUEST	SHILO_VILLAGE			Fishing and Slayer-master requirements remain separate.	Shilo_Village
+DORGESH	Areas & activities	Dorgesh-Kaan	QUEST	DEATH_TO_THE_DORGESHUUN			City access. Agility course and other activities have separate requirements.	Dorgesh-Kaan
+SOPHANEM_BANK	Areas & activities	Sophanem bank quest gate	QUEST	CONTACT			Bank access route after the quest.	Sophanem
+VISCARDIA	Areas & activities	Varlamore arrival quest gate	QUEST	CHILDREN_OF_THE_SUN			Arrival access; later areas, quests and facilities are separate.	Varlamore
+HUNTER_GUILD_QUEST	Areas & activities	Hunter Guild quest progression	QUEST	AT_FIRST_LIGHT			Guild tiers, rumours and areas still depend on their own requirements.	Hunters%27_Guild
+MOONS	Areas & activities	Perilous Moons completion	QUEST	PERILOUS_MOONS			Quest completion, not a combat-readiness prediction.	Perilous_Moons
+TOA	Areas & activities	Tombs of Amascut quest gate	QUEST	BENEATH_CURSED_SANDS			Raid access only. No invocation or gear readiness is inferred.	Tombs_of_Amascut
+NEX	Areas & activities	Ancient Prison quest gate	QUEST	THE_FROZEN_DOOR			A frozen key, kill count or other entry conditions still apply.	Ancient_Prison
+KINGDOM	Areas & activities	Managing Miscellania	QUEST	THRONE_OF_MISCELLANIA			Coffer and approval still need maintenance.	Managing_Miscellania
+KINGDOM_EXPANDED	Areas & activities	Expanded kingdom workforce	QUEST	ROYAL_TROUBLE			Expanded allocation, not a claim of current coffer funds.	Managing_Miscellania
+ABYSS	Areas & activities	Abyss miniquest completed	QUEST	ENTER_THE_ABYSS			Pouches, talismans and risk preparation remain separate.	Abyss
+GOTR	Areas & activities	Guardians of the Rift quest gate	QUEST	TEMPLE_OF_THE_EYE			Activity access; pouch and reward ownership are separate.	Guardians_of_the_Rift
+GIANTS	Areas & activities	Giants Foundry quest gate	QUEST	SLEEPING_GIANTS			Activity access; mould purchases remain separate.	Giants%27_Foundry
+TEARS	Areas & activities	Tears of Guthix quest gate	QUEST	TEARS_OF_GUTHIX			Weekly eligibility and experience/quest-point conditions are separate.	Tears_of_Guthix
+HERBLORE	Areas & activities	Herblore quest gate	QUEST	DRUIDIC_RITUAL			Skill training access, not a supply recommendation.	Herblore
+CANNNON	Areas & activities	Dwarf cannon reward access	QUEST	DWARF_CANNON			Cannon parts and ammunition must still be obtained.	Dwarf_multicannon
+BLAST_FURNACE	Areas & activities	Keldagrim quest route	QUEST	THE_GIANT_DWARF			Earlier access can occur during the quest; this records completed-quest evidence.	Keldagrim
+BARROWS_GLOVES	Gear & rewards	Barrows gloves	ITEM	barrows gloves	RECIPE_FOR_DISASTER__CULINAROMANCER		Purchase from the Culinaromancer chest after the finale.	Barrows_gloves
+DRAGON_DEFENDER	Gear & rewards	Dragon defender	ITEM	dragon defender		Defence:60	Warriors Guild entry, defender chain and basement access are additional acquisition steps.	Dragon_defender
+FIRE_CAPE	Gear & rewards	Fire cape	ITEM	fire cape			Earned from completing Fight Caves; it is not crafted or an entry requirement.	Fire_cape
+INFERNAL_CAPE	Gear & rewards	Infernal cape	ITEM	infernal cape			Earned from completing the Inferno; ownership is not inferred from stats.	Infernal_cape
+AVA_ATTRACTOR	Gear & rewards	Ava attractor	ITEM	ava's attractor	ANIMAL_MAGNETISM		Obtain the device from Ava; quest completion alone does not prove current ownership.	Ava_attractor
+AVA_ACCUMULATOR	Gear & rewards	Ava accumulator	ITEM	ava's accumulator	ANIMAL_MAGNETISM	Ranged:50	Obtain or upgrade the device with Ava.	Ava_accumulator
+AVA_ASSEMBLER	Gear & rewards	Ava assembler	ITEM	ava's assembler	DRAGON_SLAYER_II	Ranged:70	Requires Vorkath head and the relevant upgrade process.	Ava_assembler
+DRAGON_SCIMITAR	Gear & rewards	Dragon scimitar	ITEM	dragon scimitar	MONKEY_MADNESS_I	Attack:60	Quest and level gates do not prove the item was purchased.	Dragon_scimitar
+HELM_NEITIZNOT	Gear & rewards	Helm of Neitiznot	ITEM	helm of neitiznot	THE_FREMENNIK_ISLES	Defence:55	Reward or replacement ownership must be observed or confirmed.	Helm_of_Neitiznot
+FACEGUARD	Gear & rewards	Neitiznot faceguard	ITEM	neitiznot faceguard	THE_FREMENNIK_EXILES	Defence:70	Basilisk jaw and the upgrade process are separate.	Neitiznot_faceguard
+SALVE	Gear & rewards	Salve amulet	ITEM	salve amulet;salve amulet (e);salve amulet(i);salve amulet(ei)	HAUNTED_MINE		Create or claim the amulet; variants have additional upgrades.	Salve_amulet
+SALVE_E	Gear & rewards	Enchanted salve amulet	ITEM	salve amulet (e);salve amulet(ei)	HAUNTED_MINE		Tarn diary enchantment must be completed separately.	Enchanted_salve_amulet
+SALVE_EI	Gear & rewards	Salve amulet (ei)	ITEM	salve amulet(ei)	HAUNTED_MINE		Enchantment and imbue both required; neither is inferred from the quest alone.	Salve_amulet_(ei)
+SLAYER_HELM	Gear & rewards	Slayer helmet	ITEM	slayer helmet;slayer helmet (i)			Requires Malevolent Masquerade and assembly; colour variants may need manual confirmation.	Slayer_helmet
+BLACK_MASK	Gear & rewards	Black mask	ITEM	black mask;black mask (i)	CABIN_FEVER	Slayer:58	Cave horror access and a drop do not guarantee ownership; charged variants are recognised.	Black_mask
+RUNE_POUCH	Gear & rewards	Rune pouch	ITEM	rune pouch			Purchase or other acquisition; visible ownership only, not pouch contents.	Rune_pouch
+DIVINE_POUCH	Gear & rewards	Divine rune pouch	ITEM	divine rune pouch			Requires a rune pouch and thread upgrade.	Divine_rune_pouch
+HERB_SACK	Gear & rewards	Herb sack	ITEM	herb sack		Herblore:58	Reward purchase; a level alone does not confirm ownership.	Herb_sack
+GEM_BAG	Gear & rewards	Gem bag	ITEM	gem bag			Purchase from the relevant reward shop.	Gem_bag
+COAL_BAG	Gear & rewards	Coal bag	ITEM	coal bag			Purchase from the relevant reward shop.	Coal_bag
+SEED_BOX	Gear & rewards	Seed box	ITEM	seed box			Purchase from Tithe Farm rewards.	Seed_box
+BONECRUSHER	Gear & rewards	Bonecrusher	ITEM	bonecrusher			Diary requirements and reward claim are separate; charges are not inferred.	Bonecrusher
+ASH_SANCTIFIER	Gear & rewards	Ash sanctifier	ITEM	ash sanctifier			Kourend diary reward claim and charges are separate.	Ash_sanctifier
+SOUL_BEARER	Gear & rewards	Soul bearer	ITEM	soul bearer	BEAR_YOUR_SOUL		Claim the reward; current charges are not tracked here.	Soul_bearer
+ECTOPHIAL	Gear & rewards	Ectophial	ITEM	ectophial	GHOSTS_AHOY		Ownership must be seen or confirmed.	Ectophial
+DRAKAN	Gear & rewards	Drakan medallion	ITEM	drakan's medallion	A_TASTE_OF_HOPE		Ownership and charge state are separate.	Drakan_medallion
+ROYAL_SEED_POD	Gear & rewards	Royal seed pod	ITEM	royal seed pod	MONKEY_MADNESS_II		Quest completion does not prove it is currently carried.	Royal_seed_pod
+EXCALIBUR	Gear & rewards	Excalibur	ITEM	excalibur	MERLINS_CRYSTAL		Reward ownership is independent of quest completion.	Excalibur
+ARCLIGHT	Gear & rewards	Arclight	ITEM	arclight		Attack:75	Craft the upgrade and manage charges separately.	Arclight
+DARKLIGHT	Gear & rewards	Darklight	ITEM	darklight	SHADOW_OF_THE_STORM		Reward ownership must be observed or confirmed.	Darklight
+BOOK_DEAD	Gear & rewards	Book of the dead	ITEM	book of the dead	A_KINGDOM_DIVIDED		Used with resurrection spells; quest access does not prove current possession.	Book_of_the_dead
+IMBUED_HEART	Gear & rewards	Imbued heart	ITEM	imbued heart			Rare acquisition; no kill count guarantees the drop.	Imbued_heart
+SATURATED_HEART	Gear & rewards	Saturated heart	ITEM	saturated heart			Requires the heart and upgrade materials.	Saturated_heart
+FISH_BARREL	Gear & rewards	Fish barrel	ITEM	fish barrel			Tempoross reward; acquisition is not inferred from participation.	Fish_barrel
+FISH_SACK_BARREL	Gear & rewards	Fish sack barrel	ITEM	fish sack barrel			Requires both items and combination.	Fish_sack_barrel
+GLOVES_ICE	Gear & rewards	Ice gloves	ITEM	ice gloves			Obtain from the Ice Queen; mining access alternatives can vary.	Ice_gloves
+GOLDSMITH	Gear & rewards	Goldsmith gauntlets	ITEM	goldsmith gauntlets	FAMILY_CREST		Choose or change the Family Crest gauntlet enchantment.	Goldsmith_gauntlets
+COOKING_GAUNTLETS	Gear & rewards	Cooking gauntlets	ITEM	cooking gauntlets	FAMILY_CREST		Choose or change the Family Crest gauntlet enchantment.	Cooking_gauntlets
+CHAOS_GAUNTLETS	Gear & rewards	Chaos gauntlets	ITEM	chaos gauntlets	FAMILY_CREST		Choose or change the Family Crest gauntlet enchantment.	Chaos_gauntlets
+DRAMEN_STAFF	Gear & rewards	Dramen staff	ITEM	dramen staff	LOST_CITY		Visible staff ownership; fairy-ring permission is separate.	Dramen_staff
+LUNAR_STAFF	Gear & rewards	Lunar staff	ITEM	lunar staff	LUNAR_DIPLOMACY		Visible staff ownership; quest completion alone is insufficient.	Lunar_staff
+CHRONICLE	Gear & rewards	Chronicle	ITEM	chronicle			Teleport cards and charges are separate.	Chronicle
+IMBUED_SARA	Gear & rewards	Imbued Saradomin cape	ITEM	imbued saradomin cape	MAGE_ARENA_II		Miniquest completion does not prove this particular cape is owned.	Imbued_Saradomin_cape
+IMBUED_GUTHIX	Gear & rewards	Imbued Guthix cape	ITEM	imbued guthix cape	MAGE_ARENA_II		Miniquest completion does not prove this particular cape is owned.	Imbued_Guthix_cape
+IMBUED_ZAMMY	Gear & rewards	Imbued Zamorak cape	ITEM	imbued zamorak cape	MAGE_ARENA_II		Miniquest completion does not prove this particular cape is owned.	Imbued_Zamorak_cape
+GRACEFUL	Gear & rewards	Full graceful outfit	CHECK				Obtain all six pieces. Seeing one piece is not proof of a complete set. Recolours count when manually confirmed.	Graceful_outfit
+ROGUE	Gear & rewards	Full rogue outfit	CHECK				Collect all five pieces; Agility and Thieving levels alone do not prove set ownership.	Rogue_equipment
+PROSPECTOR	Gear & rewards	Full prospector outfit	CHECK				Collect the full set. Reward points alone do not prove ownership.	Prospector_kit
+ANGLER	Gear & rewards	Full angler outfit	CHECK				Collect the full set; participation does not prove ownership.	Angler%27s_outfit
+LUMBERJACK	Gear & rewards	Full lumberjack outfit	CHECK				Collect the full set; quest access does not prove ownership.	Lumberjack_outfit
+FARMER_OUTFIT	Gear & rewards	Full farmer outfit	CHECK				Purchase the full reward set.	Farmer%27s_outfit
+ZEALOT	Gear & rewards	Full zealot outfit	CHECK				Collect the full set from Shades of Mortton rewards.	Zealot%27s_robes
+RAIMENTS	Gear & rewards	Full Raiments of the Eye	CHECK				Purchase the full set; individual pieces are not a full-set confirmation.	Raiments_of_the_Eye
+VOID	Gear & rewards	Void armour set	CHECK				Confirm the exact set and helm you own; points or combat level do not prove ownership.	Void_Knight_equipment
+ELITE_VOID	Gear & rewards	Elite void armour	CHECK				Western hard diary plus reward purchase and upgrading. Confirm owned pieces.	Elite_Void_Knight_equipment
+TORMENTED	Gear & rewards	Tormented bracelet	CHECK				Obtain and craft the zenyte jewellery; a Crafting level alone is not ownership.	Tormented_bracelet
+SUFFERING_I	Gear & rewards	Ring of suffering (i)	CHECK				Craft/acquire and imbue it; current recoil charges are separate.	Ring_of_suffering_(i)
+BERSERKER_I	Gear & rewards	Berserker ring (i)	CHECK				Obtain and imbue it; boss kills or points do not prove ownership.	Berserker_ring_(i)
+BIRDHOUSES	Farming & guilds	Bird house runs	CHECK		BONE_VOYAGE	Hunter:5;Crafting:5	Clockworks, logs and seeds are still needed. Confirm route setup.	Bird_house_trapping
+SEAWEED	Farming & guilds	Giant seaweed patches	CHECK		BONE_VOYAGE	Farming:23	Diving access, seeds and patch use are separate.	Giant_seaweed
+TROLL_PATCH	Farming & guilds	Troll Stronghold herb patch	CHECK		MY_ARMS_BIG_ADVENTURE		Patch access from the quest; seeds and travel are separate.	Troll_Stronghold
+WEISS_PATCH	Farming & guilds	Weiss herb patch	CHECK		MAKING_FRIENDS_WITH_MY_ARM		Complete the relevant fire-pit/patch setup.	Weiss
+HOSIDIUS_PATCH	Farming & guilds	Hosidius herb patch	CHECK				Confirm access and any diary protection separately.	Hosidius
+FARM_GUILD_45	Farming & guilds	Farming Guild lower tier	CHECK			Farming:45	Guild entry; do not confuse with middle/upper tiers.	Farming_Guild
+FARM_GUILD_65	Farming & guilds	Farming Guild middle tier	CHECK			Farming:65	Confirm access; boost handling and contracts remain separate.	Farming_Guild
+FARM_GUILD_85	Farming & guilds	Farming Guild upper tier	CHECK			Farming:85	Confirm access; this does not plant a spirit tree.	Farming_Guild
+SPIRIT_PLANT	Farming & guilds	Spirit tree planting	CHECK			Farming:83	Seeds, patch access and number-of-tree restrictions apply.	Spirit_tree
+HARDWOOD	Farming & guilds	Fossil Island hardwood patches	CHECK		BONE_VOYAGE	Farming:35	35 Farming is the teak level; mahogany requires its own higher level.	Hardwood_tree_patch
+FISH_GUILD	Farming & guilds	Fishing Guild	CHECK			Fishing:68	Base-level gate only; boost access can occur earlier.	Fishing_Guild
+COOK_GUILD	Farming & guilds	Cooks Guild	CHECK			Cooking:32	A chefs hat or accepted alternative may be needed; bank access is a separate unlock.	Cooks%27_Guild
+CRAFT_GUILD	Farming & guilds	Crafting Guild	CHECK			Crafting:40	Apron/alternative and banking requirements are separate.	Crafting_Guild
+RANGING_GUILD	Farming & guilds	Ranging Guild	CHECK			Ranged:40	Confirm access; does not claim reward ownership.	Ranging_Guild
+MINING_GUILD	Farming & guilds	Mining Guild	CHECK			Mining:60	Base-level entry condition; boosts may permit earlier entry.	Mining_Guild
+WOODCUT_GUILD	Farming & guilds	Woodcutting Guild	CHECK			Woodcutting:60	Other current entry conditions must be checked in the guide.	Woodcutting_Guild
+WARRIORS_GUILD	Farming & guilds	Warriors Guild	CHECK				Attack + Strength 130, or 99 in either; entry does not complete the defender chain.	Warriors%27_Guild
+POH_PORTALS	POH & account upgrades	POH portal chambers	CHECK				Build and direct each portal. Construction levels do not prove furniture exists.	Portal_chamber
+POH_NEXUS	POH & account upgrades	POH portal nexus	CHECK				Build and charge chosen destinations individually.	Portal_nexus
+POH_JEWELLERY	POH & account upgrades	POH jewellery box	CHECK				Build a basic/fancy/ornate box; each tier has different destinations.	Jewellery_box
+POH_POOL	POH & account upgrades	POH restoration pool	CHECK				Confirm the exact pool tier built in your house.	Pool_of_Refreshment
+POH_ALTAR	POH & account upgrades	POH spellbook altar	CHECK				Confirm the exact altar built; access to spellbooks is still separate.	Achievement_gallery
+POH_FAIRY	POH & account upgrades	POH fairy ring	CHECK				Build the ring in your own house; fairy-ring network permission is separate.	Fairy_ring_(Construction)
+POH_SPIRIT	POH & account upgrades	POH spirit tree	CHECK				Plant the tree in your own house; levels alone do not prove it is planted.	Spirit_tree_(Construction)
+POH_COMBINED	POH & account upgrades	POH spirit tree and fairy ring	CHECK				Build the combined feature in your own house.	Spirit_tree_%26_fairy_ring
+POH_COSTUME	POH & account upgrades	POH costume room storage	CHECK				Build the desired furniture and storage tier.	Costume_room
+SEED_VAULT	POH & account upgrades	Farming Guild seed vault	CHECK				Confirm access and deposited items separately; no stored contents are inferred.	Seed_vault
+MASTER_STASH	POH & account upgrades	Master STASH storage	CHECK				Each STASH requires its own build, items and completion.	STASH
+BARB_SMASH	POH & account upgrades	Barbarian vial smashing	CHECK				Unlock the dialogue option and enable it separately.	Barbarian_training
+AUTO_WEED	POH & account upgrades	Auto-weed	CHECK				Buy from Tithe Farm; do not infer ownership from Farming level.	Tithe_Farm
+BONE_VOYAGE_CAMP	POH & account upgrades	Fossil Island camp facilities	CHECK				Build facilities individually; Bone Voyage alone does not build them.	Museum_Camp
+MUSEUM_QUIZ	POH & account upgrades	Natural history quiz reward	CHECK				Finish the museum quiz; having high Hunter or Slayer does not prove completion.	Natural_history_quiz
+REWARD_ARDOUGNE_CLOAK_1	Diary reward items	Ardougne cloak 1	ITEM	ardougne cloak 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Ardougne_cloak_1
+REWARD_ARDOUGNE_CLOAK_2	Diary reward items	Ardougne cloak 2	ITEM	ardougne cloak 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Ardougne_cloak_2
+REWARD_ARDOUGNE_CLOAK_3	Diary reward items	Ardougne cloak 3	ITEM	ardougne cloak 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Ardougne_cloak_3
+REWARD_ARDOUGNE_CLOAK_4	Diary reward items	Ardougne cloak 4	ITEM	ardougne cloak 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Ardougne_cloak_4
+REWARD_DESERT_AMULET_1	Diary reward items	Desert amulet 1	ITEM	desert amulet 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Desert_amulet_1
+REWARD_DESERT_AMULET_2	Diary reward items	Desert amulet 2	ITEM	desert amulet 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Desert_amulet_2
+REWARD_DESERT_AMULET_3	Diary reward items	Desert amulet 3	ITEM	desert amulet 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Desert_amulet_3
+REWARD_DESERT_AMULET_4	Diary reward items	Desert amulet 4	ITEM	desert amulet 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Desert_amulet_4
+REWARD_FALADOR_SHIELD_1	Diary reward items	Falador shield 1	ITEM	falador shield 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Falador_shield_1
+REWARD_FALADOR_SHIELD_2	Diary reward items	Falador shield 2	ITEM	falador shield 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Falador_shield_2
+REWARD_FALADOR_SHIELD_3	Diary reward items	Falador shield 3	ITEM	falador shield 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Falador_shield_3
+REWARD_FALADOR_SHIELD_4	Diary reward items	Falador shield 4	ITEM	falador shield 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Falador_shield_4
+REWARD_FREMENNIK_SEA_BOOTS_1	Diary reward items	Fremennik sea boots 1	ITEM	fremennik sea boots 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Fremennik_sea_boots_1
+REWARD_FREMENNIK_SEA_BOOTS_2	Diary reward items	Fremennik sea boots 2	ITEM	fremennik sea boots 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Fremennik_sea_boots_2
+REWARD_FREMENNIK_SEA_BOOTS_3	Diary reward items	Fremennik sea boots 3	ITEM	fremennik sea boots 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Fremennik_sea_boots_3
+REWARD_FREMENNIK_SEA_BOOTS_4	Diary reward items	Fremennik sea boots 4	ITEM	fremennik sea boots 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Fremennik_sea_boots_4
+REWARD_KANDARIN_HEADGEAR_1	Diary reward items	Kandarin headgear 1	ITEM	kandarin headgear 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Kandarin_headgear_1
+REWARD_KANDARIN_HEADGEAR_2	Diary reward items	Kandarin headgear 2	ITEM	kandarin headgear 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Kandarin_headgear_2
+REWARD_KANDARIN_HEADGEAR_3	Diary reward items	Kandarin headgear 3	ITEM	kandarin headgear 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Kandarin_headgear_3
+REWARD_KANDARIN_HEADGEAR_4	Diary reward items	Kandarin headgear 4	ITEM	kandarin headgear 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Kandarin_headgear_4
+REWARD_KARAMJA_GLOVES_1	Diary reward items	Karamja gloves 1	ITEM	karamja gloves 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Karamja_gloves_1
+REWARD_KARAMJA_GLOVES_2	Diary reward items	Karamja gloves 2	ITEM	karamja gloves 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Karamja_gloves_2
+REWARD_KARAMJA_GLOVES_3	Diary reward items	Karamja gloves 3	ITEM	karamja gloves 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Karamja_gloves_3
+REWARD_KARAMJA_GLOVES_4	Diary reward items	Karamja gloves 4	ITEM	karamja gloves 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Karamja_gloves_4
+REWARD_RADAS_BLESSING_1	Diary reward items	Rada's blessing 1	ITEM	rada's blessing 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Rada%27s_blessing_1
+REWARD_RADAS_BLESSING_2	Diary reward items	Rada's blessing 2	ITEM	rada's blessing 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Rada%27s_blessing_2
+REWARD_RADAS_BLESSING_3	Diary reward items	Rada's blessing 3	ITEM	rada's blessing 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Rada%27s_blessing_3
+REWARD_RADAS_BLESSING_4	Diary reward items	Rada's blessing 4	ITEM	rada's blessing 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Rada%27s_blessing_4
+REWARD_EXPLORERS_RING_1	Diary reward items	Explorer's ring 1	ITEM	explorer's ring 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Explorer%27s_ring_1
+REWARD_EXPLORERS_RING_2	Diary reward items	Explorer's ring 2	ITEM	explorer's ring 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Explorer%27s_ring_2
+REWARD_EXPLORERS_RING_3	Diary reward items	Explorer's ring 3	ITEM	explorer's ring 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Explorer%27s_ring_3
+REWARD_EXPLORERS_RING_4	Diary reward items	Explorer's ring 4	ITEM	explorer's ring 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Explorer%27s_ring_4
+REWARD_MORYTANIA_LEGS_1	Diary reward items	Morytania legs 1	ITEM	morytania legs 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Morytania_legs_1
+REWARD_MORYTANIA_LEGS_2	Diary reward items	Morytania legs 2	ITEM	morytania legs 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Morytania_legs_2
+REWARD_MORYTANIA_LEGS_3	Diary reward items	Morytania legs 3	ITEM	morytania legs 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Morytania_legs_3
+REWARD_MORYTANIA_LEGS_4	Diary reward items	Morytania legs 4	ITEM	morytania legs 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Morytania_legs_4
+REWARD_VARROCK_ARMOUR_1	Diary reward items	Varrock armour 1	ITEM	varrock armour 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Varrock_armour_1
+REWARD_VARROCK_ARMOUR_2	Diary reward items	Varrock armour 2	ITEM	varrock armour 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Varrock_armour_2
+REWARD_VARROCK_ARMOUR_3	Diary reward items	Varrock armour 3	ITEM	varrock armour 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Varrock_armour_3
+REWARD_VARROCK_ARMOUR_4	Diary reward items	Varrock armour 4	ITEM	varrock armour 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Varrock_armour_4
+REWARD_WESTERN_BANNER_1	Diary reward items	Western banner 1	ITEM	western banner 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Western_banner_1
+REWARD_WESTERN_BANNER_2	Diary reward items	Western banner 2	ITEM	western banner 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Western_banner_2
+REWARD_WESTERN_BANNER_3	Diary reward items	Western banner 3	ITEM	western banner 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Western_banner_3
+REWARD_WESTERN_BANNER_4	Diary reward items	Western banner 4	ITEM	western banner 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Western_banner_4
+REWARD_WILDERNESS_SWORD_1	Diary reward items	Wilderness sword 1	ITEM	wilderness sword 1			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Wilderness_sword_1
+REWARD_WILDERNESS_SWORD_2	Diary reward items	Wilderness sword 2	ITEM	wilderness sword 2			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Wilderness_sword_2
+REWARD_WILDERNESS_SWORD_3	Diary reward items	Wilderness sword 3	ITEM	wilderness sword 3			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Wilderness_sword_3
+REWARD_WILDERNESS_SWORD_4	Diary reward items	Wilderness sword 4	ITEM	wilderness sword 4			Physical diary reward must be claimed. A completed diary alone is not current ownership; daily charges are not inferred.	Wilderness_sword_4

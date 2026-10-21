@@ -63,6 +63,7 @@ public class OneManPluginBootstrapTest
                 bind(ClientThread.class).toInstance(mock(ClientThread.class));
                 bind(ItemManager.class).toInstance(mock(ItemManager.class));
                 bind(ClientToolbar.class).toInstance(toolbar);
+                bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(overlays);
                 bind(WorldMapPointManager.class).toInstance(mock(WorldMapPointManager.class));
                 bind(Notifier.class).toInstance(mock(Notifier.class));
@@ -96,10 +97,38 @@ public class OneManPluginBootstrapTest
                 Container panel=navigation.getValue().getPanel();
                 JComboBox<?> hubs=findHubSelector(panel);
                 assertNotNull("The real sidebar must expose all hubs and sync settings",hubs);
-                assertEquals("Overview",hubs.getItemAt(0));
+                assertEquals("Tools",hubs.getItemAt(0));
+                assertEquals("Tools",hubs.getSelectedItem());
+                assertFalse("No duplicate account session feed in normal navigation",selectTab(panel,"Summary"));
+                assertFalse("Sync diagnostics are not a main Hub",selectTab(panel,"Sync"));
+                assertFalse("Screenshot history is not a main view",selectTab(panel,"Memories"));
+                assertFalse("Slayer history is optional",selectTab(panel,"History"));
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
+                assertEquals("Monsters Hub",hubs.getItemAt(4));
+                assertEquals("Unlocks Hub",hubs.getItemAt(5));
+                hubs.setSelectedItem("Unlocks Hub");
+                assertNotNull(findNamed(panel,"unlocksSearch",JTextField.class));
+                assertNotNull(findNamed(panel,"unlocksStatusFilter",JComboBox.class));
+                javax.swing.JToggleButton gear=findNamed(panel,"unlockCategory:Gear & rewards",javax.swing.JToggleButton.class);
+                assertNotNull(gear);gear.doClick();
+                javax.swing.JToggleButton unlockDetails=findNamed(panel,"unlockDetails:BARROWS_GLOVES",javax.swing.JToggleButton.class);
+                assertNotNull(unlockDetails);unlockDetails.doClick();
+                JButton monstersShortcut=findNamed(panel,"monstersHubShortcut",JButton.class);
+                assertNotNull("Monsters Hub must also have a permanent direct button",monstersShortcut);
+                monstersShortcut.doClick();
+                assertEquals("Monsters Hub",hubs.getSelectedItem());
+                assertNotNull(findNamed(panel,"monstersProfile",JComboBox.class));
+                javax.swing.JToggleButton appearance=findNamed(panel,"monstersAppearanceToggle",javax.swing.JToggleButton.class);
+                assertNotNull(appearance); appearance.doClick();
+                assertNotNull(findNamed(panel,"monstersAppearancePreset",JComboBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanPulse",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanOutline",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanFill",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanLabel",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanTileOpacity",javax.swing.JSlider.class));
+                assertNotNull(findNamed(panel,"monstersShamanModelOpacity",javax.swing.JSlider.class));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
                 hubs.setSelectedItem("Clue Scroll Hub");
@@ -150,6 +179,7 @@ public class OneManPluginBootstrapTest
             verify(overlays).add(isA(StashMinimapOverlay.class));
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
+            verify(overlays).add(isA(ShamanMinionOverlay.class));
         }
         finally
         {
@@ -162,6 +192,7 @@ public class OneManPluginBootstrapTest
         verify(overlays).remove(isA(StashMinimapOverlay.class));
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
+        verify(overlays).remove(isA(ShamanMinionOverlay.class));
     }
     private static final class SettingsRequests
     {
@@ -220,7 +251,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==4 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==6 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {
