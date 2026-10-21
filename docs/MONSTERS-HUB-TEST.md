@@ -1,7 +1,7 @@
 # Monsters Hub: Lizardman Shaman test
 
 Base: `master` at `250aa049806ad3b6fbb5b86c8b0739dd0725317b` (0.8.2 Superior alert fix).
-Test version: `0.8.5-settings-test`. No Plugin Hub submission or master merge is part of this test.
+Test version: `0.8.6-pulse-test`. No Plugin Hub submission or master merge is part of this test.
 
 ## Implemented
 
@@ -42,7 +42,7 @@ The implemented overlay is limited to ordinary current NPC tile marking, like NP
 
 1. Download this branch ZIP, extract, open the project root in IntelliJ and allow Gradle import with JDK 11 or later. Compilation targets Java 11.
 2. Run `src/test/java/lt/oneman/sync/OneManSyncPluginTest.java` as before (or `./gradlew run`). For Jagex accounts follow [Using Jagex Accounts](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
-3. Open OneMan, confirm build `0.8.5-settings-test`, select Monsters Hub and Lizardman Shaman.
+3. Open OneMan, confirm build `0.8.6-pulse-test`, select Monsters Hub and Lizardman Shaman.
 4. At ordinary Shamans, check all already spawned minions have tiles following their current tile each tick. Two simultaneous groups must remain independently tracked; disappearing minions must leave no tile behind.
 5. Change tile/model colours and each opacity slider independently. Toggle tiles Off while keeping outline/fill/label On, then toggle each individually. Model highlights must remain when tiles are Off. Select profile Off/Lizardman Shaman; existing visible minions should reappear on the next game tick. Setting opacity to zero hides only that layer.
 6. Teleport away, change scene/plane, hop/log out and back in, disable/re-enable the plugin. Check for stale tiles. In Chambers, this helper should show no markers.
@@ -53,10 +53,20 @@ Only the owner can confirm in-game behaviour. Automated JVM/UI tests do not esta
 
 ## Navigation verification
 
-The test build has a permanent Monsters Hub button as well as the fifth item in the same Hub dropdown. Automated bootstrap tests click that button, verify it selects Monsters Hub, inspect its visual controls and lay out every Hub at narrow sidebar widths. The launcher prints the exact test version. If the running sidebar does not show 0.8.5-settings-test, it is not this test build. Use the commit-pinned ZIP linked in the handoff to avoid reusing an older source folder.
+The test build has a permanent Monsters Hub button as well as the fifth item in the same Hub dropdown. Automated bootstrap tests click that button, verify it selects Monsters Hub, inspect its visual controls and lay out every Hub at narrow sidebar widths. The launcher prints the exact test version. If the running sidebar does not show 0.8.6-pulse-test, it is not this test build. Use the commit-pinned ZIP linked in the handoff to avoid reusing an older source folder.
 
 ## Collapsible native settings
 
 OneMan Sync settings now use six collapsed-by-default sections: Sync / Account, Roadmap / Screenshots, Slayer / Alerts / Supplies, Farming, Clue Hub and Monsters / Lizardman Shaman. Click a section heading to expand it. Existing config group, keys, values and defaults are preserved. Hub controls and the native Monsters section write to the same `one-man-sync` keys; they do not create separate effects. Close/reopen the native settings page after changing a Hub control if that RuneLite page is showing an older value.
 
 Manual check: expand Clue Hub and Monsters independently; change a Shaman preference in the Hub, reopen native settings and verify it matches; change it in native settings and return to the Hub to verify the same value. Verify saved Sync Key and Superior notification preferences remain intact after upgrading.
+
+## Cosmetic pulse and appearance presets (0.8.6)
+
+Expand **Appearance presets** inside Monsters Hub. Select Subtle, Clear or Vivid and click Apply selected look. This replaces only the Shaman visual settings (including visibility toggles); it never enables a monster profile or changes task, sync or Superior preferences. Manual edits afterwards remain in effect. Subtle uses a thin lavender outline without fill/pulse; Clear uses purple with light fill/pulse; Vivid uses a thicker amber outline with stronger fill/pulse.
+
+Gentle outline pulse is optional and defaults Off for existing users. Clear/Vivid enable it; Subtle disables it. It changes only outline opacity between 60% and 100% of the chosen opacity, smoothly over a fixed 2.4-second cycle. All visible minions share one monotonic-clock phase. NPC spawn time, age, movement, distance and explosion predictions never enter the pulse calculation. It never accelerates or indicates detonation order. Tiles, fill and labels remain steady. Zero base opacity stays invisible.
+
+Manual checks: compare each preset; turn pulse Off/On; verify the outline stays gently visible and all minions pulse together at the same tempo, including new minions appearing mid-cycle. Change a colour/opacity after applying a preset and verify it persists. Disable/re-enable and check cleanup remains correct. The new appearance controls are collapsed by default so they do not lengthen the normal Hub view.
+
+This cosmetic experiment remains in the draft test branch. Public Plugin Hub acceptance of the pulse has not been confirmed; no public submission is included.

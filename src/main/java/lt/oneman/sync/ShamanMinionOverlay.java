@@ -39,12 +39,22 @@ final class ShamanMinionOverlay extends Overlay
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 
+    // One global cosmetic phase: never restarted by spawning, scene changes or configuration.
+    static int pulsePercent(long monotonicNanos)
+    {
+        long period = 2_400_000_000L;
+        double phase = Math.floorMod(monotonicNanos, period) / (double) period;
+        return (int) Math.round(80 + 20 * Math.cos(2 * Math.PI * phase));
+    }
+
     @Override public Dimension render(Graphics2D graphics)
     {
         MonstersHub currentHub = hub;
         if (currentHub == null || client.getGameState() != GameState.LOGGED_IN || !currentHub.enabled()) return null;
         Color tileColor = opacity(config.monstersShamanColor(), config.monstersShamanTileOpacity());
         Color modelColor = opacity(config.monstersShamanModelColor(), config.monstersShamanModelOpacity());
+        Color outlineColor = config.monstersShamanPulse()
+            ? opacity(modelColor, pulsePercent(System.nanoTime())) : modelColor;
         Color fillColor = opacity(config.monstersShamanModelColor(), config.monstersShamanFillOpacity());
         for (MonstersHub.Marker marker : currentHub.markers())
         {
@@ -67,7 +77,7 @@ final class ShamanMinionOverlay extends Overlay
                 if (hull != null) { graphics.setColor(fillColor); graphics.fill(hull); }
             }
             if (config.monstersShamanOutline() && modelColor.getAlpha() > 0)
-                outlines.drawOutline(npc, Math.max(1, Math.min(6, config.monstersShamanOutlineWidth())), modelColor, 2);
+                outlines.drawOutline(npc, Math.max(1, Math.min(6, config.monstersShamanOutlineWidth())), outlineColor, 2);
             if (config.monstersShamanLabel() && modelColor.getAlpha() > 0)
             {
                 Point text = npc.getCanvasTextLocation(graphics, "Spawn", npc.getLogicalHeight() + 20);

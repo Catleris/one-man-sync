@@ -41,6 +41,7 @@ public class MonstersHubTest
             @Override protected void configure()
             {
                 bind(Client.class).toInstance(client);
+                bind(net.runelite.client.callback.ClientThread.class).toInstance(mock(net.runelite.client.callback.ClientThread.class));
                 bind(OneManSyncConfig.class).toInstance(config);
                 bind(ConfigManager.class).toInstance(mock(ConfigManager.class));
                 bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));

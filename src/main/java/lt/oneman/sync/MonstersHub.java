@@ -20,6 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.JToggleButton;
+import net.runelite.client.callback.ClientThread;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -40,6 +42,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 final class MonstersHub
 {
     @Inject private Client client;
+    @Inject private ClientThread clientThread;
     @Inject private OneManSyncConfig config;
     @Inject private ConfigManager configs;
     @Inject private OverlayManager overlays;
@@ -200,6 +203,7 @@ final class MonstersHub
     private final class Panel extends JPanel
     {
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
+        private final JCheckBox pulse = new JCheckBox("Gentle outline pulse");
         private final JCheckBox tiles = new JCheckBox("Mark current minion tiles");
         private final JCheckBox outline = new JCheckBox("Outline minion models");
         private final JCheckBox fill = new JCheckBox("Fill minion silhouettes");
@@ -224,6 +228,26 @@ final class MonstersHub
             tiles.setName("monstersShamanTiles");
             tiles.setOpaque(false);
             controls.card(profile);
+            JPanel looks = new JPanel(new BorderLayout(0,4)); looks.setOpaque(false);
+            JToggleButton expandLooks = new JToggleButton("Appearance presets");
+            expandLooks.setName("monstersAppearanceToggle");
+            OneManCards lookControls = new OneManCards();
+            JComboBox<ShamanAppearance> presets = new JComboBox<>(ShamanAppearance.values());
+            presets.setName("monstersAppearancePreset");
+            JButton apply = new JButton("Apply selected look"); apply.setName("monstersAppearanceApply");
+            apply.setToolTipText("Replaces visual colours, visibility and pulse settings; leaves monster profile and Slayer settings unchanged");
+            pulse.setOpaque(false); pulse.setName("monstersShamanPulse");
+            lookControls.card(presets); lookControls.card(apply); lookControls.card(pulse);
+            lookControls.card(OneManCards.text("Pulse stays at the same gentle tempo. It does not indicate when a spawn will explode."));
+            lookControls.setVisible(false);
+            expandLooks.addActionListener(event -> { lookControls.setVisible(expandLooks.isSelected()); revalidate(); repaint(); });
+            apply.addActionListener(event -> {
+                ShamanAppearance selected = (ShamanAppearance) presets.getSelectedItem();
+                if (selected != null) clientThread.invokeLater(() -> { if (active) selected.apply(configs); });
+            });
+            pulse.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanPulse", pulse.isSelected()); });
+            looks.add(expandLooks, BorderLayout.NORTH); looks.add(lookControls, BorderLayout.CENTER);
+            controls.card(looks);
             controls.card(tiles); controls.card(color);
             controls.card(opacity("Tile visibility", tileOpacity, "monstersShamanTileOpacity"));
             for (JCheckBox box : new JCheckBox[]{outline, fill, label}) { box.setOpaque(false); controls.card(box); }
@@ -275,6 +299,7 @@ final class MonstersHub
             updating = true;
             profile.setSelectedItem(config.monstersProfile());
             tiles.setSelected(config.monstersShamanTiles());
+            pulse.setSelected(config.monstersShamanPulse());
             outline.setSelected(config.monstersShamanOutline());
             fill.setSelected(config.monstersShamanFill());
             label.setSelected(config.monstersShamanLabel());

@@ -42,6 +42,7 @@ public class ShamanMinionOverlayTest
         Injector injector=Guice.createInjector(new AbstractModule() {
             @Override protected void configure() {
                 bind(Client.class).toInstance(client);
+                bind(net.runelite.client.callback.ClientThread.class).toInstance(mock(net.runelite.client.callback.ClientThread.class));
                 bind(OneManSyncConfig.class).toInstance(config);
                 bind(ConfigManager.class).toInstance(mock(ConfigManager.class));
                 bind(OverlayManager.class).toInstance(mock(OverlayManager.class));
@@ -70,6 +71,18 @@ public class ShamanMinionOverlayTest
             overlay.render(graphics);
             verifyNoMoreInteractions(outlines);
         } finally { graphics.dispose(); hub.shutDown(); }
+    }
+
+    @Test public void pulseHasFixedPeriodAndNeverHidesTheOutline()
+    {
+        assertEquals(100, ShamanMinionOverlay.pulsePercent(0));
+        assertEquals(60, ShamanMinionOverlay.pulsePercent(1_200_000_000L));
+        assertEquals(100, ShamanMinionOverlay.pulsePercent(2_400_000_000L));
+        for (long time=0;time<2_400_000_000L;time+=20_000_000L) {
+            int value=ShamanMinionOverlay.pulsePercent(time);
+            assertTrue(value>=60 && value<=100);
+            assertEquals(value, ShamanMinionOverlay.pulsePercent(time+2_400_000_000L));
+        }
     }
 
     @Test public void opacityKeepsSeparateColoursAndRespectsSavedAlpha()

@@ -124,6 +124,9 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="monstersShamanOutlineWidth", name="Shaman outline width", description="Model outline width in pixels.", position=100, section=monstersSection)
     default int monstersShamanOutlineWidth() { return 2; }
 
+    @ConfigItem(keyName="monstersShamanPulse", name="Shaman gentle outline pulse", description="Constant 2.4-second cosmetic cycle shared by all visible spawns; never speeds up and is unrelated to explosion timing.", position=101, section=monstersSection)
+    default boolean monstersShamanPulse() { return false; }
+
     // RuneLite initializes defaults only for methods declared on this config.
     @ConfigItem(keyName="combatStyle", name="Supplies combat style", description="Controls ammunition or rune quantity warnings; does not select combat actions.", position=10, section=slayerSection)
     default CombatStyle combatStyle() { return CombatStyle.MELEE; }

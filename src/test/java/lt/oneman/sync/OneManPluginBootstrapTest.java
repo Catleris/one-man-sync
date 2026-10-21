@@ -107,6 +107,10 @@ public class OneManPluginBootstrapTest
                 monstersShortcut.doClick();
                 assertEquals("Monsters Hub",hubs.getSelectedItem());
                 assertNotNull(findNamed(panel,"monstersProfile",JComboBox.class));
+                javax.swing.JToggleButton appearance=findNamed(panel,"monstersAppearanceToggle",javax.swing.JToggleButton.class);
+                assertNotNull(appearance); appearance.doClick();
+                assertNotNull(findNamed(panel,"monstersAppearancePreset",JComboBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanPulse",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanOutline",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanFill",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanLabel",javax.swing.JCheckBox.class));
