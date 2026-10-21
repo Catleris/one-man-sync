@@ -1,7 +1,7 @@
 # Monsters Hub: Lizardman Shaman test
 
 Base: `master` at `250aa049806ad3b6fbb5b86c8b0739dd0725317b` (0.8.2 Superior alert fix).
-Test version: `0.8.4-monsters-test`. No Plugin Hub submission or master merge is part of this test.
+Test version: `0.8.5-settings-test`. No Plugin Hub submission or master merge is part of this test.
 
 ## Implemented
 
@@ -42,7 +42,7 @@ The implemented overlay is limited to ordinary current NPC tile marking, like NP
 
 1. Download this branch ZIP, extract, open the project root in IntelliJ and allow Gradle import with JDK 11 or later. Compilation targets Java 11.
 2. Run `src/test/java/lt/oneman/sync/OneManSyncPluginTest.java` as before (or `./gradlew run`). For Jagex accounts follow [Using Jagex Accounts](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
-3. Open OneMan, confirm build `0.8.4-monsters-test`, select Monsters Hub and Lizardman Shaman.
+3. Open OneMan, confirm build `0.8.5-settings-test`, select Monsters Hub and Lizardman Shaman.
 4. At ordinary Shamans, check all already spawned minions have tiles following their current tile each tick. Two simultaneous groups must remain independently tracked; disappearing minions must leave no tile behind.
 5. Change tile/model colours and each opacity slider independently. Toggle tiles Off while keeping outline/fill/label On, then toggle each individually. Model highlights must remain when tiles are Off. Select profile Off/Lizardman Shaman; existing visible minions should reappear on the next game tick. Setting opacity to zero hides only that layer.
 6. Teleport away, change scene/plane, hop/log out and back in, disable/re-enable the plugin. Check for stale tiles. In Chambers, this helper should show no markers.
@@ -53,4 +53,10 @@ Only the owner can confirm in-game behaviour. Automated JVM/UI tests do not esta
 
 ## Navigation verification
 
-The test build has a permanent Monsters Hub button as well as the fifth item in the same Hub dropdown. Automated bootstrap tests click that button, verify it selects Monsters Hub, inspect its visual controls and lay out every Hub at narrow sidebar widths. The launcher prints the exact test version. If the running sidebar does not show 0.8.4-monsters-test, it is not this test build. Use the commit-pinned ZIP linked in the handoff to avoid reusing an older source folder.
+The test build has a permanent Monsters Hub button as well as the fifth item in the same Hub dropdown. Automated bootstrap tests click that button, verify it selects Monsters Hub, inspect its visual controls and lay out every Hub at narrow sidebar widths. The launcher prints the exact test version. If the running sidebar does not show 0.8.5-settings-test, it is not this test build. Use the commit-pinned ZIP linked in the handoff to avoid reusing an older source folder.
+
+## Collapsible native settings
+
+OneMan Sync settings now use six collapsed-by-default sections: Sync / Account, Roadmap / Screenshots, Slayer / Alerts / Supplies, Farming, Clue Hub and Monsters / Lizardman Shaman. Click a section heading to expand it. Existing config group, keys, values and defaults are preserved. Hub controls and the native Monsters section write to the same `one-man-sync` keys; they do not create separate effects. Close/reopen the native settings page after changing a Hub control if that RuneLite page is showing an older value.
+
+Manual check: expand Clue Hub and Monsters independently; change a Shaman preference in the Hub, reopen native settings and verify it matches; change it in native settings and return to the Hub to verify the same value. Verify saved Sync Key and Superior notification preferences remain intact after upgrading.
