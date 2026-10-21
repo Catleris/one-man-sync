@@ -43,6 +43,7 @@ public class MonstersHubTest
                 bind(Client.class).toInstance(client);
                 bind(OneManSyncConfig.class).toInstance(config);
                 bind(ConfigManager.class).toInstance(mock(ConfigManager.class));
+                bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(mock(OverlayManager.class));
             }
         }).getInstance(MonstersHub.class);
@@ -137,6 +138,26 @@ public class MonstersHubTest
         when(client.getVarbitValue(VarbitID.RAIDS_CLIENT_INDUNGEON)).thenReturn(0);
         when(npc.getWorldView()).thenReturn(mock(WorldView.class));
         hub.onNpcSpawned(new NpcSpawned(npc));
+        assertTrue(hub.markers().isEmpty());
+    }
+
+    @Test public void modelHighlightsWorkWithTilesOffAndClearWhenEverythingIsOff()
+    {
+        when(config.monstersShamanTiles()).thenReturn(false);
+        when(config.monstersShamanOutline()).thenReturn(true);
+        hub.onConfigChanged();
+        hub.onNpcSpawned(new NpcSpawned(minion(5)));
+        assertTrue(hub.enabled());
+        assertEquals(1, hub.markers().size());
+        when(config.monstersShamanOutline()).thenReturn(false);
+        when(config.monstersShamanFill()).thenReturn(true);
+        assertTrue(hub.enabled());
+        when(config.monstersShamanFill()).thenReturn(false);
+        when(config.monstersShamanLabel()).thenReturn(true);
+        assertTrue(hub.enabled());
+        when(config.monstersShamanLabel()).thenReturn(false);
+        hub.onConfigChanged();
+        assertFalse(hub.enabled());
         assertTrue(hub.markers().isEmpty());
     }
 

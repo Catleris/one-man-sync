@@ -3,7 +3,6 @@ package lt.oneman.sync;
 import com.google.gson.JsonObject;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -19,6 +18,8 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -34,7 +35,7 @@ import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.overlay.OverlayManager;
 
-/** Client-thread NPC tracking; only immutable tile snapshots cross into rendering. */
+/** Client-thread NPC tracking; immutable tracking snapshots are published to the client-thread overlay. */
 @Singleton
 final class MonstersHub
 {
@@ -54,9 +55,10 @@ final class MonstersHub
 
     static final class Marker
     {
+        final NPC npc;
         final LocalPoint location;
         final int plane;
-        Marker(LocalPoint location, int plane) { this.location = location; this.plane = plane; }
+        Marker(NPC npc, LocalPoint location, int plane) { this.npc = npc; this.location = location; this.plane = plane; }
     }
 
     void startUp(Supplier<JsonObject> slayerState)
@@ -83,7 +85,8 @@ final class MonstersHub
 
     boolean enabled()
     {
-        return active && config.monstersProfile() == MonstersProfile.LIZARDMAN_SHAMAN && config.monstersShamanTiles()
+        return active && config.monstersProfile() == MonstersProfile.LIZARDMAN_SHAMAN && (config.monstersShamanTiles() || config.monstersShamanOutline()
+                || config.monstersShamanFill() || config.monstersShamanLabel())
             && client.getVarbitValue(VarbitID.RAIDS_CLIENT_INDUNGEON) == 0;
     }
 
@@ -179,7 +182,7 @@ final class MonstersHub
             // Ignore entities in a different world view rather than project their coordinates here.
             LocalPoint location = npc.getLocalLocation();
             if (location != null && npc.getWorldView() == client.getTopLevelWorldView())
-                next.add(new Marker(location, npc.getWorldLocation().getPlane()));
+                next.add(new Marker(npc, location, npc.getWorldLocation().getPlane()));
         }
         markers = Collections.unmodifiableList(next);
     }
@@ -198,7 +201,14 @@ final class MonstersHub
     {
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
         private final JCheckBox tiles = new JCheckBox("Mark current minion tiles");
+        private final JCheckBox outline = new JCheckBox("Outline minion models");
+        private final JCheckBox fill = new JCheckBox("Fill minion silhouettes");
+        private final JCheckBox label = new JCheckBox("Show Spawn above heads");
         private final JButton color = new JButton("Tile colour");
+        private final JButton modelColor = new JButton("Model / outline colour");
+        private final JSlider tileOpacity = new JSlider(0,100);
+        private final JSlider modelOpacity = new JSlider(0,100);
+        private final JSlider fillOpacity = new JSlider(0,100);
         private final JTextArea status = OneManCards.text(suggestion);
         private boolean updating;
 
@@ -208,12 +218,19 @@ final class MonstersHub
             OneManCards cards = new OneManCards();
             cards.card(OneManCards.banner("Monsters Hub • Test", "Lizardman Shaman • local helper"));
             JPanel settings = OneManCards.card();
-            JPanel controls = new JPanel(new GridLayout(0, 1, 0, 6));
+            OneManCards controls = new OneManCards();
             controls.setOpaque(false);
             profile.setName("monstersProfile");
             tiles.setName("monstersShamanTiles");
             tiles.setOpaque(false);
-            controls.add(profile); controls.add(tiles); controls.add(color);
+            controls.card(profile);
+            controls.card(tiles); controls.card(color);
+            controls.card(opacity("Tile visibility", tileOpacity, "monstersShamanTileOpacity"));
+            for (JCheckBox box : new JCheckBox[]{outline, fill, label}) { box.setOpaque(false); controls.card(box); }
+            outline.setName("monstersShamanOutline"); fill.setName("monstersShamanFill"); label.setName("monstersShamanLabel");
+            controls.card(modelColor);
+            controls.card(opacity("Outline / label visibility", modelOpacity, "monstersShamanModelOpacity"));
+            controls.card(opacity("Fill visibility", fillOpacity, "monstersShamanFillOpacity"));
             settings.add(controls, BorderLayout.NORTH);
             settings.add(status, BorderLayout.CENTER);
             cards.card(settings);
@@ -226,6 +243,13 @@ final class MonstersHub
             cards.finish(); add(OneManCards.scroll(cards), BorderLayout.CENTER);
             profile.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersProfile", profile.getSelectedItem()); });
             tiles.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanTiles", tiles.isSelected()); });
+            outline.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanOutline", outline.isSelected()); });
+            fill.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanFill", fill.isSelected()); });
+            label.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanLabel", label.isSelected()); });
+            modelColor.addActionListener(event -> {
+                Color selected = JColorChooser.showDialog(this, "Shaman spawn model colour", config.monstersShamanModelColor());
+                if (selected != null) configs.setConfiguration("one-man-sync", "monstersShamanModelColor", selected);
+            });
             color.addActionListener(event -> {
                 Color selected = JColorChooser.showDialog(this, "Shaman minion tile colour", config.monstersShamanColor());
                 if (selected != null) configs.setConfiguration("one-man-sync", "monstersShamanColor", selected);
@@ -233,12 +257,32 @@ final class MonstersHub
             refresh(suggestion);
         }
 
+        private JPanel opacity(String title, JSlider slider, String key)
+        {
+            JPanel row = new JPanel(new BorderLayout(0,2)); row.setOpaque(false);
+            JLabel caption = new JLabel(title); caption.setFont(caption.getFont().deriveFont(11f));
+            row.add(caption, BorderLayout.NORTH); row.add(slider, BorderLayout.CENTER);
+            slider.setName(key); slider.setOpaque(false); slider.setMajorTickSpacing(50);
+            slider.setPaintTicks(true); slider.setPaintLabels(true);
+            slider.addChangeListener(event -> {
+                if (!updating && !slider.getValueIsAdjusting()) configs.setConfiguration("one-man-sync", key, slider.getValue());
+            });
+            return row;
+        }
+
         void refresh(String message)
         {
             updating = true;
             profile.setSelectedItem(config.monstersProfile());
             tiles.setSelected(config.monstersShamanTiles());
+            outline.setSelected(config.monstersShamanOutline());
+            fill.setSelected(config.monstersShamanFill());
+            label.setSelected(config.monstersShamanLabel());
+            if (!tileOpacity.getValueIsAdjusting()) tileOpacity.setValue(config.monstersShamanTileOpacity());
+            if (!modelOpacity.getValueIsAdjusting()) modelOpacity.setValue(config.monstersShamanModelOpacity());
+            if (!fillOpacity.getValueIsAdjusting()) fillOpacity.setValue(config.monstersShamanFillOpacity());
             color.setForeground(config.monstersShamanColor());
+            modelColor.setForeground(config.monstersShamanModelColor());
             status.setText(message);
             updating = false;
             revalidate(); repaint();

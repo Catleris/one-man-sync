@@ -63,6 +63,7 @@ public class OneManPluginBootstrapTest
                 bind(ClientThread.class).toInstance(mock(ClientThread.class));
                 bind(ItemManager.class).toInstance(mock(ItemManager.class));
                 bind(ClientToolbar.class).toInstance(toolbar);
+                bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(overlays);
                 bind(WorldMapPointManager.class).toInstance(mock(WorldMapPointManager.class));
                 bind(Notifier.class).toInstance(mock(Notifier.class));
@@ -101,6 +102,16 @@ public class OneManPluginBootstrapTest
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
                 assertEquals("Monsters Hub",hubs.getItemAt(4));
+                JButton monstersShortcut=findNamed(panel,"monstersHubShortcut",JButton.class);
+                assertNotNull("Monsters Hub must also have a permanent direct button",monstersShortcut);
+                monstersShortcut.doClick();
+                assertEquals("Monsters Hub",hubs.getSelectedItem());
+                assertNotNull(findNamed(panel,"monstersProfile",JComboBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanOutline",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanFill",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanLabel",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"monstersShamanTileOpacity",javax.swing.JSlider.class));
+                assertNotNull(findNamed(panel,"monstersShamanModelOpacity",javax.swing.JSlider.class));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
                 hubs.setSelectedItem("Clue Scroll Hub");

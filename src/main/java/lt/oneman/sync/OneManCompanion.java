@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.3-monsters-test";
+    static final String VERSION = "0.8.4-monsters-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -85,13 +85,20 @@ final class OneManCompanion {
             cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
             cards.add(monstersHub.companionPanel(),"Monsters Hub");
             JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub"});
+            sections.setName("oneManHubSelector");
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
             JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
             JButton settings=new JButton("OneMan Sync settings");
             settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
-            settings.addActionListener(event->openSettings.run()); hubNavigation.add(settings,BorderLayout.SOUTH);
+            settings.addActionListener(event->openSettings.run());
+            JButton monstersShortcut=new JButton("Monsters Hub");
+            monstersShortcut.setName("monstersHubShortcut");
+            monstersShortcut.addActionListener(event->sections.setSelectedItem("Monsters Hub"));
+            JPanel hubActions=new JPanel(new GridLayout(0,1,0,4));
+            hubActions.add(monstersShortcut); hubActions.add(settings);
+            hubNavigation.add(hubActions,BorderLayout.SOUTH);
             root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
             navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues, Monsters").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);

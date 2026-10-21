@@ -84,8 +84,29 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="monstersShamanTiles", name="Shaman minion tiles", description="Mark only the current occupied tile of observed Shaman spawns. No explosion radius or prediction.", position=91)
     default boolean monstersShamanTiles() { return true; }
     @net.runelite.client.config.Alpha
-    @ConfigItem(keyName="monstersShamanColor", name="Shaman minion colour", description="Colour of current minion tile outlines.", position=92)
+    @ConfigItem(keyName="monstersShamanColor", name="Shaman tile colour", description="Colour of current minion tile outlines.", position=92)
     default Color monstersShamanColor() { return new Color(190,110,240,220); }
+
+    @ConfigItem(keyName="monstersShamanOutline", name="Shaman model outline", description="Outline already visible Shaman spawns.", position=93)
+    default boolean monstersShamanOutline() { return true; }
+    @ConfigItem(keyName="monstersShamanFill", name="Shaman model fill", description="Tint the silhouette of visible Shaman spawns.", position=94)
+    default boolean monstersShamanFill() { return true; }
+    @ConfigItem(keyName="monstersShamanLabel", name="Shaman Spawn label", description="Show Spawn above each visible minion.", position=95)
+    default boolean monstersShamanLabel() { return true; }
+    @ConfigItem(keyName="monstersShamanModelColor", name="Shaman model colour", description="Separate colour for the model outline, fill and Spawn label.", position=96)
+    default Color monstersShamanModelColor() { return new Color(220,110,255); }
+    @Range(min=0, max=100)
+    @ConfigItem(keyName="monstersShamanTileOpacity", name="Shaman tile opacity %", description="Tile visibility; 0 is invisible and 100 is fully opaque. Multiplies the saved tile colour alpha.", position=97)
+    default int monstersShamanTileOpacity() { return 100; }
+    @Range(min=0, max=100)
+    @ConfigItem(keyName="monstersShamanModelOpacity", name="Shaman outline opacity %", description="Visibility of model outline and Spawn label.", position=98)
+    default int monstersShamanModelOpacity() { return 100; }
+    @Range(min=0, max=100)
+    @ConfigItem(keyName="monstersShamanFillOpacity", name="Shaman fill opacity %", description="Separate visibility of the model silhouette fill.", position=99)
+    default int monstersShamanFillOpacity() { return 25; }
+    @Range(min=1, max=6)
+    @ConfigItem(keyName="monstersShamanOutlineWidth", name="Shaman outline width", description="Model outline width in pixels.", position=100)
+    default int monstersShamanOutlineWidth() { return 2; }
 
     // RuneLite initializes defaults only for methods declared on this config.
     @ConfigItem(keyName="combatStyle", name="Supplies combat style", description="Controls ammunition or rune quantity warnings; does not select combat actions.", position=10)
