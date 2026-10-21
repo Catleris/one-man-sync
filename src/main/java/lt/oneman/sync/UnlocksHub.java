@@ -42,7 +42,6 @@ final class UnlocksHub
     private volatile List<UnlockCatalog.Result> snapshot=Collections.emptyList();
     private volatile Set<String> favourites=Collections.emptySet();
     private volatile boolean accountReady;
-    private volatile String accountName="Log in to inspect your unlocks";
     private String lastSignature="";
     private Panel panel;
 
@@ -59,7 +58,7 @@ final class UnlocksHub
     private void clear()
     {
         profile="";saved=new Saved();accountReady=false;favourites=Collections.emptySet();
-        accountName="Log in to inspect your unlocks";lastSignature="";
+        lastSignature="";
     }
     void onGameStateChanged(GameStateChanged event)
     {
@@ -94,7 +93,6 @@ final class UnlocksHub
             dirty=true;
         }
         accountReady=true;
-        accountName=client.getLocalPlayer()==null?"Current account":client.getLocalPlayer().getName();
         return true;
     }
     void onGameTick()
@@ -144,7 +142,7 @@ final class UnlocksHub
     private void publish(UnlockCatalog.Facts facts)
     {
         List<UnlockCatalog.Result> rows=new ArrayList<>();
-        StringBuilder signature=new StringBuilder(profile).append(accountName).append(saved.favourites);
+        StringBuilder signature=new StringBuilder(profile).append(saved.favourites);
         for(UnlockCatalog.Entry entry:catalog.entries) {
             UnlockCatalog.Result row=catalog.evaluate(entry,facts,saved.manual,saved.observed);rows.add(row);
             signature.append(row.state).append(row.detail);
@@ -172,7 +170,7 @@ final class UnlocksHub
     private final class Panel extends JPanel
     {
         private final JTextField search=new JTextField();
-        private final JComboBox<String> filter=new JComboBox<>(new String[]{"All states","Not game-confirmed","Game confirmed","Check / claim","Gate pending","Item observed","Confirmed by you","Unknown","In progress"});
+        private final JComboBox<String> filter=new JComboBox<>(new String[]{"All states","To do","Unlocked","Check progress","Requirements missing","Previously seen","Marked complete","Not checked","In progress"});
         private final JCheckBox journal=new JCheckBox("Include quest journal");
         private final JCheckBox favouritesOnly=new JCheckBox("Favourites only");
         private final Map<String,Boolean> expanded=new HashMap<>();
@@ -183,7 +181,7 @@ final class UnlocksHub
         {
             super(new BorderLayout(0,6));
             OneManCards header=new OneManCards();
-            header.card(OneManCards.banner("Unlocks Hub • Test","Account access, quest gates and important rewards"));
+            header.card(OneManCards.banner("Unlocks Hub","Find your next unlock"));
             JPanel tools=OneManCards.card();
             OneManCards fields=new OneManCards();search.setName("unlocksSearch");
             search.setToolTipText("Search unlock, category, quest, skill or description");
@@ -203,8 +201,8 @@ final class UnlocksHub
             if(!config.unlocksQuestJournal()&&"JOURNAL".equals(row.entry.mode))return false;
             if(favouritesOnly.isSelected()&&!favourites.contains(row.entry.id))return false;
             String state=(String)filter.getSelectedItem();
-            if("Not game-confirmed".equals(state)&&row.state==UnlockCatalog.State.UNLOCKED)return false;
-            if(!"All states".equals(state)&&!"Not game-confirmed".equals(state)&&!row.state.label.equals(state))return false;
+            if("To do".equals(state)&&row.state==UnlockCatalog.State.UNLOCKED)return false;
+            if(!"All states".equals(state)&&!"To do".equals(state)&&!row.state.label.equals(state))return false;
             String text=row.entry.title+" "+row.entry.category+" "+row.detail;
             return text.toLowerCase(Locale.ROOT).contains(query);
         }
@@ -213,15 +211,13 @@ final class UnlocksHub
             journal.setSelected(config.unlocksQuestJournal());
             String query=search.getText().trim().toLowerCase(Locale.ROOT);
             Map<String,List<UnlockCatalog.Result>> groups=new LinkedHashMap<>();
-            int confirmed=0,observed=0,manual=0,total=0;
+            int total=0;
             for(UnlockCatalog.Result row:results()) {
                 if(!config.unlocksQuestJournal()&&"JOURNAL".equals(row.entry.mode))continue;
-                total++;if(row.state==UnlockCatalog.State.UNLOCKED)confirmed++;
-                if(row.state==UnlockCatalog.State.OBSERVED)observed++;
-                if(row.state==UnlockCatalog.State.MANUAL)manual++;
+                total++;
                 if(matches(row,query))groups.computeIfAbsent(row.entry.category,k->new ArrayList<>()).add(row);
             }
-            summary.setText(accountName+"\n"+confirmed+" / "+total+" entries game-confirmed\n"+observed+" items observed • "+manual+" manual");
+            summary.setText(total+" unlocks");
             list.removeAll();
             for(Map.Entry<String,List<UnlockCatalog.Result>> group:groups.entrySet()) {
                 String category=group.getKey();List<UnlockCatalog.Result> rows=group.getValue();
@@ -252,23 +248,23 @@ final class UnlocksHub
             UnlockCatalog.Entry entry=result.entry;String account=profile;
             JPanel card=OneManCards.card();
             JPanel title=new JPanel(new BorderLayout(3,3));title.setOpaque(false);
-            JTextArea name=OneManCards.text(entry.title);name.setForeground(Color.WHITE);title.add(name,BorderLayout.CENTER);
+            JTextArea name=OneManCards.text(UnlockHelp.title(entry));name.setForeground(Color.WHITE);title.add(name,BorderLayout.CENTER);
             JButton star=new JButton(favourites.contains(entry.id)?"★":"☆");star.setMargin(new java.awt.Insets(0,3,0,3));
             star.setToolTipText("Toggle favourite for this account");star.setEnabled(accountReady);
             star.addActionListener(e->change(account,entry.id,true));title.add(star,BorderLayout.EAST);
             card.add(title,BorderLayout.NORTH);
             OneManCards body=new OneManCards();
-            JTextArea state=OneManCards.text(result.state.label);
+            JTextArea state=OneManCards.text(UnlockHelp.status(result));
             state.setForeground(result.state==UnlockCatalog.State.UNLOCKED?new Color(100,210,140):result.state==UnlockCatalog.State.PENDING?new Color(225,145,100):OneManCards.ACCENT);
             body.card(state);
-            JToggleButton details=new JToggleButton("Details / requirements");
+            JToggleButton details=new JToggleButton("How to unlock");
             details.setName("unlockDetails:"+entry.id);
             OneManCards expandedDetails=new OneManCards();
-            expandedDetails.card(OneManCards.text(result.detail));
+            expandedDetails.card(OneManCards.text(UnlockHelp.details(result)));
             JButton guide=new JButton("Open Wiki guide");guide.addActionListener(e->LinkBrowser.browse(entry.wiki));expandedDetails.card(guide);
             if(entry.manualAllowed()&&result.state!=UnlockCatalog.State.OBSERVED) {
                 JButton confirm=new JButton(result.state==UnlockCatalog.State.MANUAL?"Undo confirmation":"Confirm manually");
-                confirm.setToolTipText("Your own note; never shown as game-confirmed");confirm.setEnabled(accountReady);
+                confirm.setToolTipText("Mark this as complete for this account");confirm.setEnabled(accountReady);
                 confirm.addActionListener(e->change(account,entry.id,false));expandedDetails.card(confirm);
             }
             expandedDetails.setVisible(false);details.addActionListener(e->{expandedDetails.setVisible(details.isSelected());revalidate();repaint();});

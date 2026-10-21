@@ -97,7 +97,12 @@ public class OneManPluginBootstrapTest
                 Container panel=navigation.getValue().getPanel();
                 JComboBox<?> hubs=findHubSelector(panel);
                 assertNotNull("The real sidebar must expose all hubs and sync settings",hubs);
-                assertEquals("Overview",hubs.getItemAt(0));
+                assertEquals("Tools",hubs.getItemAt(0));
+                assertEquals("Tools",hubs.getSelectedItem());
+                assertFalse("No duplicate account session feed in normal navigation",selectTab(panel,"Summary"));
+                assertFalse("Sync diagnostics are not a main Hub",selectTab(panel,"Sync"));
+                assertFalse("Screenshot history is not a main view",selectTab(panel,"Memories"));
+                assertFalse("Slayer history is optional",selectTab(panel,"History"));
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));

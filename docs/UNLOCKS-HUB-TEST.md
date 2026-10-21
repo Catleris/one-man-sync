@@ -1,3 +1,5 @@
+> Current interface update: see [clean UI changes](CLEAN-UI-TEST.md). The obsolete standalone Mithril task purchase has been removed; current curated count is 284. Player-facing statuses and instructions are simplified while the evidence rules below remain unchanged.
+
 # Unlocks Hub test — 0.9.0-unlocks-test
 
 This builds on the existing 0.8.6 test branch, retaining Superior 0.8.2 fixes, all hubs, Shaman visuals/pulse and collapsed native settings. No master merge or public RuneLite Plugin Hub submission is included.

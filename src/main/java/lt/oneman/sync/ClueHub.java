@@ -271,9 +271,14 @@ final class ClueHub
             toggle(options, "Reward table items", "clueRewardItems", config.clueRewardItems());
             toggle(options, "Include common rewards", "clueCommonRewards", config.clueCommonRewards());
             JPanel optionsPage = new JPanel(new BorderLayout()); optionsPage.add(options, BorderLayout.NORTH); tabs.addTab("Options", scroll(optionsPage));
-            JTextArea help = area(); help.setText("Req = needed for an emote / Charlie clue.\n\nReward table = possible clue source, not proof of where this copy came from.\n\nMultiple colours = multiple tiers. Common rewards are hidden by default.\n\nSherlock skill tasks are not indexed in this test. Ground labels are separate from Ground Items.\n\nData: RuneLite emote clues (BSD-2-Clause), OSRS Wiki reward tables (CC BY-NC-SA 3.0), snapshot 2026-10-17. Offline data can change after game updates.");
+            JTextArea help = area(); help.setText("Required: items used in clue steps.\n\nReward: items that can come from clues.\n\nColoured dots show clue tiers.");
             JButton guide = new JButton("Open clue guide"); guide.addActionListener(e -> LinkBrowser.browse("https://oldschool.runescape.wiki/w/Treasure_Trails"));
-            JPanel about = new JPanel(new BorderLayout(0, 4)); about.add(scroll(help), BorderLayout.CENTER); about.add(guide, BorderLayout.SOUTH); tabs.addTab("About", about);
+            JPanel about = new JPanel(new BorderLayout(0,4));about.add(scroll(help),BorderLayout.CENTER);
+            OneManCards extra=new OneManCards();extra.card(guide);
+            JToggleButton credits=new JToggleButton("Credits / coverage");
+            JTextArea sources=OneManCards.text("RuneLite emote clues (BSD-2-Clause) and OSRS Wiki reward tables (CC BY-NC-SA 3.0). Snapshot: 2026-10-17. Sherlock skill tasks are not indexed. Reward labels show possible sources, not this item's origin.");
+            sources.setVisible(false);credits.addActionListener(e->{sources.setVisible(credits.isSelected());revalidate();repaint();});
+            extra.card(credits);extra.card(sources);about.add(extra,BorderLayout.SOUTH);tabs.addTab("Help",about);
             add(tabs, BorderLayout.CENTER);
         }
         private JScrollPane scroll(JComponent content)

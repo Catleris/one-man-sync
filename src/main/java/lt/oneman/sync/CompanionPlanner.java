@@ -71,7 +71,6 @@ final class CompanionPlanner {
         n.skills.forEach((k,v)->s.append(k).append(": ").append(levels.containsKey(k)?levels.get(k):"unknown").append(" / ").append(v).append("\n"));
         for(String q:n.quests) s.append(done.contains(q)?"✓ ":"Missing quest: ").append(nodes.containsKey(q)?nodes.get(q).name:q).append("\n");
         if(n.qp>0)s.append("Quest points: ").append(qp).append(" / ").append(n.qp).append("\n");
-        s.append("Check supplies and encounters; this is not a combat-readiness claim.");
         return s.toString();
     }
 }

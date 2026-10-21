@@ -148,8 +148,8 @@ final class MonstersHub
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
         suggestion = suggestsShaman(task)
-            ? "Suggested: Lizardman Shaman. Your Lizardmen task can include Shamans; check any task location restriction. Select the profile below."
-            : "No matching confirmed Slayer task. You can still select Lizardman Shaman manually.";
+            ? "Suggested for your task: Lizardman Shaman."
+            : "Choose a profile above.";
         if (!enabled())
         {
             clear();
@@ -194,7 +194,7 @@ final class MonstersHub
 
     private void refresh()
     {
-        String status = suggestion + "\n\nObserved minions: " + markers.size();
+        String status = suggestion + (markers.isEmpty()?"":"\nSpawns: "+markers.size());
         if (status.equals(lastStatus)) return;
         lastStatus = status;
         SwingUtilities.invokeLater(() -> { if (active && panel != null) panel.refresh(status); });
@@ -220,7 +220,7 @@ final class MonstersHub
         {
             super(new BorderLayout());
             OneManCards cards = new OneManCards();
-            cards.card(OneManCards.banner("Monsters Hub • Test", "Lizardman Shaman • local helper"));
+            cards.card(OneManCards.banner("Monsters Hub", "Lizardman Shaman"));
             JPanel settings = OneManCards.card();
             OneManCards controls = new OneManCards();
             controls.setOpaque(false);
@@ -258,12 +258,10 @@ final class MonstersHub
             settings.add(controls, BorderLayout.NORTH);
             settings.add(status, BorderLayout.CENTER);
             cards.card(settings);
-            JPanel timing = OneManCards.card();
-            timing.add(OneManCards.text("Explosion countdowns unavailable in this test. Exact per-minion timing and the server trigger could not be verified. No seconds/ticks switch is offered without a reliable countdown."));
-            cards.card(timing);
-            JPanel scope = OneManCards.card();
-            scope.add(OneManCards.text("Tiles follow already visible spawns each game tick. Only their occupied tile is marked. Chambers of Xeric helper mechanics are outside this test's scope."));
-            cards.card(scope);
+            JToggleButton help=new JToggleButton("Help");
+            JTextArea helpText=OneManCards.text("Marks visible Shaman spawns. Pulsing is cosmetic, not an explosion timer. Chambers of Xeric is excluded.");
+            helpText.setVisible(false);help.addActionListener(event->{helpText.setVisible(help.isSelected());revalidate();repaint();});
+            cards.card(help);cards.card(helpText);
             cards.finish(); add(OneManCards.scroll(cards), BorderLayout.CENTER);
             profile.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersProfile", profile.getSelectedItem()); });
             tiles.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanTiles", tiles.isSelected()); });

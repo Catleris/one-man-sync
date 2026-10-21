@@ -15,8 +15,8 @@ final class UnlockCatalog
 {
     enum State
     {
-        UNLOCKED("Game confirmed"), PENDING("Gate pending"), READY("Check / claim"),
-        OBSERVED("Item observed"), MANUAL("Confirmed by you"), UNKNOWN("Unknown"), STARTED("In progress");
+        UNLOCKED("Unlocked"), PENDING("Requirements missing"), READY("Check progress"),
+        OBSERVED("Previously seen"), MANUAL("Marked complete"), UNKNOWN("Not checked"), STARTED("In progress");
         final String label;
         State(String label) { this.label=label; }
         @Override public String toString() { return label; }
@@ -131,7 +131,6 @@ final class UnlockCatalog
         flag("BOSSES","Like a boss",VarbitID.SLAYER_UNLOCK_BOSSES,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
         flag("LIZARDMEN","Reptile got ripped",VarbitID.SLAYER_UNLOCK_LIZARDMEN,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
         flag("BASILISK","Basilocked",VarbitID.SLAYER_UNLOCK_BASILISK,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
-        flag("MITHRIL","Mithril dragon tasks",VarbitID.SLAYER_UNLOCK_MITHRILDRAGONS,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
         flag("AVIANSIES","Aviansie tasks",VarbitID.SLAYER_UNLOCK_AVIANSIES,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
         flag("REDDRAGONS","Red dragon tasks",VarbitID.SLAYER_UNLOCK_REDDRAGONS,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");
         flag("TZHAAR","TzHaar tasks",VarbitID.SLAYER_UNLOCK_TZHAAR,"Purchase flag only; task eligibility, current toggles and stored tasks are separate.");

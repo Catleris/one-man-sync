@@ -263,6 +263,10 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
     {
+        if ("one-man-sync".equals(event.getGroup()) && "companionRoadmapVisible".equals(event.getKey()))
+            companion.refreshViews();
+        if ("one-man-sync".equals(event.getGroup()) && "slayerHistoryVisible".equals(event.getKey()))
+            slayerHelper.refreshOptionalViews();
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("unlocks"))
             unlocksHub.onConfigChanged();
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("monsters"))
@@ -671,7 +675,6 @@ public class OneManSyncPlugin extends Plugin
             .post(body)
             .build();
 
-        final String sentProfile=configManager.getRSProfileKey();
         requestInFlight=true;
         lastFullSyncTick=client.getTickCount();
         progressDirty=false;
@@ -682,24 +685,23 @@ public class OneManSyncPlugin extends Plugin
                 clientThread.invokeLater(() -> {
                     if(call!=activeSyncCall)return;
                     requestInFlight=false;progressDirty=true;
-                    companion.syncResult(sentProfile,payload,false,"Upload failed; last successful times retained.");
+
                     log.fine("OneMan sync failed");
                 });
             }
             @Override public void onResponse(Call call,Response response)throws IOException{
-                final boolean success;final int code;final String detail;
+                final boolean success;final int code;
                 try(Response r=response){success=r.isSuccessful();code=r.code();
-                    detail=success?"":CompanionSyncError.describe(gson,r.body()!=null?r.body().string():"");
                 }
                 clientThread.invokeLater(() -> {
                     if(call!=activeSyncCall)return;
                     try {
                         if(!success){
                             progressDirty=true;
-                            companion.syncResult(sentProfile,payload,false,"Upload rejected: HTTP "+code+detail);
+
                             log.fine("OneMan sync HTTP "+code);
                         }else{
-                            companion.syncResult(sentProfile,payload,true,"Last upload succeeded.");
+
                             pendingNewCollection.removeAll(sentNewCollection);
                             for(Integer id:sentCaMeta.keySet())pendingCaMeta.remove(id,sentCaMeta.get(id));
                             for(String k:sentLoot.keySet())pendingLootEvents.remove(k,sentLoot.get(k));

@@ -176,25 +176,23 @@ public class OneManSlayerHelper
         SlayerLabCatalog.Guide guide = SlayerLabCatalog.find(name);
         SlayerLabKnowledge.Entry knowledge = SlayerLabKnowledge.find(name);
         String summary = name + "\nRemaining: " + remaining + "\nAssigned area: " + (location == null || location.isEmpty() ? "any eligible location" : location);
-        String prep = summary + "\n\n" + account.preparation(guide, inventory, equipment, now)
+        String prep = account.preparation(guide, inventory, equipment, now)
             + "\n\n" + (guide == null ? "Use Task Wiki for requirements." : guide.advice)
             + "\n\n" + (knowledge == null ? "" : knowledge.overview())
-            + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER)
-            + "\nA variant may require a higher level; protection and exemptions must be checked for that variant.";
-        StringBuilder places = new StringBuilder(summary+"\n\nAssigned locations must be respected; generic alternatives are reference only.\n\n");
+            + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER);
+        StringBuilder places = new StringBuilder("Use your assigned area.\n\n");
         for (SlayerLabLocations.Destination destination : destinations) places.append(SlayerLabAdvice.comparison(destination,name)).append("\n");
         if(destinations.isEmpty()) places.append("No verified entrance for this task/assigned area. Use Task Wiki.\n");
         if(guide != null) places.append("\nSource locations:\n").append(guide.locations);
         SlayerLabLocations.Destination selected=selectedDestination;
         if(selected!=null) places.append("\n\nTRACKING: ").append(selected.name).append("\nDirection: ")
             .append(SlayerLabLocations.direction(client.getLocalPlayer().getWorldLocation(), selected.entrance));
-        places.append("\n\nMarkers and direction only; no calculated walking path or internal dungeon route.");
         Set<String> carried=new HashSet<>(inventory); carried.addAll(equipment);
         Set<String> quests = new HashSet<>();
         Quest[] checked={Quest.HEROES_QUEST,Quest.CABIN_FEVER,Quest.SONG_OF_THE_ELVES,Quest.HORROR_FROM_THE_DEEP,Quest.MONKEY_MADNESS_II,Quest.BONE_VOYAGE,Quest.PRIEST_IN_PERIL};
         String[] labels={"Heroes' Quest","Cabin Fever","Song of the Elves","Horror from the Deep","Monkey Madness II","Bone Voyage","Priest in Peril"};
         for(int i=0;i<checked.length;i++) if(checked[i].getState(client)==QuestState.FINISHED) quests.add(labels[i]);
-        StringBuilder travel=new StringBuilder("Availability uses carried items and verified quest completion. Dated bank ownership does not make a route ready.\n\n");
+        StringBuilder travel=new StringBuilder();
         for(SlayerLabLocations.Destination d:destinations) travel.append(SlayerLabTravel.route(d,carried,quests));
         if(destinations.isEmpty()) travel.append("No verified travel route for this assigned area; see Task Wiki.");
         SlayerLabSupplies.Counts supplies = supplyCounts();
@@ -207,7 +205,7 @@ public class OneManSlayerHelper
         String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
         java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
         SwingUtilities.invokeLater(() -> {
-            if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile); panel.showLocations(snapshot); }
+            if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile,summary); panel.showLocations(snapshot); }
         });
     }
     private void refreshPrayer()
@@ -346,10 +344,16 @@ public class OneManSlayerHelper
             }
         });
     }
+    void refreshOptionalViews()
+    {
+        SwingUtilities.invokeLater(()->{if(active&&panel!=null)panel.optionalViews();});
+    }
     private final class LabPanel extends JPanel
     {
         private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
         private final JTextArea[] sections = new JTextArea[8];
+        private final JPanel[] pages = new JPanel[8];
+        private final String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
         private final JTextArea note = new JTextArea(3,20);
         private String shownTask = "", shownProfile = "";
@@ -373,7 +377,6 @@ public class OneManSlayerHelper
             JLabel title = new JLabel("ONEMAN SYNC • SLAYER");
             title.setForeground(new Color(218, 176, 85));
 
-            String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
@@ -387,8 +390,9 @@ public class OneManSlayerHelper
                     saveGoal.addActionListener(e -> { String entered=String.valueOf(goals.getEditor().getItem()).trim(); String value=entered.substring(0,Math.min(120,entered.length())); String profile=shownProfile; clientThread.invokeLater(()->{ if(!profile.isEmpty() && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { configManager.setConfiguration(SlayerLabConfig.GROUP,account.profile,"lootGoal",value); nextRefresh=0; } }); }); }
                 if(i==5) { JPanel notes=new JPanel(new BorderLayout()); note.setLineWrap(true); note.setWrapStyleWord(true); JButton save=new JButton("Save session note"); notes.add(new JScrollPane(note),BorderLayout.CENTER); notes.add(save,BorderLayout.SOUTH); page.add(notes,BorderLayout.SOUTH);
                     save.addActionListener(e -> { String value=note.getText().substring(0, Math.min(1000,note.getText().length())); long started=shownSession; String profile=shownProfile; clientThread.invokeLater(()->{ if(account.journal.active!=null && account.journal.active.started==started && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { account.journal.active.note=value; account.save(System.currentTimeMillis(),true); nextRefresh=0; } }); }); }
-                tabs.addTab(labels[i],page);
+                pages[i]=page;
             }
+            optionalViews();
             add(tabs, BorderLayout.CENTER);
             variants.addActionListener(e -> { if(updating) return; String value=(String)variants.getSelectedItem(); if(value!=null) clientThread.invokeLater(()->{variant=value; nextRefresh=0;}); });
             wiki.addActionListener(e -> { if (!url.isEmpty()) LinkBrowser.browse(url); });
@@ -449,10 +453,15 @@ public class OneManSlayerHelper
             clear.setEnabled(hasLocations);
             if (!hasLocations) access.setText("No mapped entrance available.");
         }
-        void showTabs(String[] views,String task,String sessionNote,long started,String profile)
+        void optionalViews()
         {
-            String[] summaryLines=views[0].split("\n",4);
-            taskSummary.setText(String.join("\n",java.util.Arrays.copyOf(summaryLines,Math.min(3,summaryLines.length))));
+            Component selected=tabs.getSelectedComponent();tabs.removeAll();
+            for(int i=0;i<labels.length;i++)if(config.slayerHistoryVisible()||(i!=5&&i!=7))tabs.addTab(labels[i],pages[i]);
+            if(selected!=null)for(int i=0;i<tabs.getTabCount();i++)if(tabs.getComponentAt(i)==selected)tabs.setSelectedIndex(i);
+        }
+        void showTabs(String[] views,String task,String sessionNote,long started,String profile,String taskHeader)
+        {
+            taskSummary.setText(taskHeader);
             updating=true;
             shownProfile=profile;
             if(shownSession!=started) { shownSession=started; note.setText(sessionNote); }

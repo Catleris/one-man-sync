@@ -148,3 +148,8 @@ The `test/monsters-hub-shaman` branch adds a local Lizardman Shaman profile with
 ## Unlocks Hub test
 
 Test build `0.9.0-unlocks-test` adds a searchable, collapsible account unlock registry with favourites, explicit evidence states, optional quest journal and account-scoped confirmations/item observations. See [coverage and game test checklist](docs/UNLOCKS-HUB-TEST.md).
+
+
+## Clean interface test
+
+`0.9.1-clean-ui-test` starts on a compact Tools home. Roadmap and Slayer session/history views are optional; Unlocks use short actionable instructions. See [changes and manual checks](docs/CLEAN-UI-TEST.md).
