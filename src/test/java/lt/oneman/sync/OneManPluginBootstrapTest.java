@@ -102,6 +102,14 @@ public class OneManPluginBootstrapTest
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
                 assertEquals("Monsters Hub",hubs.getItemAt(4));
+                assertEquals("Unlocks Hub",hubs.getItemAt(5));
+                hubs.setSelectedItem("Unlocks Hub");
+                assertNotNull(findNamed(panel,"unlocksSearch",JTextField.class));
+                assertNotNull(findNamed(panel,"unlocksStatusFilter",JComboBox.class));
+                javax.swing.JToggleButton gear=findNamed(panel,"unlockCategory:Gear & rewards",javax.swing.JToggleButton.class);
+                assertNotNull(gear);gear.doClick();
+                javax.swing.JToggleButton unlockDetails=findNamed(panel,"unlockDetails:BARROWS_GLOVES",javax.swing.JToggleButton.class);
+                assertNotNull(unlockDetails);unlockDetails.doClick();
                 JButton monstersShortcut=findNamed(panel,"monstersHubShortcut",JButton.class);
                 assertNotNull("Monsters Hub must also have a permanent direct button",monstersShortcut);
                 monstersShortcut.doClick();
@@ -238,7 +246,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==5 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==6 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {

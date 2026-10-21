@@ -139,6 +139,7 @@ public class OneManSyncPlugin extends Plugin
     @Inject private OneManCompanion companion;
     @Inject private ClueHub clueHub;
     @Inject private MonstersHub monstersHub;
+    @Inject private UnlocksHub unlocksHub;
     @Inject private OneManMapLocations mapLocations;
     @Inject private StashMinimapOverlay stashMinimapOverlay;
     @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
@@ -199,6 +200,7 @@ public class OneManSyncPlugin extends Plugin
         mapOverlays.add(stashMinimapOverlay);
         clueHub.startUp();
         monstersHub.startUp(this::localSlayerState);
+        unlocksHub.startUp();
         slayerHelper.startUp(this::localSlayerState);
         companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
         if (client.getGameState() == GameState.LOGGED_IN)
@@ -214,6 +216,7 @@ public class OneManSyncPlugin extends Plugin
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
         mapOverlays.remove(stashMinimapOverlay);
         mapLocations.shutDown();
+        unlocksHub.shutDown();
         monstersHub.shutDown();
         clueHub.shutDown();
         companion.shutDown();
@@ -260,6 +263,8 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
     {
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("unlocks"))
+            unlocksHub.onConfigChanged();
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("monsters"))
             clientThread.invokeLater(monstersHub::onConfigChanged);
         if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("clue"))
@@ -269,6 +274,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        unlocksHub.onGameStateChanged(event);
         monstersHub.onGameStateChanged(event);
         clueHub.onGameStateChanged(event);
         slayerHelper.onGameStateChanged(event);
@@ -297,6 +303,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onStatChanged(StatChanged event)
     {
+        unlocksHub.changed();
         slayerHelper.onStatChanged(event);
         if(!ready()) return;
         int total=calculateTotalLevel();
@@ -307,6 +314,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        unlocksHub.changed();
         if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
         {
             // Match RuneLite's Slayer plugin behaviour: read the assignment after
@@ -381,6 +389,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        unlocksHub.onItemContainerChanged(event);
         clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
@@ -541,6 +550,7 @@ public class OneManSyncPlugin extends Plugin
         mapLocations.tick();
         clueHub.onGameTick();
         monstersHub.onGameTick();
+        unlocksHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
         if(!ready()) return;

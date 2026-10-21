@@ -31,6 +31,11 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigSection(name="Monsters / Lizardman Shaman", description="The same Shaman preferences used by Monsters Hub", position=5, closedByDefault=true)
     String monstersSection = "monstersSection";
 
+    @ConfigSection(name="Unlocks Hub", description="Account unlock catalogue and journal visibility", position=6, closedByDefault=true)
+    String unlocksSection = "unlocksSection";
+    @ConfigItem(keyName="unlocksQuestJournal", name="Include quest journal entries", description="Also include every quest/miniquest milestone exposed by RuneLite. Useful unlock categories remain visible without this.", position=110, section=unlocksSection)
+    default boolean unlocksQuestJournal() { return false; }
+
     @ConfigItem(
         keyName = "enabled",
         name = "Enable OneMan Sync",

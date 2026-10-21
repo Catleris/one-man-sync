@@ -26,7 +26,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.8.6-pulse-test";
+    static final String VERSION = "0.9.0-unlocks-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -40,6 +40,7 @@ final class OneManCompanion {
     @Inject private FarmingRunTracker farmingTracker;
     @Inject private ClueHub clueHub;
     @Inject private MonstersHub monstersHub;
+    @Inject private UnlocksHub unlocksHub;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -84,7 +85,8 @@ final class OneManCompanion {
             cards.add(farmingTracker.companionPanel(),"Farming Hub");
             cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
             cards.add(monstersHub.companionPanel(),"Monsters Hub");
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub"});
+            cards.add(unlocksHub.companionPanel(),"Unlocks Hub");
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Overview","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub"});
             sections.setName("oneManHubSelector");
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
@@ -100,7 +102,7 @@ final class OneManCompanion {
             hubActions.add(monstersShortcut); hubActions.add(settings);
             hubNavigation.add(hubActions,BorderLayout.SOUTH);
             root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
-            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues, Monsters").icon(icon).priority(6).panel(root).build();
+            navigation = NavigationButton.builder().tooltip("OneMan — Roadmap, Slayer, Farming, Clues, Monsters, Unlocks").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
     }
