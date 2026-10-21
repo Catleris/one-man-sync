@@ -79,6 +79,14 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="clueGroundLabelHeight", name="Clue ground label height", description="Height above a ground item's layer; adjust to separate from Ground Items labels.", position=87)
     default int clueGroundLabelHeight() { return 70; }
 
+    @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works without a Slayer task or website sync.", position=90)
+    default MonstersProfile monstersProfile() { return MonstersProfile.NONE; }
+    @ConfigItem(keyName="monstersShamanTiles", name="Shaman minion tiles", description="Mark only the current occupied tile of observed Shaman spawns. No explosion radius or prediction.", position=91)
+    default boolean monstersShamanTiles() { return true; }
+    @net.runelite.client.config.Alpha
+    @ConfigItem(keyName="monstersShamanColor", name="Shaman minion colour", description="Colour of current minion tile outlines.", position=92)
+    default Color monstersShamanColor() { return new Color(190,110,240,220); }
+
     // RuneLite initializes defaults only for methods declared on this config.
     @ConfigItem(keyName="combatStyle", name="Supplies combat style", description="Controls ammunition or rune quantity warnings; does not select combat actions.", position=10)
     default CombatStyle combatStyle() { return CombatStyle.MELEE; }

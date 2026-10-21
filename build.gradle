@@ -29,7 +29,7 @@ dependencies {
 }
 
 group = 'lt.oneman'
-version = '0.8.2'
+version = '0.8.3-monsters-test'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'

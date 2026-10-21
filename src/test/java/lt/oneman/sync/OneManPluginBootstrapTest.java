@@ -100,6 +100,7 @@ public class OneManPluginBootstrapTest
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
+                assertEquals("Monsters Hub",hubs.getItemAt(4));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
                 hubs.setSelectedItem("Clue Scroll Hub");
@@ -150,6 +151,7 @@ public class OneManPluginBootstrapTest
             verify(overlays).add(isA(StashMinimapOverlay.class));
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
+            verify(overlays).add(isA(ShamanMinionOverlay.class));
         }
         finally
         {
@@ -162,6 +164,7 @@ public class OneManPluginBootstrapTest
         verify(overlays).remove(isA(StashMinimapOverlay.class));
         verify(overlays).remove(isA(ClueGroundOverlay.class));
         verify(overlays).remove(isA(ClueWidgetOverlay.class));
+        verify(overlays).remove(isA(ShamanMinionOverlay.class));
     }
     private static final class SettingsRequests
     {
@@ -220,7 +223,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==4 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==5 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {
