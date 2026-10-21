@@ -7,10 +7,20 @@ import javax.swing.*;
 final class OneManCards extends JPanel implements Scrollable
 {
     static final Color ACCENT=new Color(218,176,85);
-    static final Color MUTED=new Color(170,177,175);
+    static final Color MUTED=new Color(211,216,213);
+    static final Font BODY=new Font(Font.SANS_SERIF,Font.PLAIN,13);
+    static final Font HEADING=BODY.deriveFont(Font.BOLD);
+    /** Style only plugin-owned sidebar components, never the global RuneLite UI. */
+    static void readable(Component component)
+    {
+        Font current=component.getFont();
+        component.setFont(current!=null&&current.isBold()?HEADING:BODY);
+        if(component instanceof Container)for(Component child:((Container)component).getComponents())readable(child);
+    }
     OneManCards() { super(new GridBagLayout());setOpaque(false); }
     void card(JComponent card)
     {
+        readable(card);
         GridBagConstraints row=new GridBagConstraints();row.gridx=0;row.gridy=getComponentCount();row.weightx=1;
         row.fill=GridBagConstraints.HORIZONTAL;row.anchor=GridBagConstraints.NORTHWEST;row.insets=new Insets(0,0,6,0);add(card,row);
     }
@@ -27,12 +37,12 @@ final class OneManCards extends JPanel implements Scrollable
     }
     static JTextArea text(String value)
     {
-        JTextArea text=new JTextArea(value);text.setEditable(false);text.setLineWrap(true);text.setWrapStyleWord(true);text.setOpaque(false);text.setForeground(MUTED);text.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,12));return text;
+        JTextArea text=new JTextArea(value);text.setEditable(false);text.setLineWrap(true);text.setWrapStyleWord(true);text.setOpaque(false);text.setForeground(MUTED);text.setFont(BODY);return text;
     }
     static JPanel banner(String title,String subtitle)
     {
         JPanel banner=new JPanel(new BorderLayout(0,4));banner.setBackground(new Color(36,53,44));banner.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        JLabel heading=new JLabel(title);heading.setFont(heading.getFont().deriveFont(Font.BOLD));banner.add(heading,BorderLayout.NORTH);
+        JLabel heading=new JLabel(title);heading.setFont(HEADING);banner.add(heading,BorderLayout.NORTH);
         banner.add(text(subtitle),BorderLayout.CENTER);return banner;
     }
     static JScrollPane scroll(JComponent view)

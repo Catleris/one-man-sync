@@ -250,8 +250,8 @@ final class ClueHub
             setLayout(new BorderLayout(0, 8));
             recent.setText("No clue-related drops observed in this session yet.");
             JPanel header = new JPanel(new BorderLayout(0, 4)); header.add(status, BorderLayout.NORTH);
-            JPanel legend = new JPanel(new GridLayout(2, 3, 3, 2));
-            for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("• " + tier.label); label.setForeground(tier.color); label.setFont(label.getFont().deriveFont(11f)); label.setToolTipText(tier.label); legend.add(label); }
+            JPanel legend = new JPanel(new GridLayout(3, 2, 8, 5));
+            for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("• " + tier.label); label.setForeground(tier.color); label.setFont(OneManCards.HEADING); label.setToolTipText(tier.label); legend.add(label); }
             header.add(legend, BorderLayout.CENTER); add(header, BorderLayout.NORTH);
             JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
             JPanel items = new JPanel(new BorderLayout(0, 6));
@@ -280,6 +280,8 @@ final class ClueHub
             sources.setVisible(false);credits.addActionListener(e->{sources.setVisible(credits.isSelected());revalidate();repaint();});
             extra.card(credits);extra.card(sources);about.add(extra,BorderLayout.SOUTH);tabs.addTab("Help",about);
             add(tabs, BorderLayout.CENTER);
+            OneManCards.readable(this);
+            status.setFont(OneManCards.HEADING);
         }
         private JScrollPane scroll(JComponent content)
         {
@@ -293,7 +295,7 @@ final class ClueHub
         private JTextArea area()
         {
             JTextArea area = new JTextArea(); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
-            area.setBackground(new Color(30,33,38)); area.setForeground(new Color(220,220,220)); area.setBorder(BorderFactory.createEmptyBorder(5,5,5,5)); return area;
+            area.setFont(OneManCards.BODY); area.setBackground(new Color(30,33,38)); area.setForeground(new Color(220,220,220)); area.setBorder(BorderFactory.createEmptyBorder(5,5,5,5)); return area;
         }
     }
 }

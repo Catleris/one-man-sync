@@ -194,7 +194,7 @@ final class UnlocksHub
                 public void insertUpdate(DocumentEvent e){rebuild();}public void removeUpdate(DocumentEvent e){rebuild();}public void changedUpdate(DocumentEvent e){rebuild();}
             });
             filter.addActionListener(e->rebuild());favouritesOnly.addActionListener(e->rebuild());
-            journal.addActionListener(e->configs.setConfiguration("one-man-sync","unlocksQuestJournal",journal.isSelected()));rebuild();
+            journal.addActionListener(e->configs.setConfiguration("one-man-sync","unlocksQuestJournal",journal.isSelected()));rebuild();OneManCards.readable(this);
         }
         private boolean matches(UnlockCatalog.Result row,String query)
         {
@@ -224,7 +224,8 @@ final class UnlocksHub
                 JPanel card=OneManCards.card();
                 boolean open=expanded.getOrDefault(category,!query.isEmpty()||favouritesOnly.isSelected());
                 JToggleButton heading=new JToggleButton(category+" ("+rows.size()+")",open);
-                heading.setFont(heading.getFont().deriveFont(11f));
+                heading.setFont(OneManCards.HEADING);
+                heading.setText("<html><div style=\"text-align:center\">"+category.replace("&","&amp;")+"<br>"+rows.size()+" unlocks</div></html>");
                 heading.setName("unlockCategory:"+category);
                 heading.setToolTipText("Expand or collapse "+category);
                 heading.addActionListener(e->{expanded.put(category,heading.isSelected());rebuild();});
