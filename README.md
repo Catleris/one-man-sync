@@ -138,3 +138,8 @@ All @Subscribe entry points follow RuneLite's mandatory `on<EventClass>` naming 
 The always-visible settings button posts RuneLite's public RUNELITE_OVERLAY_CONFIG action with the real owning plugin. The active ConfigPlugin opens its own complete configuration panel; no reflection, private UI access or duplicate form is used. The bootstrap test clicks the actual Swing button through a real EventBus and verifies RUNELITE_OVERLAY_CONFIG with the exact loaded OneMan plugin as owner. This checks the supported request contract; the native configuration UI and game rendering still require user confirmation. A separate local smoke check of the real ConfigPlugin lifecycle/subscriber with UI doubles also passed. Test helpers must stay outside RuneLite packages, because dependency JARs are signed.
 
 Earlier launchers forced a fresh user.home and therefore could not inherit the installed client's Stretched Mode, scaling, plugin preferences or stored OneMan settings. Default launches now keep the JVM's normal home. This restores access to the same saved client configuration; it does not reset game widgets, minimap positions, camera or account settings. Rendering must be confirmed by the user.
+
+
+## Monsters Hub test branch
+
+The `test/monsters-hub-shaman` branch adds a local Lizardman Shaman profile with current minion tile markers. Explosion countdowns are unavailable because their exact timing could not be verified. See [test instructions, rules and timing decision](docs/MONSTERS-HUB-TEST.md).
