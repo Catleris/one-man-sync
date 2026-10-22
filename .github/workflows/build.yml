@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master, dev/slayer-helper-lab, dev/companion-suite, dev/clue-scroll-hub, test/monsters-hub-shaman ]
+    branches: [ master, dev/slayer-helper-lab, dev/companion-suite, dev/clue-scroll-hub, test/monsters-hub-shaman, test/combat-achievements-hub ]
   pull_request:
     branches: [ master ]
 
@@ -29,13 +29,13 @@ jobs:
         run: ./gradlew clean build shadowJar
 
       - name: Package test source
-        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Monsters-Hub-TEST.zip
+        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Combat-Hub-TEST.zip
 
       - name: Upload development build
         uses: actions/upload-artifact@v4
         with:
-          name: oneman-monsters-hub-test
+          name: oneman-combat-hub-test
           path: |
             build/libs/*-all.jar
-            build/OneMan-Sync-Monsters-Hub-TEST.zip
+            build/OneMan-Sync-Combat-Hub-TEST.zip
             build/reports/tests/test/
