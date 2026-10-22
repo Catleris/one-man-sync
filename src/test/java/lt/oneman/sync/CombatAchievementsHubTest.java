@@ -12,6 +12,7 @@ import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static lt.oneman.sync.CombatAchievementCatalog.*;
@@ -53,7 +54,17 @@ public class CombatAchievementsHubTest
         }}).getInstance(CombatAchievementsHub.class);
         hub.startUp();for(int i=0;i<16;i++)hub.onGameTick();assertTrue(hub.snapshot().ready);
         assertEquals(new HashSet<>(Arrays.asList(0,1)),hub.snapshot().tracked);assertTrue(hub.snapshot().completed.contains(0));
-        when(configs.getRSProfileKey()).thenReturn("account-b");hub.onGameTick();assertFalse(hub.snapshot().ready);assertTrue(hub.snapshot().tracked.isEmpty());
+        SwingUtilities.invokeAndWait(()->{
+            JPanel panel=hub.companionPanel();find(panel,"combatBoss:Barrows",JToggleButton.class).doClick();
+            find(panel,"combatTrack:2",JCheckBox.class).doClick();
+        });
+        ArgumentCaptor<Runnable> actions=ArgumentCaptor.forClass(Runnable.class);verify(thread).invokeLater(actions.capture());
+        actions.getValue().run();verify(configs).setConfiguration(eq("one-man-sync"),eq("account-a"),eq(CombatAchievementsHub.TRACKED_KEY),any());
+        hub.changed();for(int i=0;i<6;i++)hub.onGameTick();assertTrue(hub.snapshot().tracked.contains(2));
+        when(configs.getRSProfileKey()).thenReturn("account-b");
+        clearInvocations(configs);actions.getValue().run();
+        verify(configs,never()).setConfiguration(anyString(),anyString(),eq(CombatAchievementsHub.TRACKED_KEY),any());
+        hub.onGameTick();assertFalse(hub.snapshot().ready);assertTrue(hub.snapshot().tracked.isEmpty());
         when(client.getVarpValue(CombatAchievementsHub.VARPS[0])).thenReturn(0);
         for(int i=0;i<16;i++)hub.onGameTick();assertTrue(hub.snapshot().completed.isEmpty());assertEquals(Collections.singleton(3),hub.snapshot().tracked);
         GameStateChanged out=new GameStateChanged();out.setGameState(GameState.LOGIN_SCREEN);hub.onGameStateChanged(out);assertFalse(hub.snapshot().ready);assertTrue(hub.snapshot().completed.isEmpty());
