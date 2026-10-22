@@ -37,7 +37,7 @@ final class OneManMapPanel extends JPanel
         JPanel fields=new JPanel(new GridLayout(0,1,0,3));
         JPanel searchRow=new JPanel(new BorderLayout(6,0));JLabel label=new JLabel("Search");label.setForeground(OneManCards.ACCENT);searchRow.add(label,BorderLayout.WEST);searchRow.add(search,BorderLayout.CENTER);
         fields.add(filter);fields.add(searchRow);fields.add(show);fields.add(count);
-        controls.add(OneManCards.banner(farming?"FARMING PATCH LOCATIONS":"STASH LOCATIONS", "Choose a location to focus the world map."),BorderLayout.NORTH);
+        controls.add(OneManCards.banner(farming?"Farming patches":"STASH locations", "Choose a location to focus the world map."),BorderLayout.NORTH);
         controls.add(fields,BorderLayout.CENTER);add(controls,BorderLayout.NORTH);add(OneManCards.scroll(cards),BorderLayout.CENTER);
         filter.addActionListener(event->{reload();maps.configure(group,(String)filter.getSelectedItem(),show.isSelected());});
         show.addActionListener(event->maps.configure(group,(String)filter.getSelectedItem(),show.isSelected()));
@@ -46,7 +46,7 @@ final class OneManMapPanel extends JPanel
             public void removeUpdate(DocumentEvent event) {reload();}
             public void changedUpdate(DocumentEvent event) {reload();}
         });
-        reload();
+        reload();OneManTheme.apply(this);
     }
     void setRequirements(Map<String,List<StashRequirements.Row>> requirements)
     {

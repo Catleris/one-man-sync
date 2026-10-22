@@ -374,13 +374,11 @@ public class OneManSlayerHelper
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN SYNC • SLAYER");
-            title.setForeground(new Color(218, 176, 85));
 
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
-                JPanel page=new JPanel(new BorderLayout(0,6)); page.add(area,BorderLayout.CENTER);
+                JPanel page=new JPanel(new BorderLayout(0,6)); page.add(new OneManTextCards(area),BorderLayout.CENTER);
                 if(i==1) {
                     JPanel options=new JPanel(new BorderLayout()); options.add(variants,BorderLayout.NORTH);
                     JButton variantWiki=new JButton("Selected variant Wiki"); options.add(variantWiki,BorderLayout.SOUTH); page.add(options,BorderLayout.NORTH);
@@ -400,7 +398,7 @@ public class OneManSlayerHelper
             controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
             taskSummary.setEditable(false); taskSummary.setLineWrap(true); taskSummary.setWrapStyleWord(true);
             taskSummary.setOpaque(false); taskSummary.setAlignmentX(Component.LEFT_ALIGNMENT);
-            taskSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE,95)); controls.add(taskSummary);
+            taskSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE,95));
             JLabel destinationLabel=new JLabel("DESTINATION / ENTRANCE"); destinationLabel.setAlignmentX(Component.LEFT_ALIGNMENT); controls.add(destinationLabel);
             choices.setAlignmentX(Component.LEFT_ALIGNMENT);
             choices.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -434,9 +432,11 @@ public class OneManSlayerHelper
             });
             clear.addActionListener(e -> clientThread.invokeLater(() -> { selectedDestination = null; nextRefresh = 0; }));
             JPanel header = new JPanel(new BorderLayout(0, 10));
-            header.add(title, BorderLayout.NORTH);
-            header.add(controls, BorderLayout.CENTER);
+            header.add(OneManCards.banner("Slayer Hub","Task preparation & locations"), BorderLayout.NORTH);
+            JPanel summary=OneManCards.card();summary.add(taskSummary);header.add(summary, BorderLayout.CENTER);
+            pages[2].add(OneManTheme.collapsible("Map & travel controls",controls),BorderLayout.NORTH);
             add(header, BorderLayout.NORTH);
+            OneManTheme.apply(this);
         }
         void showLocations(java.util.List<SlayerLabLocations.Destination> locations)
         {
@@ -477,7 +477,7 @@ public class OneManSlayerHelper
         {
             updating=true; shownTask=""; shownProfile=""; shownSession=0;
             taskSummary.setText(view);
-            for(int i=0;i<8;i++) sections[i].setText(view);
+            for(int i=0;i<8;i++) sections[i].setText(view.length()<100&&!view.contains("\n")?"":view);
             variants.removeAllItems(); goals.removeAllItems(); note.setText("");
             url = link;
             wiki.setEnabled(!link.isEmpty()); updating=false;

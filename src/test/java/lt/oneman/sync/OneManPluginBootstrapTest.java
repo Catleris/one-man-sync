@@ -133,6 +133,8 @@ public class OneManPluginBootstrapTest
                 assertNotNull(findNamed(panel,"monstersShamanFill",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanLabel",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanTileOpacity",javax.swing.JSlider.class));
+                findNamed(panel,"oneManExpand:Tile markers",javax.swing.JToggleButton.class).doClick();
+                findNamed(panel,"oneManExpand:Spawn appearance",javax.swing.JToggleButton.class).doClick();
                 assertNotNull(findNamed(panel,"monstersShamanModelOpacity",javax.swing.JSlider.class));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
@@ -144,6 +146,9 @@ public class OneManPluginBootstrapTest
                     for(int pass=0;pass<4;pass++) layoutTree(panel);
                     assertVisibleChildrenFit(panel);
                 }
+                hubs.setSelectedItem("Slayer");assertTrue(selectTab(panel,"Places"));
+                findNamed(panel,"oneManExpand:Map & travel controls",javax.swing.JToggleButton.class).doClick();
+                for(int pass=0;pass<6;pass++)layoutTree(panel);assertVisibleChildrenFit(panel);
                 hubs.setSelectedItem("Clue Scroll Hub");
                 assertTrue("STASH needs its own browser tab",selectTab(panel,"STASH"));
                 JComboBox<?> tier=findNamed(panel,"stashTierFilter",JComboBox.class);

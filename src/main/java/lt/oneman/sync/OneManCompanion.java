@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.9.6-birdhouse-ui-test";
+    static final String VERSION = "0.10.0-unified-ui-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -86,13 +86,14 @@ final class OneManCompanion {
             sections.setName("oneManHubSelector");
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
-            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(buildLabel.getFont().deriveFont(11f));
+            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(OneManCards.BODY);
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
             JButton settings=new JButton("OneMan Sync settings");
             settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
             settings.addActionListener(event->openSettings.run());
             hubNavigation.add(settings,BorderLayout.SOUTH);
             root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
+            OneManTheme.apply(root);
             navigation = NavigationButton.builder().tooltip("OneMan tools").icon(icon).priority(6).panel(root).build();
             toolbar.addNavigation(navigation);
         });
@@ -217,11 +218,20 @@ final class OneManCompanion {
         OneManCards tools=new OneManCards();
         String[][] choices={{"Slayer","Task preparation and locations"},{"Farming Hub","Patches, seeds and run timers"},
             {"Clue Scroll Hub","Clue items and STASH units"},{"Monsters Hub","Monster helpers"},{"Unlocks Hub","Account unlocks and requirements"},{"Combat Achievements","Tasks, bosses and progress"}};
-        for(String[] choice:choices) {
-            JPanel card=OneManCards.card();JButton open=new JButton(choice[0]);
+        tools.card(OneManCards.banner("OneMan tools","Choose a hub"));
+        int[] icons={net.runelite.api.gameval.ItemID.SLAYER_HELM,net.runelite.api.gameval.ItemID.RAKE,
+            net.runelite.api.gameval.ItemID.TRAIL_CLUE_EASY_SIMPLE001,net.runelite.api.gameval.ItemID.LIZARDMAN_FANG,
+            net.runelite.api.gameval.ItemID.CRYSTAL_KEY,net.runelite.api.gameval.ItemID.BRONZE_SWORD};
+        for(int i=0;i<choices.length;i++) {
+            String[] choice=choices[i];JPanel card=OneManCards.card();JPanel heading=new JPanel(new BorderLayout(6,0));heading.setOpaque(false);
+            JLabel icon=new JLabel();icon.setPreferredSize(new Dimension(36,36));icon.setIcon(CombatHubStyle.fallback());
+            net.runelite.client.util.AsyncBufferedImage image=items.getImage(icons[i]);if(image!=null)image.addTo(icon);
+            JTextArea title=OneManCards.text(choice[0]);title.setFont(OneManCards.HEADING);title.setForeground(Color.WHITE);
+            JButton open=new JButton("›");open.setToolTipText("Open "+choice[0]);open.setPreferredSize(new Dimension(26,30));
             if("Monsters Hub".equals(choice[0]))open.setName("monstersHubShortcut");
             open.addActionListener(event->sections.setSelectedItem(choice[0]));
-            card.add(open,BorderLayout.NORTH);card.add(OneManCards.text(choice[1]),BorderLayout.CENTER);tools.card(card);
+            heading.add(icon,BorderLayout.WEST);heading.add(title);heading.add(open,BorderLayout.EAST);
+            card.add(heading,BorderLayout.NORTH);card.add(OneManCards.text(choice[1]),BorderLayout.CENTER);tools.card(card);
         }
         tools.finish();JPanel home=new JPanel(new BorderLayout());home.add(OneManCards.scroll(tools));return home;
     }
@@ -239,8 +249,8 @@ final class OneManCompanion {
         final JComboBox<CompanionPlanner.Step> goals=new JComboBox<>();boolean updating;
         Panel() {
             setLayout(new BorderLayout());JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
-            tabs.addTab("Next",new JScrollPane(next));
-            JPanel preparation=new JPanel(new BorderLayout());preparation.add(goals,BorderLayout.NORTH);preparation.add(new JScrollPane(prep),BorderLayout.CENTER);
+            tabs.addTab("Next",new OneManTextCards(next));
+            JPanel preparation=new JPanel(new BorderLayout());preparation.add(goals,BorderLayout.NORTH);preparation.add(new OneManTextCards(prep),BorderLayout.CENTER);
             JPanel actions=new JPanel(new GridLayout(0,1));JButton guide=new JButton("Open goal guide"),mark=new JButton("Confirm manual unlock");
             JButton reset=new JButton("Follow default roadmap");actions.add(reset);
             reset.addActionListener(e->clientThread.invokeLater(()->{focusedGoal=false;selected="";configs.setConfiguration("one-man-sync",profile,"companionFocus",false);}));
