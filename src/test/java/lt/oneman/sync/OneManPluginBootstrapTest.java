@@ -62,6 +62,7 @@ public class OneManPluginBootstrapTest
                 bind(ConfigManager.class).toInstance(configs);
                 bind(ClientThread.class).toInstance(mock(ClientThread.class));
                 bind(ItemManager.class).toInstance(mock(ItemManager.class));
+                bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
                 bind(ClientToolbar.class).toInstance(toolbar);
                 bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(overlays);
@@ -102,12 +103,17 @@ public class OneManPluginBootstrapTest
                 assertFalse("No duplicate account session feed in normal navigation",selectTab(panel,"Summary"));
                 assertFalse("Sync diagnostics are not a main Hub",selectTab(panel,"Sync"));
                 assertFalse("Screenshot history is not a main view",selectTab(panel,"Memories"));
-                assertFalse("Slayer history is optional",selectTab(panel,"History"));
+                assertFalse("History removed",selectTab(panel,"History"));
+                assertFalse("Session removed",selectTab(panel,"Session"));
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));
                 assertEquals("Monsters Hub",hubs.getItemAt(4));
                 assertEquals("Unlocks Hub",hubs.getItemAt(5));
+                assertEquals("Combat Achievements",hubs.getItemAt(6));
+                hubs.setSelectedItem("Combat Achievements");
+                assertNotNull(findNamed(panel,"combatSearch",JTextField.class));
+                assertNotNull(findNamed(panel,"combatFiltersToggle",javax.swing.JToggleButton.class));
                 hubs.setSelectedItem("Unlocks Hub");
                 assertNotNull(findNamed(panel,"unlocksSearch",JTextField.class));
                 assertNotNull(findNamed(panel,"unlocksStatusFilter",JComboBox.class));
@@ -128,6 +134,8 @@ public class OneManPluginBootstrapTest
                 assertNotNull(findNamed(panel,"monstersShamanFill",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanLabel",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"monstersShamanTileOpacity",javax.swing.JSlider.class));
+                findNamed(panel,"oneManExpand:Tile markers",javax.swing.JToggleButton.class).doClick();
+                findNamed(panel,"oneManExpand:Spawn appearance",javax.swing.JToggleButton.class).doClick();
                 assertNotNull(findNamed(panel,"monstersShamanModelOpacity",javax.swing.JSlider.class));
                 assertSame("The sidebar must fill its viewport without an outer scrolling wrapper", panel, navigation.getValue().getPanel().getWrappedPanel());
                 panel.setSize(242, 700);
@@ -139,6 +147,9 @@ public class OneManPluginBootstrapTest
                     for(int pass=0;pass<4;pass++) layoutTree(panel);
                     assertVisibleChildrenFit(panel);
                 }
+                hubs.setSelectedItem("Slayer");assertTrue(selectTab(panel,"Places"));
+                findNamed(panel,"oneManExpand:Map & travel controls",javax.swing.JToggleButton.class).doClick();
+                for(int pass=0;pass<6;pass++)layoutTree(panel);assertVisibleChildrenFit(panel);
                 hubs.setSelectedItem("Clue Scroll Hub");
                 assertTrue("STASH needs its own browser tab",selectTab(panel,"STASH"));
                 JComboBox<?> tier=findNamed(panel,"stashTierFilter",JComboBox.class);
@@ -151,6 +162,11 @@ public class OneManPluginBootstrapTest
                 for(int row=0;row<stashList.getItemCount();row++) assertEquals("Easy",((OneManMapCatalog.Site)stashList.getItemAt(row)).category);
                 for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
                 hubs.setSelectedItem("Farming Hub");
+                assertTrue(selectTab(panel,"Runs"));
+                assertNotNull(findNamed(panel,"birdhouseRunsPanel",javax.swing.JPanel.class));
+                assertNotNull(findNamed(panel,"birdhouseCard:3",javax.swing.JPanel.class));
+                for(int pass=0;pass<6;pass++)layoutTree(panel);assertVisibleChildrenFit(panel);
+                assertTrue(selectTab(panel,"Patches"));
                 JComboBox<?> type=findNamed(panel,"farmingTypeFilter",JComboBox.class);
                 assertNotNull(type);type.setSelectedItem("Tree");
                 JComboBox<?> patchList=findNamed(panel,"farmingLocation:Tree",JComboBox.class);
@@ -251,7 +267,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==6 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if(box.getItemCount()==7 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
             }
             if(component instanceof Container)
             {

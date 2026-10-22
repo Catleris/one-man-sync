@@ -249,9 +249,9 @@ final class ClueHub
         {
             setLayout(new BorderLayout(0, 8));
             recent.setText("No clue-related drops observed in this session yet.");
-            JPanel header = new JPanel(new BorderLayout(0, 4)); header.add(status, BorderLayout.NORTH);
+            JPanel header = new JPanel(new BorderLayout(0,6));header.setBackground(new Color(36,53,44));header.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));header.add(status, BorderLayout.NORTH);
             JPanel legend = new JPanel(new GridLayout(3, 2, 8, 5));
-            for (ClueTier tier : ClueTier.values()) { JLabel label = new JLabel("• " + tier.label); label.setForeground(tier.color); label.setFont(OneManCards.HEADING); label.setToolTipText(tier.label); legend.add(label); }
+            for (ClueTier tier : ClueTier.values()) { JLabel label = CombatHubStyle.badge(tier.label,tier.color); label.setForeground(tier.color); label.setFont(OneManCards.HEADING); label.setToolTipText(tier.label); legend.add(label); }
             header.add(legend, BorderLayout.CENTER); add(header, BorderLayout.NORTH);
             JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
             JPanel items = new JPanel(new BorderLayout(0, 6));
@@ -259,8 +259,8 @@ final class ClueHub
             search.addActionListener(e -> { if (!query.getText().trim().isEmpty()) lookup(query.getText()); }); query.addActionListener(e -> search.doClick());
             JPanel lookup = new JPanel(new BorderLayout(4, 4)); lookup.add(query, BorderLayout.CENTER); lookup.add(search, BorderLayout.EAST);
             result.setRows(5);
-            JPanel searchPanel = new JPanel(new BorderLayout(0, 4)); searchPanel.add(lookup, BorderLayout.NORTH); searchPanel.add(scroll(result), BorderLayout.CENTER);
-            items.add(searchPanel, BorderLayout.NORTH); items.add(scroll(recent), BorderLayout.CENTER); tabs.addTab("Items", items);
+            JPanel searchPanel = new JPanel(new BorderLayout(0, 4)); searchPanel.add(lookup, BorderLayout.NORTH); searchPanel.add(resultCards(result), BorderLayout.CENTER);
+            items.add(searchPanel, BorderLayout.NORTH); items.add(new OneManTextCards(recent), BorderLayout.CENTER); tabs.addTab("Items", items);
             stash.setRequirements(stashSnapshot);tabs.addTab("STASH", stash);
             JPanel options = new JPanel(new GridLayout(0, 1, 0, 4));
             toggle(options, "Enable Clue Hub", "clueHubEnabled", config.clueHubEnabled());
@@ -273,7 +273,7 @@ final class ClueHub
             JPanel optionsPage = new JPanel(new BorderLayout()); optionsPage.add(options, BorderLayout.NORTH); tabs.addTab("Options", scroll(optionsPage));
             JTextArea help = area(); help.setText("Required: items used in clue steps.\n\nReward: items that can come from clues.\n\nColoured dots show clue tiers.");
             JButton guide = new JButton("Open clue guide"); guide.addActionListener(e -> LinkBrowser.browse("https://oldschool.runescape.wiki/w/Treasure_Trails"));
-            JPanel about = new JPanel(new BorderLayout(0,4));about.add(scroll(help),BorderLayout.CENTER);
+            JPanel about = new JPanel(new BorderLayout(0,4));about.add(new OneManTextCards(help),BorderLayout.CENTER);
             OneManCards extra=new OneManCards();extra.card(guide);
             JToggleButton credits=new JToggleButton("Credits / coverage");
             JTextArea sources=OneManCards.text("RuneLite emote clues (BSD-2-Clause) and OSRS Wiki reward tables (CC BY-NC-SA 3.0). Snapshot: 2026-10-17. Sherlock skill tasks are not indexed. Reward labels show possible sources, not this item's origin.");
@@ -283,6 +283,7 @@ final class ClueHub
             OneManCards.readable(this);
             status.setFont(OneManCards.HEADING);
         }
+        private JScrollPane resultCards(JTextArea source){OneManTextCards cards=new OneManTextCards(source);cards.setPreferredSize(new Dimension(0,145));return cards;}
         private JScrollPane scroll(JComponent content)
         {
             JScrollPane scroll = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);

@@ -10,7 +10,7 @@ final class OneManSidebarPanel extends PluginPanel
 {
     OneManSidebarPanel()
     {
-        super(false);setLayout(new BorderLayout(0,6));setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
+        super(false);setBackground(OneManTheme.CANVAS);setLayout(new BorderLayout(0,6));setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
     }
     @Override public Dimension getPreferredSize() { return new Dimension(PANEL_WIDTH+SCROLLBAR_WIDTH,0); }
     @Override public Dimension getMinimumSize() { return new Dimension(PANEL_WIDTH+SCROLLBAR_WIDTH,0); }

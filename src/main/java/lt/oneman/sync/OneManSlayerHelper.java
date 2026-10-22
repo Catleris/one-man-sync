@@ -199,13 +199,11 @@ public class OneManSlayerHelper
         String warning=supplies.warnings(config);
         if(config.notifySupplies() && !warning.isEmpty() && !warning.equals(lastWarning)) notifier.notify("Slayer Lab: " + warning);
         lastWarning=warning;
-        final String sessionNote = session.note;
-        final long sessionStarted = session.started;
         final String sessionProfile = account.profile;
-        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),SlayerLabJournal.metrics(session,now),SlayerLabAdvice.loot(name,goal,account.bank,session),account.journal.historyText()};
+        String[] views={prep,SlayerLabAdvice.tactics(name,variant),places.toString(),travel.toString(),supplies.describe(config),"",SlayerLabAdvice.loot(name,goal,account.bank,session),""};
         java.util.List<SlayerLabLocations.Destination> snapshot=destinations;
         SwingUtilities.invokeLater(() -> {
-            if(active && panel!=null) { panel.showTabs(views,name,sessionNote,sessionStarted,sessionProfile,summary); panel.showLocations(snapshot); }
+            if(active && panel!=null) { panel.showTabs(views,name,sessionProfile,summary); panel.showLocations(snapshot); }
         });
     }
     private void refreshPrayer()
@@ -355,9 +353,7 @@ public class OneManSlayerHelper
         private final JPanel[] pages = new JPanel[8];
         private final String[] labels={"Prep","Tactics","Places","Travel","Supplies","Session","Loot","History"};
         private final JComboBox<String> variants = new JComboBox<>(), goals = new JComboBox<>();
-        private final JTextArea note = new JTextArea(3,20);
         private String shownTask = "", shownProfile = "";
-        private long shownSession;
         private boolean updating;
 
         private final JButton wiki = new JButton("Task Wiki");
@@ -374,13 +370,11 @@ public class OneManSlayerHelper
         {
             setLayout(new BorderLayout(0, 10));
             setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-            JLabel title = new JLabel("ONEMAN SYNC • SLAYER");
-            title.setForeground(new Color(218, 176, 85));
 
             for(int i=0;i<labels.length;i++) {
                 JTextArea area=new JTextArea(16,20); area.setEditable(false); area.setLineWrap(true); area.setWrapStyleWord(true);
                 area.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,13)); sections[i]=area;
-                JPanel page=new JPanel(new BorderLayout(0,6)); page.add(area,BorderLayout.CENTER);
+                JPanel page=new JPanel(new BorderLayout(0,6)); page.add(new OneManTextCards(area),BorderLayout.CENTER);
                 if(i==1) {
                     JPanel options=new JPanel(new BorderLayout()); options.add(variants,BorderLayout.NORTH);
                     JButton variantWiki=new JButton("Selected variant Wiki"); options.add(variantWiki,BorderLayout.SOUTH); page.add(options,BorderLayout.NORTH);
@@ -388,8 +382,6 @@ public class OneManSlayerHelper
                 }
                 if(i==6) { goals.setEditable(true); JButton saveGoal=new JButton("Save loot goal"); JPanel options=new JPanel(new BorderLayout()); options.add(goals,BorderLayout.NORTH); options.add(saveGoal,BorderLayout.SOUTH); page.add(options,BorderLayout.NORTH);
                     saveGoal.addActionListener(e -> { String entered=String.valueOf(goals.getEditor().getItem()).trim(); String value=entered.substring(0,Math.min(120,entered.length())); String profile=shownProfile; clientThread.invokeLater(()->{ if(!profile.isEmpty() && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { configManager.setConfiguration(SlayerLabConfig.GROUP,account.profile,"lootGoal",value); nextRefresh=0; } }); }); }
-                if(i==5) { JPanel notes=new JPanel(new BorderLayout()); note.setLineWrap(true); note.setWrapStyleWord(true); JButton save=new JButton("Save session note"); notes.add(new JScrollPane(note),BorderLayout.CENTER); notes.add(save,BorderLayout.SOUTH); page.add(notes,BorderLayout.SOUTH);
-                    save.addActionListener(e -> { String value=note.getText().substring(0, Math.min(1000,note.getText().length())); long started=shownSession; String profile=shownProfile; clientThread.invokeLater(()->{ if(account.journal.active!=null && account.journal.active.started==started && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { account.journal.active.note=value; account.save(System.currentTimeMillis(),true); nextRefresh=0; } }); }); }
                 pages[i]=page;
             }
             optionalViews();
@@ -400,7 +392,7 @@ public class OneManSlayerHelper
             controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
             taskSummary.setEditable(false); taskSummary.setLineWrap(true); taskSummary.setWrapStyleWord(true);
             taskSummary.setOpaque(false); taskSummary.setAlignmentX(Component.LEFT_ALIGNMENT);
-            taskSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE,95)); controls.add(taskSummary);
+            taskSummary.setMaximumSize(new Dimension(Integer.MAX_VALUE,95));
             JLabel destinationLabel=new JLabel("DESTINATION / ENTRANCE"); destinationLabel.setAlignmentX(Component.LEFT_ALIGNMENT); controls.add(destinationLabel);
             choices.setAlignmentX(Component.LEFT_ALIGNMENT);
             choices.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -434,9 +426,11 @@ public class OneManSlayerHelper
             });
             clear.addActionListener(e -> clientThread.invokeLater(() -> { selectedDestination = null; nextRefresh = 0; }));
             JPanel header = new JPanel(new BorderLayout(0, 10));
-            header.add(title, BorderLayout.NORTH);
-            header.add(controls, BorderLayout.CENTER);
+            header.add(OneManCards.banner("Slayer Hub","Task preparation & locations"), BorderLayout.NORTH);
+            JPanel summary=OneManCards.card();summary.add(taskSummary);header.add(summary, BorderLayout.CENTER);
+            pages[2].add(OneManTheme.collapsible("Map & travel controls",controls),BorderLayout.NORTH);
             add(header, BorderLayout.NORTH);
+            OneManTheme.apply(this);
         }
         void showLocations(java.util.List<SlayerLabLocations.Destination> locations)
         {
@@ -456,29 +450,28 @@ public class OneManSlayerHelper
         void optionalViews()
         {
             Component selected=tabs.getSelectedComponent();tabs.removeAll();
-            for(int i=0;i<labels.length;i++)if(config.slayerHistoryVisible()||(i!=5&&i!=7))tabs.addTab(labels[i],pages[i]);
+            for(int i=0;i<labels.length;i++)if(i!=5&&i!=7)tabs.addTab(labels[i],pages[i]);
             if(selected!=null)for(int i=0;i<tabs.getTabCount();i++)if(tabs.getComponentAt(i)==selected)tabs.setSelectedIndex(i);
         }
-        void showTabs(String[] views,String task,String sessionNote,long started,String profile,String taskHeader)
+        void showTabs(String[] views,String task,String profile,String taskHeader)
         {
             taskSummary.setText(taskHeader);
             updating=true;
             shownProfile=profile;
-            if(shownSession!=started) { shownSession=started; note.setText(sessionNote); }
             if(!shownTask.equals(task)) {
                 shownTask=task; variants.removeAllItems(); for(String option:SlayerLabAdvice.variants(task)) variants.addItem(option);
                 goals.removeAllItems(); for(SlayerLabAdvice.Goal option:SlayerLabAdvice.goals(task)) goals.addItem(option.item);
-                goals.getEditor().setItem(goal); note.setText(sessionNote);
+                goals.getEditor().setItem(goal);
             }
             for(int i=0;i<sections.length;i++) CompanionText.update(sections[i],views[i]);
             url=SlayerLabCatalog.wiki(task); wiki.setEnabled(true); updating=false;
         }
         void showView(String view, String link)
         {
-            updating=true; shownTask=""; shownProfile=""; shownSession=0;
+            updating=true; shownTask=""; shownProfile="";
             taskSummary.setText(view);
-            for(int i=0;i<8;i++) sections[i].setText(view);
-            variants.removeAllItems(); goals.removeAllItems(); note.setText("");
+            for(int i=0;i<8;i++) sections[i].setText(view.length()<100&&!view.contains("\n")?"":view);
+            variants.removeAllItems(); goals.removeAllItems();
             url = link;
             wiki.setEnabled(!link.isEmpty()); updating=false;
         }

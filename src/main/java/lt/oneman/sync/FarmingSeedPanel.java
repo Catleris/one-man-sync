@@ -18,7 +18,7 @@ final class FarmingSeedPanel extends JPanel
     {
         super(new BorderLayout(0,6));this.maps=maps;this.browse=browse;
         JPanel header=new JPanel(new BorderLayout(0,6));
-        header.add(OneManCards.banner("SEED TO PATCH", "Find where a seed, sapling, spore or tuber belongs."),BorderLayout.NORTH);
+        header.add(OneManCards.banner("Seed finder", "Find where a seed, sapling, spore or tuber belongs."),BorderLayout.NORTH);
         query.setName("farmingSeedSearch");query.putClientProperty("JTextField.placeholderText","e.g. ranarr seed");query.setToolTipText("Try ranarr seed, acorn, jute seed or maple sapling");
         JPanel row=new JPanel(new BorderLayout(6,0));JLabel label=new JLabel("Seed");label.setForeground(OneManCards.ACCENT);row.add(label,BorderLayout.WEST);row.add(query,BorderLayout.CENTER);
         header.add(row,BorderLayout.SOUTH);add(header,BorderLayout.NORTH);add(OneManCards.scroll(results),BorderLayout.CENTER);
@@ -26,7 +26,7 @@ final class FarmingSeedPanel extends JPanel
             public void insertUpdate(DocumentEvent event) {search();}
             public void removeUpdate(DocumentEvent event) {search();}
             public void changedUpdate(DocumentEvent event) {search();}
-        });search();
+        });search();OneManTheme.apply(this);
     }
     private void search()
     {

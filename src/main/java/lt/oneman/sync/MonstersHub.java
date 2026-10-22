@@ -248,13 +248,16 @@ final class MonstersHub
             pulse.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanPulse", pulse.isSelected()); });
             looks.add(expandLooks, BorderLayout.NORTH); looks.add(lookControls, BorderLayout.CENTER);
             controls.card(looks);
-            controls.card(tiles); controls.card(color);
-            controls.card(opacity("Tile visibility", tileOpacity, "monstersShamanTileOpacity"));
-            for (JCheckBox box : new JCheckBox[]{outline, fill, label}) { box.setOpaque(false); controls.card(box); }
-            outline.setName("monstersShamanOutline"); fill.setName("monstersShamanFill"); label.setName("monstersShamanLabel");
-            controls.card(modelColor);
-            controls.card(opacity("Outline / label visibility", modelOpacity, "monstersShamanModelOpacity"));
-            controls.card(opacity("Fill visibility", fillOpacity, "monstersShamanFillOpacity"));
+            OneManCards tileControls=new OneManCards();tileControls.card(tiles);tileControls.card(color);
+            tileControls.card(opacity("Tile visibility",tileOpacity,"monstersShamanTileOpacity"));
+            controls.card(OneManTheme.collapsible("Tile markers",tileControls));
+            OneManCards modelControls=new OneManCards();
+            for(JCheckBox box:new JCheckBox[]{outline,fill,label}){box.setOpaque(false);modelControls.card(box);}
+            outline.setName("monstersShamanOutline");fill.setName("monstersShamanFill");label.setName("monstersShamanLabel");
+            modelControls.card(modelColor);
+            modelControls.card(opacity("Outline / label visibility",modelOpacity,"monstersShamanModelOpacity"));
+            modelControls.card(opacity("Fill visibility",fillOpacity,"monstersShamanFillOpacity"));
+            controls.card(OneManTheme.collapsible("Spawn appearance",modelControls));
             settings.add(controls, BorderLayout.NORTH);
             settings.add(status, BorderLayout.CENTER);
             cards.card(settings);

@@ -140,6 +140,7 @@ public class OneManSyncPlugin extends Plugin
     @Inject private ClueHub clueHub;
     @Inject private MonstersHub monstersHub;
     @Inject private UnlocksHub unlocksHub;
+    @Inject private CombatAchievementsHub combatHub;
     @Inject private OneManMapLocations mapLocations;
     @Inject private StashMinimapOverlay stashMinimapOverlay;
     @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
@@ -201,6 +202,7 @@ public class OneManSyncPlugin extends Plugin
         clueHub.startUp();
         monstersHub.startUp(this::localSlayerState);
         unlocksHub.startUp();
+        combatHub.startUp();
         slayerHelper.startUp(this::localSlayerState);
         companion.startUp(this::getPluginDirectory, () -> eventBus.post(OneManSettings.request(this)));
         if (client.getGameState() == GameState.LOGGED_IN)
@@ -217,6 +219,7 @@ public class OneManSyncPlugin extends Plugin
         mapOverlays.remove(stashMinimapOverlay);
         mapLocations.shutDown();
         unlocksHub.shutDown();
+        combatHub.shutDown();
         monstersHub.shutDown();
         clueHub.shutDown();
         companion.shutDown();
@@ -279,6 +282,7 @@ public class OneManSyncPlugin extends Plugin
     public void onGameStateChanged(GameStateChanged event)
     {
         unlocksHub.onGameStateChanged(event);
+        combatHub.onGameStateChanged(event);
         monstersHub.onGameStateChanged(event);
         clueHub.onGameStateChanged(event);
         slayerHelper.onGameStateChanged(event);
@@ -318,6 +322,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        combatHub.changed();
         unlocksHub.changed();
         if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
         {
@@ -555,6 +560,7 @@ public class OneManSyncPlugin extends Plugin
         clueHub.onGameTick();
         monstersHub.onGameTick();
         unlocksHub.onGameTick();
+        combatHub.onGameTick();
         slayerHelper.onGameTick(event);
         companion.onGameTick(event);
         if(!ready()) return;

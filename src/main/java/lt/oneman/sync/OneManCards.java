@@ -13,9 +13,7 @@ final class OneManCards extends JPanel implements Scrollable
     /** Style only plugin-owned sidebar components, never the global RuneLite UI. */
     static void readable(Component component)
     {
-        Font current=component.getFont();
-        component.setFont(current!=null&&current.isBold()?HEADING:BODY);
-        if(component instanceof Container)for(Component child:((Container)component).getComponents())readable(child);
+        OneManTheme.apply(component);
     }
     OneManCards() { super(new GridBagLayout());setOpaque(false); }
     void card(JComponent card)
@@ -31,13 +29,11 @@ final class OneManCards extends JPanel implements Scrollable
     }
     static JPanel card()
     {
-        JPanel card=new JPanel(new BorderLayout(0,6));card.setBackground(new Color(35,38,37));
-        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(66,72,68)),BorderFactory.createEmptyBorder(8,8,8,8)));
-        return card;
+        return CombatHubStyle.card(ACCENT,false);
     }
     static JTextArea text(String value)
     {
-        JTextArea text=new JTextArea(value);text.setEditable(false);text.setLineWrap(true);text.setWrapStyleWord(true);text.setOpaque(false);text.setForeground(MUTED);text.setFont(BODY);return text;
+        JTextArea text=new JTextArea();text.setEditable(false);text.setLineWrap(true);text.setWrapStyleWord(true);text.setOpaque(false);text.setForeground(MUTED);text.setFont(BODY);((javax.swing.text.DefaultCaret)text.getCaret()).setUpdatePolicy(javax.swing.text.DefaultCaret.NEVER_UPDATE);text.setFocusable(false);text.setText(value);text.setCaretPosition(0);return text;
     }
     static JPanel banner(String title,String subtitle)
     {
