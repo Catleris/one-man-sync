@@ -22,12 +22,20 @@ final class SlayerLabSupplies
         String describe(SlayerLabConfig config)
         {
             String warning = warnings(config);
-            return "Combat style: " + config.combatStyle() + " (change in plugin settings)\nFood items: " + food
-                + "\nPotion doses: " + doses + "\nAmmo: " + ammo + "\nVisible runes: " + runes
-                + "\n\n" + (warning.isEmpty() ? "No chosen threshold is crossed. This is not a combat-readiness assessment." : warning)
-                + "\n\nPotion doses by item:\n" + potions + "\n\nRune stacks:\n" + runeStacks
-                + "\n\nRune pouch, quiver storage, charged weapons and healing per food are not inspected. Potion totals include different potion types. Thresholds are your preferences, not mandatory supplies.";
+            StringBuilder out = new StringBuilder("Supplies\nFood: " + food + "\nPotion doses: " + doses
+                + "\nAmmo: " + ammo + "\nRunes: " + runes);
+            if (!warning.isEmpty()) out.append("\n\nLow supplies\n").append(warning);
+            appendItems(out, "Potions · doses", potions);
+            appendItems(out, "Runes · quantity", runeStacks);
+            out.append("\n\nInventory & equipped items only; stored runes/ammo and weapon charges excluded.");
+            return out.toString();
         }
+    }
+    private static void appendItems(StringBuilder out, String heading, Map<String,Integer> items)
+    {
+        if (items.isEmpty()) return;
+        out.append("\n\n").append(heading);
+        items.forEach((name, count) -> out.append("\n").append(name).append(" · ").append(count));
     }
     private static final Pattern DOSES = Pattern.compile("\\((\\d+)\\)$");
     static Counts count(Map<String, Integer> items, Set<String> edible, Set<String> drinkable)

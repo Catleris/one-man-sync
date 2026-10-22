@@ -33,11 +33,11 @@ public interface OneManSyncConfig extends SlayerLabConfig
 
     @ConfigSection(name="Unlocks Hub", description="Account unlock catalogue and journal visibility", position=6, closedByDefault=true)
     String unlocksSection = "unlocksSection";
-    @ConfigSection(name="Optional views", description="Extra planning and history views", position=7, closedByDefault=true)
+    @ConfigSection(name="Optional views", description="Extra planning views", position=7, closedByDefault=true)
     String optionalViewsSection = "optionalViewsSection";
     @ConfigItem(keyName="companionRoadmapVisible", name="Show Roadmap", description="Add the optional Next / Prep planner to the Hub selector.", position=120, section=optionalViewsSection)
     default boolean companionRoadmapVisible() { return false; }
-    @ConfigItem(keyName="slayerHistoryVisible", name="Show Slayer session / history", description="Show optional Session and History tabs inside Slayer Hub.", position=121, section=optionalViewsSection)
+    // Retained for stored-config compatibility; Session and History are no longer displayed.
     default boolean slayerHistoryVisible() { return false; }
 
     @ConfigItem(keyName="unlocksQuestJournal", name="Include quest journal entries", description="Also include every quest/miniquest milestone exposed by RuneLite. Useful unlock categories remain visible without this.", position=110, section=unlocksSection)

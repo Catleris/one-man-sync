@@ -20,6 +20,19 @@ public class OneManThemeTest
             JPanel details=new JPanel();JPanel group=OneManTheme.collapsible("Details",details);assertFalse(details.isVisible());((JToggleButton)group.getComponent(0)).doClick();assertTrue(details.isVisible());
         });
     }
+    @Test public void scrollingArrowsNeverBecomeEmptyTabs()throws Exception{
+        SwingUtilities.invokeAndWait(()->{
+            JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);
+            tabs.addTab("Next",new JPanel());tabs.addTab("Prep",new JPanel());
+            OneManTheme.apply(tabs);OneManTheme.apply(tabs);
+            tabs.setSize(242,400);layout(tabs);
+            assertEquals(2,tabs.getTabCount());
+            for(Component child:tabs.getComponents())if(child instanceof javax.swing.plaf.basic.BasicArrowButton)assertFalse(child.isVisible());
+            for(int i=0;i<6;i++)tabs.addTab("Long section "+i,new JPanel());
+            OneManTheme.apply(tabs);layout(tabs);assertEquals(8,tabs.getTabCount());
+            for(int i=0;i<8;i++)assertFalse(tabs.getTitleAt(i).isEmpty());
+        });
+    }
     @Test public void textCardsRetainSourceContentAndPositionAfterDeferredRefresh()throws Exception{
         final JTextArea[] source={null};final OneManTextCards[] view={null};
         SwingUtilities.invokeAndWait(()->{

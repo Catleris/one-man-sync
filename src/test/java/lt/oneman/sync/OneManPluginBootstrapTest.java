@@ -103,7 +103,8 @@ public class OneManPluginBootstrapTest
                 assertFalse("No duplicate account session feed in normal navigation",selectTab(panel,"Summary"));
                 assertFalse("Sync diagnostics are not a main Hub",selectTab(panel,"Sync"));
                 assertFalse("Screenshot history is not a main view",selectTab(panel,"Memories"));
-                assertFalse("Slayer history is optional",selectTab(panel,"History"));
+                assertFalse("History removed",selectTab(panel,"History"));
+                assertFalse("Session removed",selectTab(panel,"Session"));
                 assertEquals("Slayer",hubs.getItemAt(1));
                 assertEquals("Farming Hub",hubs.getItemAt(2));
                 assertEquals("Clue Scroll Hub",hubs.getItemAt(3));

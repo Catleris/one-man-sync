@@ -15,6 +15,7 @@ final class OneManTheme
     private OneManTheme(){}
     static void apply(Component component){
         Font font=component.getFont();component.setFont(font!=null&&font.isBold()?OneManCards.HEADING:OneManCards.BODY);
+        if(component instanceof BasicArrowButton)return;
         if(component instanceof JLabel){if(component.getForeground() instanceof UIResource)component.setForeground(OneManCards.MUTED);return;}
         if(component instanceof JCheckBox){
             JCheckBox box=(JCheckBox)component;box.setOpaque(false);box.setForeground(OneManCards.MUTED);box.setIcon(CHECK);box.setSelectedIcon(CHECK);return;
@@ -68,8 +69,12 @@ final class OneManTheme
             if(on){g.setStroke(new BasicStroke(2));g.drawPolyline(new int[]{3,6,12},new int[]{8,11,4},3);}g.dispose();
         }
     };
+    // JTabbedPane treats non-UIResource children as user tabs, including empty arrow buttons.
+    private static final class TabArrow extends BasicArrowButton implements UIResource {
+        TabArrow(int direction){super(direction,CANVAS,new Color(65,76,66),OneManCards.ACCENT,CANVAS);}
+    }
     private static final class TabsUI extends BasicTabbedPaneUI {
-        @Override protected JButton createScrollButton(int direction){return new BasicArrowButton(direction,CANVAS,new Color(65,76,66),OneManCards.ACCENT,CANVAS);}
+        @Override protected JButton createScrollButton(int direction){return new TabArrow(direction);}
         @Override protected void installDefaults(){super.installDefaults();tabInsets=new Insets(7,8,7,8);tabAreaInsets=new Insets(2,0,4,0);contentBorderInsets=new Insets(0,0,0,0);}
         @Override protected void paintTabBackground(Graphics graphics,int placement,int index,int x,int y,int w,int h,boolean selected){
             Graphics2D g=(Graphics2D)graphics.create();smooth(g);g.setColor(selected?new Color(74,65,39):new Color(31,38,33));g.fillRoundRect(x,y,w-2,h-2,8,8);g.dispose();

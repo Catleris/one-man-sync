@@ -82,6 +82,22 @@ public class SlayerLabFeaturesTest
         assertTrue(blocked.contains("verified Monkey Madness II"));
         assertTrue(SlayerLabTravel.route(d,Collections.singleton("royal seed pod"),Collections.singleton("Monkey Madness II")).contains("CARRIED + quest completed"));
     }
+    @Test public void travelUsesConcreteCodesAndCurrentMagicRequirement()
+    {
+        String route=SlayerLabTravel.route(SlayerLabLocations.forTask("Greater demons","Catacombs of Kourend").get(0),Collections.emptySet(),Collections.emptySet());
+        assertTrue(route.contains("48 Magic"));assertTrue(route.contains("Xeric's Heart"));
+        assertFalse(route.contains("must be checked manually"));
+        SlayerLabLocations.Destination security=new SlayerLabLocations.Destination("Stronghold of Security","Under Barbarian Village");
+        assertFalse(SlayerLabTravel.route(security,Collections.emptySet(),Collections.emptySet()).contains("Slayer ring"));
+    }
+    @Test public void suppliesOmitEmptyMapsAndUnrelatedCombatStyle()
+    {
+        SlayerLabSupplies.Counts counts=new SlayerLabSupplies.Counts();
+        String empty=counts.describe(new SlayerLabConfig(){});
+        assertFalse(empty.contains("{}"));assertFalse(empty.contains("Combat style"));assertFalse(empty.contains("Potions · doses"));
+        counts.potions.put("prayer potion(4)",8);
+        assertTrue(counts.describe(new SlayerLabConfig(){}).contains("prayer potion(4) · 8"));
+    }
     @Test public void lootGoalsSeparateBankOwnershipFromThisSession()
     {
         SlayerLabAccount.Bank bank=new SlayerLabAccount.Bank();SlayerLabJournal j=new SlayerLabJournal();
