@@ -43,6 +43,7 @@ final class CombatAchievementsHub
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
     @Inject private Gson gson;
+    @Inject private CombatAchievementIcons icons;
     private volatile boolean active;
     private volatile Snapshot snapshot=Snapshot.empty();
     private CombatAchievementsPanel panel;
@@ -51,9 +52,9 @@ final class CombatAchievementsHub
     private String profile="";
     private boolean dirty=true;
     private int delay=10,retry,cooldown;
-    void startUp(){active=true;dirty=true;delay=10;retry=0;cooldown=0;profile="";tracked.clear();snapshot=Snapshot.empty();}
-    void shutDown(){active=false;profile="";catalog=Collections.emptyList();tracked.clear();snapshot=Snapshot.empty();render();}
-    JPanel companionPanel(){if(panel==null)panel=new CombatAchievementsPanel(this::track);panel.update(snapshot);return panel;}
+    void startUp(){icons.startUp();active=true;dirty=true;delay=10;retry=0;cooldown=0;profile="";tracked.clear();snapshot=Snapshot.empty();}
+    void shutDown(){icons.shutDown();active=false;profile="";catalog=Collections.emptyList();tracked.clear();snapshot=Snapshot.empty();render();}
+    JPanel companionPanel(){if(panel==null)panel=new CombatAchievementsPanel(this::track,icons::addTo);panel.update(snapshot);return panel;}
     Snapshot snapshot(){return snapshot;}
     void changed(){dirty=true;}
     void onGameStateChanged(GameStateChanged event){

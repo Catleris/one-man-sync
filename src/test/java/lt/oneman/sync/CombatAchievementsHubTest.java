@@ -51,6 +51,8 @@ public class CombatAchievementsHubTest
         CombatAchievementsHub hub=Guice.createInjector(new AbstractModule(){protected void configure(){
             bind(Client.class).toInstance(client);bind(ConfigManager.class).toInstance(configs);bind(ClientThread.class).toInstance(thread);
             bind(com.google.gson.Gson.class).toInstance(new GsonBuilder().create());
+            bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
+            bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
         }}).getInstance(CombatAchievementsHub.class);
         hub.startUp();for(int i=0;i<16;i++)hub.onGameTick();assertTrue(hub.snapshot().ready);
         assertEquals(new HashSet<>(Arrays.asList(0,1)),hub.snapshot().tracked);assertTrue(hub.snapshot().completed.contains(0));

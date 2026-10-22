@@ -16,3 +16,13 @@ No combat overlays, mechanic warnings, prediction, input injection or network re
 Enum/struct parameter mappings checked against `jimmyununu/combat-achievement-lookup` (`CombatTaskRepository`, `TaskTier`, `TaskType`); no plugin dependency or source code is bundled. RuneLite exposes no named gameval enum/param constants for these mappings. VarPlayerID/VarbitID constants are used wherever available.
 
 The implementation is new Java/Swing code using OneMan's existing cards and fonts. The image concept is adapted to the actual sidebar width: compact header, two-column difficulty chips, one-column collapsible boss cards. It does not use generated screenshots as UI assets.
+
+## 0.9.4 visual / scrolling regression check
+
+- Open Filters and repeatedly toggle Easy, Medium and every other tier. The result list must return to its top after layout settles, rather than jump to its last card. Try the status/type controls and search too.
+- Scroll partway down, then expand a boss or let a passive progress update arrive. The reading position should stay stable. Opening Filters itself should not move the result list.
+- Verify distinct tier button fills/borders under the normal RuneLite theme: green Easy, blue Medium, red Hard, purple Elite, orange Master, gold Grandmaster. Selected tabs use gold.
+- Boss cards display local highscore sprites or Slayer guide item icons. Check Aberrant Spectre, Abyssal Sire, Hydra and Barrows. Encounters without a mapped game portrait show a shield badge. No external image service is contacted.
+- Task cards have tier badges; open boss cards have a gold outline and custom progress bars. Check long names at 242px sidebar width.
+
+Read-only Combat Hub text disables automatic caret scrolling; filter results restore their viewport after queued Swing layout, with stale restorations discarded. Custom button/bar painting prevents RuneLite's look and feel from masking the selected colours. Icon requests are cached, detached labels are weakly held, and shutdown rejects stale callbacks.
