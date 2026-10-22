@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.9.2";
+    static final String VERSION = "0.9.3-combat-hub-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -39,6 +39,7 @@ final class OneManCompanion {
     @Inject private ClueHub clueHub;
     @Inject private MonstersHub monstersHub;
     @Inject private UnlocksHub unlocksHub;
+    @Inject private CombatAchievementsHub combatHub;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -75,7 +76,7 @@ final class OneManCompanion {
             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
             g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
             PluginPanel root=new OneManSidebarPanel();
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Tools","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub"});
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Tools","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub","Combat Achievements"});
             hubSelector=sections;
             JPanel cards=new JPanel(new CardLayout());cards.add(toolsPanel(sections),"Tools");cards.add(panel,"Roadmap");
             if(config.companionRoadmapVisible())sections.addItem("Roadmap");
@@ -84,6 +85,7 @@ final class OneManCompanion {
             cards.add(clueHub.companionPanel(),"Clue Scroll Hub");
             cards.add(monstersHub.companionPanel(),"Monsters Hub");
             cards.add(unlocksHub.companionPanel(),"Unlocks Hub");
+            cards.add(combatHub.companionPanel(),"Combat Achievements");
             sections.setName("oneManHubSelector");
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
@@ -217,7 +219,7 @@ final class OneManCompanion {
     {
         OneManCards tools=new OneManCards();
         String[][] choices={{"Slayer","Task preparation and locations"},{"Farming Hub","Patches, seeds and run timers"},
-            {"Clue Scroll Hub","Clue items and STASH units"},{"Monsters Hub","Monster helpers"},{"Unlocks Hub","Account unlocks and requirements"}};
+            {"Clue Scroll Hub","Clue items and STASH units"},{"Monsters Hub","Monster helpers"},{"Unlocks Hub","Account unlocks and requirements"},{"Combat Achievements","Tasks, bosses and progress"}};
         for(String[] choice:choices) {
             JPanel card=OneManCards.card();JButton open=new JButton(choice[0]);
             if("Monsters Hub".equals(choice[0]))open.setName("monstersHubShortcut");
