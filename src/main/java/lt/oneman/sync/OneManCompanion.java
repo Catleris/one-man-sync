@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.9.5-combat-icons-test";
+    static final String VERSION = "0.9.6-birdhouse-ui-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -71,10 +71,7 @@ final class OneManCompanion {
         SwingUtilities.invokeLater(() -> {
             if (!active) return;
             panel = new Panel();
-            BufferedImage icon = new BufferedImage(24,24,BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = icon.createGraphics(); g.setColor(new Color(218,176,85));
-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18)); g.fillPolygon(new int[]{4,20,20,12,4},new int[]{3,3,13,22,13},5);
-            g.setColor(new Color(38,42,48));g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));g.drawString("1",8,15);g.dispose();
+            BufferedImage icon = OneManIcon.toolbar();
             PluginPanel root=new OneManSidebarPanel();
             JComboBox<String> sections=new JComboBox<>(new String[]{"Tools","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub","Combat Achievements"});
             hubSelector=sections;

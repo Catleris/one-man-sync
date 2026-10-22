@@ -156,6 +156,11 @@ public class OneManPluginBootstrapTest
                 for(int row=0;row<stashList.getItemCount();row++) assertEquals("Easy",((OneManMapCatalog.Site)stashList.getItemAt(row)).category);
                 for(int pass=0;pass<4;pass++) layoutTree(panel);assertVisibleChildrenFit(panel);
                 hubs.setSelectedItem("Farming Hub");
+                assertTrue(selectTab(panel,"Runs"));
+                assertNotNull(findNamed(panel,"birdhouseRunsPanel",javax.swing.JPanel.class));
+                assertNotNull(findNamed(panel,"birdhouseCard:3",javax.swing.JPanel.class));
+                for(int pass=0;pass<6;pass++)layoutTree(panel);assertVisibleChildrenFit(panel);
+                assertTrue(selectTab(panel,"Patches"));
                 JComboBox<?> type=findNamed(panel,"farmingTypeFilter",JComboBox.class);
                 assertNotNull(type);type.setSelectedItem("Tree");
                 JComboBox<?> patchList=findNamed(panel,"farmingLocation:Tree",JComboBox.class);

@@ -26,3 +26,11 @@ The implementation is new Java/Swing code using OneMan's existing cards and font
 - Task cards have tier badges; open boss cards have a gold outline and custom progress bars. Check long names at 242px sidebar width.
 
 Read-only Combat Hub text disables automatic caret scrolling; filter results restore their viewport after queued Swing layout, with stale restorations discarded. Custom button/bar painting prevents RuneLite's look and feel from masking the selected colours. Icon requests are cached, detached labels are weakly held, and shutdown rejects stale callbacks.
+
+## 0.9.6 Runs cards and toolbar icon
+
+- Combat Achievements: check the local portrait for the actual `Chambers of Xeric: CM` category, alongside both Hunllef icons.
+- Check the toolbar's gold helmet mark replaces the small numbered shield; it still opens the same OneMan sidebar.
+- Farming Hub → Runs now has four stable birdhouse cards, item icons, concise states and estimated growth bars, plus a separate Farming contract card. Unknown detection guidance is shown once. No active timers or progress are inferred from missing observations.
+- Visit Fossil Island with RuneLite Time Tracking enabled. Verify empty / needs seeds / growing / estimated ready against observations. Existing 50-minute estimate and ready-notification transition behaviour are retained. Refresh still schedules a client-thread observation refresh.
+- Verify growing cards change without resetting scroll position; logout must clear house details, growth bars and contract state. Existing Patches and Seeds browsers are unchanged.

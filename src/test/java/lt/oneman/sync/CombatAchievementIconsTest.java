@@ -30,6 +30,7 @@ public class CombatAchievementIconsTest
         SwingUtilities.invokeAndWait(()->icons.addTo("Abyssal Sire",c));assertSame(a.getIcon(),c.getIcon());
         assertEquals(ItemID.SLAYERGUIDE_ABERRANTSPECTER,CombatAchievementIcons.item("aberrantspectre"));
         assertEquals(SpriteID.HISCORE_BARROWS_CHESTS,CombatAchievementIcons.sprite("barrows"));
+        assertEquals(SpriteID.HISCORE_CHAMBERS_OF_XERIC_CHALLENGE_MODE,CombatAchievementIcons.sprite("chambersofxericcm"));
         assertEquals(SpriteID.HISCORE_THE_GAUNTLET,CombatAchievementIcons.sprite("crystallinehunllef"));
         assertEquals(SpriteID.HISCORE_THE_CORRUPTED_GAUNTLET,CombatAchievementIcons.sprite("corruptedhunllef"));
         assertNotEquals(CombatAchievementIcons.sprite("crystallinehunllef"),CombatAchievementIcons.sprite("corruptedhunllef"));

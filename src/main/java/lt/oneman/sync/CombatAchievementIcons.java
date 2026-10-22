@@ -80,7 +80,7 @@ final class CombatAchievementIcons
         case "crazyarchaeologist":return SpriteID.HISCORE_CRAZY_ARCHAEOLOGIST;
         case "derangedarchaeologist":return SpriteID.HISCORE_DERANGED_ARCHAEOLOGIST;
         case "chambersofxeric":return SpriteID.HISCORE_CHAMBERS_OF_XERIC;
-        case "chambersofxericchallengemode":return SpriteID.HISCORE_CHAMBERS_OF_XERIC_CHALLENGE_MODE;
+        case "chambersofxericcm":case "chambersofxericchallengemode":return SpriteID.HISCORE_CHAMBERS_OF_XERIC_CHALLENGE_MODE;
         case "commanderzilyana":return SpriteID.HISCORE_COMMANDER_ZILYANA;
         case "corporealbeast":return SpriteID.HISCORE_CORPOREAL_BEAST;
         case "dagannothprime":return SpriteID.HISCORE_DAGANNOTH_PRIME;

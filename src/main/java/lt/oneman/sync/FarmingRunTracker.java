@@ -1,17 +1,13 @@
 package lt.oneman.sync;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTabbedPane;
 import java.util.Map;
 import java.util.HashMap;
@@ -40,6 +36,7 @@ public class FarmingRunTracker {
     @Inject
     private OneManSyncConfig config;
     @Inject private OneManMapLocations mapLocations;
+    @Inject private net.runelite.client.game.ItemManager items;
     private FarmingPanel panel;
     private volatile boolean active;
     private volatile int nextFarmingRefresh = 0;
@@ -59,7 +56,7 @@ public class FarmingRunTracker {
             if (this.panel == null) {
                 this.panel = new FarmingPanel();
             }
-            this.panel.showStatus("Log in to see Farming Run status.");
+            this.panel.showLoggedOut();
         });
     }
 
@@ -83,7 +80,7 @@ public class FarmingRunTracker {
             this.nextFarmingRefresh = 0;
             SwingUtilities.invokeLater(() -> {
                 if (this.active && this.panel != null) {
-                    this.panel.showStatus("Log in to see Farming Run status.");
+                    this.panel.showLoggedOut();
                 }
             });
         }
@@ -113,66 +110,13 @@ public class FarmingRunTracker {
         int[] birdVarps = new int[]{VarPlayerID.BIRDHOUSE_TRANSMIT_A, VarPlayerID.BIRDHOUSE_TRANSMIT_B, VarPlayerID.BIRDHOUSE_TRANSMIT_C, VarPlayerID.BIRDHOUSE_TRANSMIT_D};
         String[] birdNames = new String[]{"Mushroom Meadow N", "Mushroom Meadow S", "Verdant Valley NE", "Verdant Valley SW"};
         long now = System.currentTimeMillis() / 1000L;
-        StringBuilder sb = new StringBuilder("=== BIRDHOUSE RUNS ===\n");
-        for (int i = 0; i < birdVarps.length; ++i) {
-            String stored = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, TimeTrackingConfig.BIRD_HOUSE + "." + birdVarps[i]);
-            sb.append(birdNames[i]).append(": ");
-            if (stored == null || stored.trim().isEmpty()) {
-                sb.append("Unknown (visit Fossil Island to detect)\n");
-                this.lastBirdhouseReady[i] = false;
-                continue;
-            }
-            int varp = -1;
-            long seen = 0L;
-            String[] parts = stored.split(":");
-            if (parts.length == 2) {
-                try {
-                    varp = Integer.parseInt(parts[0]);
-                    seen = Long.parseLong(parts[1]);
-                }
-                catch (NumberFormatException numberFormatException) {
-                    // empty catch block
-                }
-            }
-            if (varp < 0 || seen <= 0L) {
-                sb.append("Unknown (visit Fossil Island to detect)\n");
-                this.lastBirdhouseReady[i] = false;
-                continue;
-            }
-            BirdHouseDecoder.State state = BirdHouseDecoder.getState(varp);
-            String houseName = BirdHouseDecoder.getHouseName(varp);
-            if (houseName == null) {
-                houseName = "Bird House";
-            }
-            if (state == BirdHouseDecoder.State.EMPTY) {
-                sb.append("Empty (no birdhouse placed)\n");
-                this.lastBirdhouseReady[i] = false;
-                continue;
-            }
-            if (state == BirdHouseDecoder.State.BUILT) {
-                sb.append(houseName).append(" \u2014 Built (needs seeds)\n");
-                this.lastBirdhouseReady[i] = false;
-                continue;
-            }
-            if (state == BirdHouseDecoder.State.SEEDED) {
-                long readyAt = seen + 3000L;
-                boolean ready = now >= readyAt;
-                if (ready) {
-                    sb.append(houseName).append(" \u2014 READY to collect!\n");
-                    if (baseline && !this.lastBirdhouseReady[i] && this.config.notifyBirdhousesReady()) {
-                        this.notifier.notify("OneMan: " + birdNames[i] + " (" + houseName + ") is ready!");
-                    }
-                } else {
-                    long left = readyAt - now;
-                    long mins = left / 60L;
-                    long secs = left % 60L;
-                    sb.append(houseName).append(" \u2014 Growing (").append(mins).append("m ").append(secs).append("s left)\n");
-                }
-                this.lastBirdhouseReady[i] = ready;
-                continue;
-            }
-            sb.append("Visit this birdhouse to refresh its status.\n");
-            this.lastBirdhouseReady[i] = false;
+        List<BirdhouseRun> runs=new ArrayList<>();
+        for(int i=0;i<birdVarps.length;i++){
+            String stored=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,TimeTrackingConfig.BIRD_HOUSE+"."+birdVarps[i]);
+            BirdhouseRun run=BirdhouseRun.read(i,stored,now);runs.add(run);
+            boolean ready=run.status==BirdhouseRun.Status.READY;
+            if(baseline&&ready&&!lastBirdhouseReady[i]&&config.notifyBirdhousesReady())notifier.notify("OneMan: "+birdNames[i]+" ("+run.house+") is ready!");
+            lastBirdhouseReady[i]=ready;
         }
         baseline = true;
         Map<String,String> patchStatuses=new HashMap<>();
@@ -183,17 +127,11 @@ public class FarmingRunTracker {
             patchStatuses.put(def.getName(),status);
         }
         String contractId = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, "contract");
-        sb.append("\n=== FARMING CONTRACT ===\n");
-        if (contractId != null && !contractId.trim().isEmpty()) {
-            boolean complete = this.client.getVarbitValue(VarbitID.FARMGUILD_CONTRACT_COMPLETE) > 0;
-            sb.append("Contract active: ").append(complete ? "COMPLETE \u2713" : "In progress...").append("\n");
-        } else {
-            sb.append("No active contract detected.\n");
-        }
-        String text = sb.toString();
+        String contractState=contractId!=null&&!contractId.trim().isEmpty()
+            ?(client.getVarbitValue(VarbitID.FARMGUILD_CONTRACT_COMPLETE)>0?"Complete":"In progress"):"None detected";
         SwingUtilities.invokeLater(() -> {
             if (this.active && this.panel != null) {
-                this.panel.showStatus(text,patchStatuses);
+                this.panel.showStatus(runs,contractState,patchStatuses);
             }
         });
     }
@@ -222,31 +160,21 @@ public class FarmingRunTracker {
 
     private final class FarmingPanel
     extends JPanel {
-        private final JTextArea area = new JTextArea();
-        private final JButton refresh = new JButton("Refresh");
+        private final BirdhouseRunsPanel runs=new BirdhouseRunsPanel(items,()->clientThread.invokeLater(()->nextFarmingRefresh=0));
         private final OneManMapPanel patches=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.FARMING);
 
         FarmingPanel() {
             this.setLayout(new BorderLayout(0, 6));
             this.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-            this.area.setEditable(false);
-            this.area.setLineWrap(true);
-            this.area.setWrapStyleWord(true);
-            this.area.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
-            this.refresh.addActionListener(e -> FarmingRunTracker.this.clientThread.invokeLater(() -> {
-                FarmingRunTracker.this.nextFarmingRefresh = 0;
-            }));
-            JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);tabs.addTab("Patches",patches);
+            JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);tabs.setFont(OneManCards.BODY);tabs.addTab("Patches",patches);
             tabs.addTab("Seeds",new FarmingSeedPanel(mapLocations,category->{patches.chooseCategory(category);tabs.setSelectedIndex(0);}));
-            JPanel timers=new JPanel(new BorderLayout(0,5));
-            timers.add(new JScrollPane(this.area),BorderLayout.CENTER);timers.add(this.refresh,BorderLayout.SOUTH);
-            tabs.addTab("Runs",timers);
+            tabs.addTab("Runs",runs);
             this.add(tabs,BorderLayout.CENTER);
         }
 
-        void showStatus(String text) { showStatus(text,Collections.emptyMap()); }
-        void showStatus(String text,Map<String,String> observed) {
-            CompanionText.update(this.area, text);
+        void showLoggedOut() { runs.loggedOut();patches.setStatuses(Collections.emptyMap()); }
+        void showStatus(List<BirdhouseRun> observations,String contract,Map<String,String> observed) {
+            runs.update(observations,contract);
             Map<String,String> status=new HashMap<>();
             observed.forEach((key,value)->status.put(key.replace(": ",":"),value));
             patches.setStatuses(status);
