@@ -29,7 +29,7 @@ dependencies {
 }
 
 group = 'lt.oneman'
-version = '0.10.1-clean-ui-test'
+version = '0.10.1'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
