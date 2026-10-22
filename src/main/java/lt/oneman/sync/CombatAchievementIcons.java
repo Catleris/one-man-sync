@@ -104,8 +104,8 @@ final class CombatAchievementIcons
         case "scurrius":return SpriteID.HISCORE_SCURRIUS;
         case "skotizo":return SpriteID.HISCORE_SKOTIZO;
         case "tempoross":return SpriteID.HISCORE_TEMPOROSS;
-        case "thegauntlet":case "gauntlet":return SpriteID.HISCORE_THE_GAUNTLET;
-        case "corruptedgauntlet":case "thecorruptedgauntlet":return SpriteID.HISCORE_THE_CORRUPTED_GAUNTLET;
+        case "crystallinehunllef":case "thegauntlet":case "gauntlet":return SpriteID.HISCORE_THE_GAUNTLET;
+        case "corruptedhunllef":case "corruptedgauntlet":case "thecorruptedgauntlet":return SpriteID.HISCORE_THE_CORRUPTED_GAUNTLET;
         case "theatreofblood":case "theatreofbloodentrymode":case "theatreofbloodhardmode":return SpriteID.HISCORE_THEATRE_OF_BLOOD;
         case "thermonuclearsmokedevil":return SpriteID.HISCORE_THERMONUCLEAR_SMOKE_DEVIL;
         case "tombsofamascut":case "tombsofamascutentrymode":return SpriteID.HISCORE_TOMBS_OF_AMASCUT;
