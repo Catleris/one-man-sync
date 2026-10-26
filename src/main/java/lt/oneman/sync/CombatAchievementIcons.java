@@ -33,7 +33,11 @@ final class CombatAchievementIcons
         String key=normal(boss);Icon known=cached.get(key);if(known!=null){label.setIcon(known);return;}
         int item=item(key);
         if(item>=0){AsyncBufferedImage image=items.getImage(item);if(image!=null)image.addTo(label);return;}
-        int sprite=sprite(key);if(sprite<0)return;
+        int sprite=sprite(key);
+        if(sprite<0){
+            // A real category icon for future/unrecognised groups, rather than an empty portrait.
+            AsyncBufferedImage image=items.getImage(ItemID.CA_BOOK);if(image!=null)image.addTo(label);return;
+        }
         // Weak references avoid retaining detached cards while a cache sprite is loading.
         if(waiting.containsKey(key)){waiting.get(key).add(new WeakReference<>(label));return;}
         waiting.put(key,new ArrayList<>(Collections.singletonList(new WeakReference<>(label))));int requested=generation;
@@ -48,12 +52,24 @@ final class CombatAchievementIcons
         }));
     }
     private static String normal(String boss){return boss.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]","");}
-    static int item(String key){switch(key){
+    static int item(String key){switch(normal(key)){
         case "aberrantspectre":case "aberrantspectres":return ItemID.SLAYERGUIDE_ABERRANTSPECTER;
         case "basiliskknight":case "basilisk":return ItemID.SLAYERGUIDE_BASILISK;
         case "brutus":return ItemID.COW_MASK;
         case "gryphon":case "gryphons":return ItemID.SLAYERGUIDE_GRYPHON;
-        case "bloodveld":return ItemID.SLAYERGUIDE_BLOODVELD;
+        case "general":return ItemID.CA_BOOK;
+        case "other":case "others":return ItemID.BOOK_OF_THE_DEAD;
+        case "kurask":case "kurasks":return ItemID.SLAYERGUIDE_KURASK;
+        case "demonicgorilla":case "demonicgorillas":return ItemID.ZENYTE_SHARD;
+        case "fragmentofseren":case "thefragmentofseren":return ItemID.PRIF_SEREN_BOOK;
+        case "galvek":return ItemID.DRAGONMASK_RED;
+        case "glough":return ItemID.MM2_KRUK_GREEGREE;
+        case "tormenteddemon":case "tormenteddemons":return ItemID.TORMENTED_SYNAPSE;
+        case "dustdevil":case "dustdevils":return ItemID.SLAYERGUIDE_DUSTDEVIL;
+        case "abyssaldemon":case "abyssaldemons":return ItemID.SLAYERGUIDE_ABYSSALDEMON;
+        case "nechryael":case "nechryaels":return ItemID.SLAYERGUIDE_NECHRYAEL;
+        case "darkbeast":case "darkbeasts":return ItemID.SLAYERGUIDE_DARK_BEAST;
+        case "bloodveld":case "bloodvelds":return ItemID.SLAYERGUIDE_BLOODVELD;
         case "blackdragon":case "brutalblackdragon":return ItemID.DRAGONMASK_BLACK;
         case "gargoyle":return ItemID.SLAYERGUIDE_GARGOYLE;
         case "greaterdemon":return ItemID.GREATER_DEMON_MASK;
@@ -63,10 +79,16 @@ final class CombatAchievementIcons
         case "skeletalwyvern":return ItemID.SLAYERGUIDE_SKELETALWYVERN;
         default:return -1;
     }}
-    static int sprite(String key){switch(key){
+    static int sprite(String key){switch(normal(key)){
         case "abyssalsire":case "theabyssalsire":return SpriteID.HISCORE_ABYSSAL_SIRE;
         case "alchemicalhydra":case "thealchemicalhydra":return SpriteID.HISCORE_ALCHEMICAL_HYDRA;
         case "barrows":case "barrowsbrothers":return SpriteID.HISCORE_BARROWS_CHESTS;
+        case "sarachnis":return SpriteID.HISCORE_SARACHNIS;
+        case "shellbanegryphon":case "theshellbanegryphon":return net.runelite.api.gameval.SpriteID.IconBoss25x25.SHELLBANE_GRYPHON;
+        case "madangel":case "themadangel":return net.runelite.api.gameval.SpriteID.IconBoss25x25.MAD_ANGEL;
+        case "maggotking":case "themaggotking":return net.runelite.api.gameval.SpriteID.IconBoss25x25.MAGGOT_KING;
+        case "doomofmokhaiotl":case "thedoomofmokhaiotl":return net.runelite.api.gameval.SpriteID.IconBoss25x25.DOOM_OF_MOKHAIOTL;
+        case "tzhaarketrakschallenges":case "tzhaarketrakchallenges":case "tzhaarketrak":return SpriteID.HISCORE_TZTOK_JAD;
         case "bryophyta":return SpriteID.HISCORE_BRYOPHYTA;
         case "obor":return SpriteID.HISCORE_OBOR;
         case "araxxor":return SpriteID.HISCORE_ARAXXOR;
@@ -119,7 +141,7 @@ final class CombatAchievementIcons
         case "wintertodt":return SpriteID.HISCORE_WINTERTODT;
         case "zalcano":return SpriteID.HISCORE_ZALCANO;
         case "zulrah":return SpriteID.HISCORE_ZULRAH;
-        case "perilousmoons":case "lunarchests":return SpriteID.HISCORE_LUNAR_CHESTS;
+        case "moonsofperil":case "perilousmoons":case "lunarchests":return SpriteID.HISCORE_LUNAR_CHESTS;
         case "fortiscolosseum":case "solheredit":return SpriteID.HISCORE_SOL_HEREDIT;
         case "thehueycoatl":case "hueycoatl":return SpriteID.HISCORE_THE_HUEYCOATL;
         case "royaltitans":return SpriteID.HISCORE_ROYAL_TITANS;
