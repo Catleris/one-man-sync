@@ -15,6 +15,31 @@ import static org.mockito.Mockito.*;
 
 public class CombatAchievementIconsTest
 {
+    @Test public void reportedCategoriesResolveUsingTheirActualCacheNames(){
+        String[] groups={"Sarachnis","Shellbane Gryphon","General","Kurask","Moons of Peril","Others",
+            "The Mad Angel","Maggot King","Demonic Gorilla","Doom of Mokhaiotl","Fragment of Seren",
+            "Galvek","Glough","Tormented Demon","TzHaar - Ket - Rak's Challenges"};
+        for(String group:groups)assertTrue("Missing portrait: "+group,
+            CombatAchievementIcons.item(group)>=0||CombatAchievementIcons.sprite(group)>=0);
+        assertEquals(SpriteID.HISCORE_SARACHNIS,CombatAchievementIcons.sprite("Sarachnis"));
+        assertEquals(SpriteID.HISCORE_LUNAR_CHESTS,CombatAchievementIcons.sprite("Moons of Peril"));
+        assertEquals(ItemID.SLAYERGUIDE_KURASK,CombatAchievementIcons.item("Kurask"));
+        assertEquals(ItemID.CA_BOOK,CombatAchievementIcons.item("General"));
+        assertEquals(ItemID.BOOK_OF_THE_DEAD,CombatAchievementIcons.item("Others"));
+        assertEquals(net.runelite.api.gameval.SpriteID.IconBoss25x25.SHELLBANE_GRYPHON,CombatAchievementIcons.sprite("Shellbane Gryphon"));
+        assertEquals(net.runelite.api.gameval.SpriteID.IconBoss25x25.MAD_ANGEL,CombatAchievementIcons.sprite("The Mad Angel"));
+        assertEquals(net.runelite.api.gameval.SpriteID.IconBoss25x25.MAGGOT_KING,CombatAchievementIcons.sprite("Maggot King"));
+        assertEquals(net.runelite.api.gameval.SpriteID.IconBoss25x25.DOOM_OF_MOKHAIOTL,CombatAchievementIcons.sprite("Doom of Mokhaiotl"));
+    }
+    @Test public void unknownCategoriesRequestAnAchievementBookInsteadOfLeavingThePlaceholder() throws Exception {
+        SpriteManager sprites=mock(SpriteManager.class);ItemManager items=mock(ItemManager.class);
+        CombatAchievementIcons icons=Guice.createInjector(new AbstractModule(){protected void configure(){
+            bind(SpriteManager.class).toInstance(sprites);bind(ItemManager.class).toInstance(items);
+        }}).getInstance(CombatAchievementIcons.class);
+        icons.startUp();SwingUtilities.invokeAndWait(()->icons.addTo("Future category",new JLabel()));
+        verify(items).getImage(ItemID.CA_BOOK);verifyNoInteractions(sprites);
+        icons.shutDown();SwingUtilities.invokeAndWait(()->{});
+    }
     @Test public void gamePortraitsAreCachedAndStaleCallbacksCannotReviveShutdownIcons() throws Exception {
         SpriteManager sprites=mock(SpriteManager.class);ItemManager items=mock(ItemManager.class);
         CombatAchievementIcons icons=Guice.createInjector(new AbstractModule(){protected void configure(){
