@@ -5,7 +5,7 @@ Run OneManSyncPluginTest in IntelliJ, or ./gradlew run. Disable the installed Pl
 
 Open OneMan tools > Collection / Combat alarms. Both switches are off by default and independent of website sync. Enable each switch, log in and use each Preview button. Preview never changes task/log completion or uploads an example unlock.
 
-The banner is a native Java2D adaptation of the selected Legendary concept: gold wings, shield, item portrait and a tier-colored label. It scales to the viewport. Configure duration (3–15 seconds) and scale in OneMan Sync settings.
+The test2 banner uses bundled transparent artwork edited from the exact selected Legendary reference: textured gold wings, cracked stone, crest, hanging item frame and detailed crossed-sword shield. Dynamic text and native item icons are drawn over the artwork. It scales to the viewport. Configure duration (3–15 seconds) and scale in OneMan Sync settings.
 
 Enable Collection log notifications and Combat task completion messages in OSRS settings. A real new Collection Log message triggers the item banner; a real completed Combat Achievement message triggers the task name, tier and points. Every item name and all six task tiers are accepted without a hand-maintained whitelist or fixed task-ID limit. Item icons use the RuneLite item cache (including pets and untradeables); until resolved, a gold emblem is shown. No drop rates, source names or KC are guessed. Opening an old Collection Log/CA page does not replay historical unlocks.
 
