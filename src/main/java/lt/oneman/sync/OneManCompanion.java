@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.10.2";
+    static final String VERSION = "0.11.0-alarms-test";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -40,6 +40,7 @@ final class OneManCompanion {
     @Inject private MonstersHub monstersHub;
     @Inject private UnlocksHub unlocksHub;
     @Inject private CombatAchievementsHub combatHub;
+    @Inject private AchievementAlarms achievementAlarms;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
     private CompanionPlanner planner;
@@ -73,7 +74,7 @@ final class OneManCompanion {
             panel = new Panel();
             BufferedImage icon = OneManIcon.toolbar();
             PluginPanel root=new OneManSidebarPanel();
-            JComboBox<String> sections=new JComboBox<>(new String[]{"Tools","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub","Combat Achievements"});
+            JComboBox<String> sections=new JComboBox<>(new String[]{"Tools","Slayer","Farming Hub","Clue Scroll Hub","Monsters Hub","Unlocks Hub","Combat Achievements","Collection / Combat alarms"});
             hubSelector=sections;
             JPanel cards=new JPanel(new CardLayout());cards.add(toolsPanel(sections),"Tools");cards.add(panel,"Roadmap");
             if(config.companionRoadmapVisible())sections.addItem("Roadmap");
@@ -83,6 +84,7 @@ final class OneManCompanion {
             cards.add(monstersHub.companionPanel(),"Monsters Hub");
             cards.add(unlocksHub.companionPanel(),"Unlocks Hub");
             cards.add(combatHub.companionPanel(),"Combat Achievements");
+            cards.add(achievementAlarms.companionPanel(),"Collection / Combat alarms");
             sections.setName("oneManHubSelector");
             sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
@@ -217,11 +219,11 @@ final class OneManCompanion {
     {
         OneManCards tools=new OneManCards();
         String[][] choices={{"Slayer","Task preparation and locations"},{"Farming Hub","Patches, seeds and run timers"},
-            {"Clue Scroll Hub","Clue items and STASH units"},{"Monsters Hub","Monster helpers"},{"Unlocks Hub","Account unlocks and requirements"},{"Combat Achievements","Tasks, bosses and progress"}};
+            {"Clue Scroll Hub","Clue items and STASH units"},{"Monsters Hub","Monster helpers"},{"Unlocks Hub","Account unlocks and requirements"},{"Combat Achievements","Tasks, bosses and progress"},{"Collection / Combat alarms","Legendary unlock notifications"}};
         tools.card(OneManCards.banner("OneMan tools","Choose a hub"));
         int[] icons={net.runelite.api.gameval.ItemID.SLAYER_HELM,net.runelite.api.gameval.ItemID.RAKE,
             net.runelite.api.gameval.ItemID.TRAIL_CLUE_EASY_SIMPLE001,net.runelite.api.gameval.ItemID.LIZARDMAN_FANG,
-            net.runelite.api.gameval.ItemID.CRYSTAL_KEY,net.runelite.api.gameval.ItemID.BRONZE_SWORD};
+            net.runelite.api.gameval.ItemID.CRYSTAL_KEY,net.runelite.api.gameval.ItemID.BRONZE_SWORD,net.runelite.api.gameval.ItemID.CA_BOOK};
         for(int i=0;i<choices.length;i++) {
             String[] choice=choices[i];JPanel card=OneManCards.card();JPanel heading=new JPanel(new BorderLayout(6,0));heading.setOpaque(false);
             JLabel icon=new JLabel();icon.setPreferredSize(new Dimension(36,36));icon.setIcon(CombatHubStyle.fallback());
