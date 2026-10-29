@@ -111,6 +111,12 @@ public class OneManPluginBootstrapTest
                 assertEquals("Monsters Hub",hubs.getItemAt(4));
                 assertEquals("Unlocks Hub",hubs.getItemAt(5));
                 assertEquals("Combat Achievements",hubs.getItemAt(6));
+                assertEquals("Collection / Combat alarms",hubs.getItemAt(7));
+                hubs.setSelectedItem("Collection / Combat alarms");
+                assertNotNull(findNamed(panel,"alarmCollectionToggle",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"alarmCombatToggle",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"alarmCollectionPreview",JButton.class));
+                assertNotNull(findNamed(panel,"alarmCombatPreview",JButton.class));
                 hubs.setSelectedItem("Combat Achievements");
                 assertNotNull(findNamed(panel,"combatSearch",JTextField.class));
                 assertNotNull(findNamed(panel,"combatFiltersToggle",javax.swing.JToggleButton.class));
@@ -267,7 +273,7 @@ public class OneManPluginBootstrapTest
             if(component instanceof JComboBox)
             {
                 JComboBox<?> box=(JComboBox<?>)component;
-                if(box.getItemCount()==7 && "Clue Scroll Hub".equals(box.getItemAt(3))) return box;
+                if("oneManHubSelector".equals(box.getName())) return box;
             }
             if(component instanceof Container)
             {

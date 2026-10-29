@@ -92,13 +92,14 @@ final class AchievementAlarms
     JPanel companionPanel() {
         OneManCards cards=new OneManCards();cards.card(OneManCards.banner("Collection / Combat alarms","Legendary • local game notifications"));
         JPanel options=OneManCards.card();JPanel rows=new JPanel(new GridLayout(0,1,0,8));rows.setOpaque(false);
-        collectionBox=new JCheckBox("Collection Log alarm",config.alarmCollection());combatBox=new JCheckBox("Combat Achievement alarm",config.alarmCombat());
+        collectionBox=new JCheckBox("Collection Log",config.alarmCollection());combatBox=new JCheckBox("Combat Achievements",config.alarmCombat());
+        collectionBox.setName("alarmCollectionToggle");combatBox.setName("alarmCombatToggle");
         collectionBox.addActionListener(e->configs.setConfiguration("one-man-sync","alarmCollection",collectionBox.isSelected()));
         combatBox.addActionListener(e->configs.setConfiguration("one-man-sync","alarmCombat",combatBox.isSelected()));
         rows.add(collectionBox);rows.add(combatBox);options.add(rows,BorderLayout.CENTER);cards.card(options);
         JPanel test=OneManCards.card();JPanel buttons=new JPanel(new GridLayout(0,1,0,8));buttons.setOpaque(false);
-        JButton log=new JButton("Preview Collection Log");log.addActionListener(e->preview(false));buttons.add(log);
-        JButton ca=new JButton("Preview Combat Achievement");ca.addActionListener(e->preview(true));buttons.add(ca);
+        JButton log=new JButton("Preview Collection Log");log.setName("alarmCollectionPreview");log.addActionListener(e->preview(false));buttons.add(log);
+        JButton ca=new JButton("Preview Combat Achievement");ca.setName("alarmCombatPreview");ca.addActionListener(e->preview(true));buttons.add(ca);
         test.add(buttons,BorderLayout.NORTH);test.add(OneManCards.text("Enable the matching alarm and log in to preview. Preview messages do not change your progress."),BorderLayout.CENTER);cards.card(test);
         cards.card(OneManCards.text("New unlocks only. Enable Collection log notifications and Combat task completion messages in OSRS settings. Old entries and opening your log do not trigger alarms."));
         cards.finish();JPanel result=new JPanel(new BorderLayout());result.add(OneManCards.scroll(cards));return result;
