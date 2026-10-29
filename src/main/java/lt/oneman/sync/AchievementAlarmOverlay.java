@@ -22,8 +22,8 @@ final class AchievementAlarmOverlay extends Overlay
         if(notice.combat?!config.alarmCombat():!config.alarmCollection())return null;
         int available=client.getViewportWidth();if(available<200)return null;
         double scale=Math.min(config.alarmScale()/100.0,(available-16)/520.0);
-        int x=client.getViewportX()+(int)((available-520*scale)/2);
-        int y=client.getViewportY()+18;
+        int x=client.getViewportXOffset()+(int)((available-520*scale)/2);
+        int y=client.getViewportYOffset()+18;
         Graphics2D g=(Graphics2D)graphics.create();
         try {g.translate(x,y);g.scale(scale,scale);draw(g,notice,alarms.icon());}finally{g.dispose();}
         return null;
