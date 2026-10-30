@@ -12,7 +12,7 @@ final class AchievementAlarmQueue
 {
     static final Pattern COLLECTION = Pattern.compile("^New item added to your collection log:\\s*(.+?)[.]?$", Pattern.CASE_INSENSITIVE);
     static final Pattern COMBAT = Pattern.compile("^(?:CA_ID:(\\d+)\\|)?Congratulations, you've completed an? (easy|medium|hard|elite|master|grandmaster) combat task:\\s*(.+?)(?:\\s*\\(\\d+ points?\\))?[.]?$", Pattern.CASE_INSENSITIVE);
-    enum Kind { COLLECTION, COMBAT_TASK, COMBAT_TIER, DIARY }
+    enum Kind { COLLECTION, COMBAT_TASK, COMBAT_TIER, DIARY, QUEST }
     static final String[] TIERS={"Easy","Medium","Hard","Elite","Master","Grandmaster"};
     static final class Notice {
         final Kind kind;
@@ -23,7 +23,7 @@ final class AchievementAlarmQueue
             this(combat?Kind.COMBAT_TASK:Kind.COLLECTION,name,detail,tier,preview);
         }
         Notice(Kind kind,String name,String detail,int tier,boolean preview) {
-            this.kind=kind;this.combat=kind!=Kind.COLLECTION;this.name=name;this.detail=detail;this.tier=tier;this.preview=preview;
+            this.kind=kind;this.combat=kind!=Kind.COLLECTION&&kind!=Kind.QUEST;this.name=name;this.detail=detail;this.tier=tier;this.preview=preview;
             this.key=kind.name()+":"+tier+":"+name.toLowerCase(java.util.Locale.ROOT);
         }
     }

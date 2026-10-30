@@ -121,6 +121,8 @@ public class OneManPluginBootstrapTest
                 assertNotNull(findNamed(panel,"alarmDiariesToggle",javax.swing.JCheckBox.class));
                 assertNotNull(findNamed(panel,"alarmCombatTiersPreview",JButton.class));
                 assertNotNull(findNamed(panel,"alarmDiariesPreview",JButton.class));
+                assertNotNull(findNamed(panel,"alarmQuestsToggle",javax.swing.JCheckBox.class));
+                assertNotNull(findNamed(panel,"alarmQuestsPreview",JButton.class));
                 assertEquals(6,findNamed(panel,"alarmCombatPreviewTier",JComboBox.class).getItemCount());
                 assertEquals(12,findNamed(panel,"alarmDiaryPreviewArea",JComboBox.class).getItemCount());
                 assertEquals(4,findNamed(panel,"alarmDiaryPreviewTier",JComboBox.class).getItemCount());
