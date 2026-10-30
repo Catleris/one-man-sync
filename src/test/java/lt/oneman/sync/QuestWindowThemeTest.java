@@ -24,7 +24,8 @@ public class QuestWindowThemeTest {
     private final Map<Integer,SpritePixels> sprites=new HashMap<>();
     private final AtomicInteger color=new AtomicInteger(0x123456);
     private final AtomicBoolean shadow=new AtomicBoolean(false);
-    private Widget[] children;\n    private QuestWindowTheme theme;
+    private Widget[] children;
+    private QuestWindowTheme theme;
     @Before public void setup(){
         when(config.alarmQuests()).thenReturn(true);when(client.getGameState()).thenReturn(GameState.LOGGED_IN);
         when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(scroll);
@@ -60,7 +61,8 @@ public class QuestWindowThemeTest {
         assertTrue(theme.apply());assertEquals(net.runelite.api.widgets.WidgetType.LAYER,type.get());assertNotNull(theme.backgroundBounds());
         assertEquals(QuestWindowTheme.CREAM,color.get());assertTrue(shadow.get());assertEquals("1 Quest Point",reward.getText());
         verify(reward,never()).setText(anyString());verify(scroll,never()).setHidden(anyBoolean());
-        verify(scroll,never()).setWidth(anyInt());verify(scroll,never()).setHeight(anyInt());verify(child).revalidate();\n        verify(child).setOriginalWidth(488);verify(child).setOriginalHeight(334);
+        verify(scroll,never()).setWidth(anyInt());verify(scroll,never()).setHeight(anyInt());verify(child).revalidate();
+        verify(child).setOriginalWidth(488);verify(child).setOriginalHeight(334);
         verifyNoInteractions(model,ribbon,close);
         when(config.alarmQuests()).thenReturn(false);theme.configChanged();
         assertFalse(hidden.get());assertEquals(0x123456,color.get());assertFalse(shadow.get());theme.shutDown();
