@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.11.0-alarms-test4";
+    static final String VERSION = "0.11.0-alarms-test5";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -128,15 +128,11 @@ final class OneManCompanion {
         player=client.getLocalPlayer().getName();
         Map<String,Integer> nextLevels=new LinkedHashMap<>();
         for(Skill skill:Skill.values())if(skill!=Skill.OVERALL)nextLevels.put(skill.getName(),client.getRealSkillLevel(skill));
-        Set<String> nextQuests=new HashSet<>();Map<String,Boolean> questStates=new LinkedHashMap<>();
-        for(Quest q:Quest.values())try {
-            boolean finished=q.getState(client)==QuestState.FINISHED;questStates.put(q.getName(),finished);
-            if(finished){
-                nextQuests.add(q.name());
-                for(CompanionPlanner.Step n:planner.ordered)if(normal(n.name).equals(normal(q.getName())))nextQuests.add(n.id);
-            }
-        }catch(RuntimeException ignored) { /* Unknown state remains incomplete. */ }
-        achievementAlarms.observeQuests(questStates,baseline);
+        Set<String> nextQuests=new HashSet<>();
+        for(Quest q:Quest.values())try { if(q.getState(client)==QuestState.FINISHED) {
+            nextQuests.add(q.name());
+            for(CompanionPlanner.Step n:planner.ordered)if(normal(n.name).equals(normal(q.getName())))nextQuests.add(n.id);
+        }}catch(RuntimeException ignored) { /* Unknown state remains incomplete. */ }
         if(baseline) {
             nextQuests.addAll(completed);
             for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(player,profile,"Quest: "+planner.nodes.get(q).name);

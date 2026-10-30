@@ -34,7 +34,7 @@ final class LegendaryAlarmArt
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             g.drawImage(notice.combat?combat:collection,0,0,WIDTH,HEIGHT,null);
-            String heading=notice.kind==AchievementAlarmQueue.Kind.QUEST?"QUEST COMPLETED":notice.kind==AchievementAlarmQueue.Kind.DIARY?"ACHIEVEMENT DIARY":notice.kind==AchievementAlarmQueue.Kind.COMBAT_TIER?"COMBAT TIER UNLOCKED":notice.combat?"COMBAT ACHIEVEMENT":"COLLECTION LOG";
+            String heading=notice.kind==AchievementAlarmQueue.Kind.DIARY?"ACHIEVEMENT DIARY":notice.kind==AchievementAlarmQueue.Kind.COMBAT_TIER?"COMBAT TIER UNLOCKED":notice.combat?"COMBAT ACHIEVEMENT":"COLLECTION LOG";
             text(g,heading,260,57,notice.combat?18:20,new Color(245,204,112),390);
             text(g,notice.name,notice.combat?344:335,notice.combat?95:98,20,new Color(249,238,211),notice.combat?190:200);
             if(notice.combat) {
@@ -50,7 +50,7 @@ final class LegendaryAlarmArt
                     if(height>65){height=65;width=item.getWidth()*height/Math.max(1,item.getHeight());}
                     g.drawImage(item,167-width/2,119-height/2,width,height,null);
                 } else text(g,"✦",167,128,29,new Color(245,204,112),65);
-                text(g,notice.kind==AchievementAlarmQueue.Kind.QUEST?"COMPLETED":"NEW ITEM",335,132,16,new Color(249,211,131),100);
+                text(g,"NEW ITEM",335,132,16,new Color(249,211,131),100);
                 if(notice.preview)text(g,"PREVIEW",335,154,11,new Color(197,182,152),180);
             }
             text(g,notice.preview?"OneMan Sync • Preview":"OneMan Sync",260,notice.combat?174:181,11,new Color(225,210,178),106);

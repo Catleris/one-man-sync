@@ -23,7 +23,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     default boolean alarmCombatTiers(){return false;}
     @ConfigItem(keyName="alarmDiaries", name="Achievement Diary alarm", description="Show a banner when a Diary region tier becomes complete. All twelve regions and Easy through Elite are supported.", position=136, section=alarmSection)
     default boolean alarmDiaries(){return false;}
-    @ConfigItem(keyName="alarmQuests", name="Quest completion alarm", description="Show a Legendary banner for newly completed quests and miniquests in RuneLite. Existing completed quests are not replayed.", position=137, section=alarmSection)
+    @ConfigItem(keyName="alarmQuests", name="Quest completion window style", description="Apply a Legendary background and readable text colors to the original OSRS quest-completion window. Preserves real rewards, model, ribbon and controls; no extra quest banner.", position=137, section=alarmSection)
     default boolean alarmQuests(){return false;}
     @ConfigItem(keyName="alarmSound", name="Alarm sound", description="Play a short game UI sound when a banner begins", position=134, section=alarmSection)
     default boolean alarmSound(){return false;}
