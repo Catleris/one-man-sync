@@ -45,3 +45,8 @@ Verify with the completion window left open longer than the configured preview d
 
 ## TEST9: dynamic background child
 The legacy decorative background is temporarily a layer with a dynamic GRAPHIC child, using the per-widget texture override. Dynamic children use the IF3 drawing path. Native sibling reward texts, model, ribbon and close remain unchanged. Parent type/content and original children restore at cleanup. Verify actual background persistence and restoration manually; build success alone does not verify game rendering.
+
+## TEST10: documented native layer draw hook
+Removes sprite overrides and dynamic children. The decorative SCROLL temporarily becomes a LAYER; a MANUAL overlay registered with drawAfterLayer(SCROLL) paints its background before native reward siblings. No above-window quest toast exists. Native model, ribbon, close, texts and click positions remain owned by OSRS.
+A draw watchdog restores the original decoration if three game ticks pass without the background draw callback, with an explicit diagnostic instead of a transparent window. Toggle the option to retry. Tests render real artwork to a BufferedImage through the overlay and verify opaque output, persistence, native-content preservation, cleanup and missing-callback fallback. Actual client draw-hook execution still needs owner confirmation.
+Use the open reward window, toggle Quest window style, wait 15 seconds and check normal close/Escape and style-off restoration. No extra quest is needed merely to test preview.

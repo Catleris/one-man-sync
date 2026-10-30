@@ -9,7 +9,7 @@ import net.runelite.api.*;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
-import net.runelite.client.util.ImageUtil;
+
 import net.runelite.client.ui.overlay.OverlayManager;
 import java.awt.Rectangle;
 
@@ -26,14 +26,12 @@ final class QuestWindowTheme {
     private final OverlayManager overlays;
     private final QuestWindowArt art=new QuestWindowArt();
     @Inject private QuestWindowPreviewOverlay previewOverlay;
+    @Inject private QuestWindowBackgroundOverlay backgroundOverlay;
 
     private final List<TextStyle> textStyles=new ArrayList<>();
     private Widget scroll;
-    private int previousType,previousSprite,previousOpacity,previousContentType;
-    private Widget[] previousChildren;
-    private Widget backgroundChild;
-    private boolean previousTiling;
-    private SpritePixels replacement,previousOverride;
+    private int previousType,previousContentType,framesWithoutDraw;
+    private boolean drawObserved,failed;
     private boolean active;
     private int retry;
     private long previewUntil;
@@ -42,18 +40,19 @@ final class QuestWindowTheme {
     private void updateStatus(){
         Widget w=client.getWidget(InterfaceID.Questscroll.SCROLL);
         Widget c=client.getWidget(InterfaceID.Questscroll.CONTENT);
-        status="Quest: "+(!active?"inactive":!config.alarmQuests()?"OFF":scroll!=null?"APPLIED":w==null?"waiting for window":
+        status="Quest: "+(!active?"inactive":!config.alarmQuests()?"OFF":failed?"BACKGROUND HOOK MISSING - original restored":scroll!=null?(drawObserved?"DRAWING":"waiting for draw hook"):w==null?"waiting for window":
             "found type="+w.getType()+" size="+w.getWidth()+"x"+w.getHeight()+" hidden="+w.isHidden()+" content="+(c==null?"missing":c.isHidden()?"hidden":"visible"));
     }
     @Inject QuestWindowTheme(Client client,OneManSyncConfig config,OverlayManager overlays){this.client=client;this.config=config;this.overlays=overlays;}
-    void startUp(){active=true;retry=10;overlays.add(previewOverlay);}
-    void shutDown(){active=false;previewUntil=0;retry=0;restore();overlays.remove(previewOverlay);}
-    void opened(){if(active&&config.alarmQuests()){previewUntil=0;retry=10;apply();}}
+    void startUp(){active=true;retry=10;overlays.add(previewOverlay);overlays.add(backgroundOverlay);}
+    void shutDown(){active=false;previewUntil=0;retry=0;restore();overlays.remove(previewOverlay);overlays.remove(backgroundOverlay);}
+    void opened(){failed=false;if(active&&config.alarmQuests()){previewUntil=0;retry=10;apply();}}
     void closed(){previewUntil=0;retry=0;restore();}
     void gameStateChanged(GameState state){
         if(state!=GameState.LOGGED_IN)closed();else if(active&&config.alarmQuests())retry=10;
     }
     void configChanged(){
+        failed=false;
         if(!config.alarmQuests()){closed();return;}
         retry=10;if(active&&client.getGameState()==GameState.LOGGED_IN)apply();
     }
@@ -61,37 +60,26 @@ final class QuestWindowTheme {
         updateStatus();
         if(!active||!config.alarmQuests()){closed();return;}
         if(scroll!=null){
-            if(client.getWidget(InterfaceID.Questscroll.SCROLL)==scroll&&contentVisible()){for(TextStyle style:textStyles)style.apply();return;}
+            if(client.getWidget(InterfaceID.Questscroll.SCROLL)==scroll&&contentVisible()){
+                if(drawObserved){framesWithoutDraw=0;drawObserved=false;}
+                else if(++framesWithoutDraw>=3){restore();failed=true;updateStatus();return;}
+                for(TextStyle style:textStyles)style.apply();return;
+            }
             restore();
         }
         apply(); // A single widget lookup also catches late layout and an already-open window.
     }
     boolean apply(){
-        if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN)return false;
+        if(failed||!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN)return false;
         Widget widget=client.getWidget(InterfaceID.Questscroll.SCROLL);
         if(widget==null||!contentVisible()||(widget!=scroll&&widget.isHidden())||widget.getWidth()<1||widget.getHeight()<1)return false;
         if(widget==scroll)return true;
         restore();
-        SpritePixels sprite=ImageUtil.getImageSpritePixels(art.background(widget.getWidth(),widget.getHeight()),client);
-        if(sprite==null)return false;
-        Widget[] children=widget.getChildren();
-        Widget child=widget.createChild(-1,WidgetType.GRAPHIC);
-        if(child==null)return false;
         scroll=widget;
-        previousChildren=children;backgroundChild=child;previousContentType=widget.getContentType();
-        previousType=widget.getType();previousSprite=widget.getSpriteId();
-        previousOpacity=widget.getOpacity();previousTiling=widget.getSpriteTiling();
-        previousOverride=client.getWidgetSpriteOverrides().get(InterfaceID.Questscroll.SCROLL);
-        replacement=sprite;
-        client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,sprite);
-        // Legacy IF1 graphics do not use the same sprite path as dynamic IF3 children.
-        // Keep the decoration's bounds, but let its dynamic graphic child draw the skin.
-        child.setOriginalX(0);child.setOriginalY(0);
-        child.setOriginalWidth(widget.getWidth());child.setOriginalHeight(widget.getHeight());
-        child.setSpriteId(net.runelite.api.SpriteID.TAB_QUESTS);
-        child.setSpriteTiling(false);child.setOpacity(0);
+        previousType=widget.getType();previousContentType=widget.getContentType();
+        // The documented drawAfterLayer hook runs here before native sibling rewards.
         widget.setContentType(0);widget.setType(WidgetType.LAYER);
-        child.revalidate();
+        framesWithoutDraw=0;drawObserved=false;
         for(int id:TEXT){
             Widget text=client.getWidget(id);if(text==null)continue;
             int color=(id==InterfaceID.Questscroll.CONGRATULATIONS||id==InterfaceID.Questscroll.QUEST_POINTS)?GOLD:CREAM;
@@ -101,26 +89,8 @@ final class QuestWindowTheme {
     }
     private void restore(){
         for(TextStyle style:textStyles)style.restore();textStyles.clear();
-        if(scroll!=null){
-            Widget[] current=scroll.getChildren();
-            // Only remove our own child; do not discard children another plugin added.
-            if(current!=null&&backgroundChild!=null){
-                boolean onlyOwn=true;
-                int originalLength=previousChildren==null?0:previousChildren.length;
-                for(int i=originalLength;i<current.length;i++)
-                    if(current[i]!=null&&current[i]!=backgroundChild)onlyOwn=false;
-                if(onlyOwn)scroll.setChildren(previousChildren);
-                else for(int i=0;i<current.length;i++)if(current[i]==backgroundChild)current[i]=null;
-            }
-            scroll.setContentType(previousContentType);
-            scroll.setType(previousType);scroll.setSpriteId(previousSprite);
-            scroll.setSpriteTiling(previousTiling);scroll.setOpacity(previousOpacity);
-        }
-        if(replacement!=null&&client.getWidgetSpriteOverrides().get(InterfaceID.Questscroll.SCROLL)==replacement){
-            if(previousOverride==null)client.getWidgetSpriteOverrides().remove(InterfaceID.Questscroll.SCROLL);
-            else client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,previousOverride);
-        }
-        replacement=null;previousOverride=null;backgroundChild=null;previousChildren=null;
+        if(scroll!=null){scroll.setContentType(previousContentType);scroll.setType(previousType);}
+        framesWithoutDraw=0;drawObserved=false;
         scroll=null;
 
     }
@@ -137,6 +107,7 @@ final class QuestWindowTheme {
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN||scroll==null||!contentVisible())return null;
         return scroll.getBounds();
     }
+    void backgroundDrawn(){drawObserved=true;}
     BufferedImage background(int width,int height){return art.background(width,height);}
     void preview(){
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN)return;
