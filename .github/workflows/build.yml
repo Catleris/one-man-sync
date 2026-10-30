@@ -29,13 +29,13 @@ jobs:
         run: ./gradlew clean build shadowJar
 
       - name: Package test source
-        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Legendary-TEST7.zip
+        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Legendary-TEST8.zip
 
       - name: Upload development build
         uses: actions/upload-artifact@v4
         with:
-          name: oneman-legendary-alarms-test7
+          name: oneman-legendary-alarms-test8
           path: |
             build/libs/*-all.jar
-            build/OneMan-Sync-Legendary-TEST7.zip
+            build/OneMan-Sync-Legendary-TEST8.zip
             build/reports/tests/test/

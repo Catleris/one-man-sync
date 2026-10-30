@@ -38,3 +38,7 @@ Enable Quest window style in 0.11.0-alarms-test6. Toggle with real completion op
 
 ## TEST7: visible activation diagnostics
 Alarm panel shows BUILD 0.11.0-alarms-test7 and Quest OFF / waiting for window / APPLIED / widget type, size and visibility. Enable & Preview Quest Window enables the style explicitly and previews without awarding any progress. Existing live windows can be tested by toggling, no additional quest required. New artifact and source zip names distinguish this build from older downloads.
+
+## TEST8: persistent native widget background
+The decorative background widget is changed from its original type to GRAPHIC with a per-widget sprite override. No background overlay or hidden parchment remains. Native interface drawing keeps the skin visible for the entire reward-window lifetime, independently of preview duration. Original type, sprite, tiling, opacity and existing sprite override restore on close, disable and shutdown. No reward text, model, ribbon or controls are moved or replaced.
+Verify with the completion window left open longer than the configured preview duration; toggle style off/on and close normally/Escape. In-game result remains unverified.

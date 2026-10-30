@@ -8,6 +8,8 @@ import javax.inject.Singleton;
 import net.runelite.api.*;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetType;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.ui.overlay.OverlayManager;
 import java.awt.Rectangle;
 
@@ -24,10 +26,12 @@ final class QuestWindowTheme {
     private final OverlayManager overlays;
     private final QuestWindowArt art=new QuestWindowArt();
     @Inject private QuestWindowPreviewOverlay previewOverlay;
-    @Inject private QuestWindowBackgroundOverlay backgroundOverlay;
+
     private final List<TextStyle> textStyles=new ArrayList<>();
     private Widget scroll;
-    private boolean previousHidden;
+    private int previousType,previousSprite,previousOpacity;
+    private boolean previousTiling;
+    private SpritePixels replacement,previousOverride;
     private boolean active;
     private int retry;
     private long previewUntil;
@@ -40,8 +44,8 @@ final class QuestWindowTheme {
             "found type="+w.getType()+" size="+w.getWidth()+"x"+w.getHeight()+" hidden="+w.isHidden()+" content="+(c==null?"missing":c.isHidden()?"hidden":"visible"));
     }
     @Inject QuestWindowTheme(Client client,OneManSyncConfig config,OverlayManager overlays){this.client=client;this.config=config;this.overlays=overlays;}
-    void startUp(){active=true;retry=10;overlays.add(previewOverlay);overlays.add(backgroundOverlay);}
-    void shutDown(){active=false;previewUntil=0;retry=0;restore();overlays.remove(previewOverlay);overlays.remove(backgroundOverlay);}
+    void startUp(){active=true;retry=10;overlays.add(previewOverlay);}
+    void shutDown(){active=false;previewUntil=0;retry=0;restore();overlays.remove(previewOverlay);}
     void opened(){if(active&&config.alarmQuests()){previewUntil=0;retry=10;apply();}}
     void closed(){previewUntil=0;retry=0;restore();}
     void gameStateChanged(GameState state){
@@ -66,10 +70,18 @@ final class QuestWindowTheme {
         if(widget==null||!contentVisible()||(widget!=scroll&&widget.isHidden())||widget.getWidth()<1||widget.getHeight()<1)return false;
         if(widget==scroll)return true;
         restore();
-        // Questscroll.SCROLL is background artwork, not a replaceable sprite on every client.
-        // Hide only this decoration; every sibling (including controls) stays game-owned.
-        previousHidden=widget.isSelfHidden();scroll=widget;
-        scroll.setHidden(true);
+        SpritePixels sprite=ImageUtil.getImageSpritePixels(art.background(widget.getWidth(),widget.getHeight()),client);
+        if(sprite==null)return false;
+        scroll=widget;
+        previousType=widget.getType();previousSprite=widget.getSpriteId();
+        previousOpacity=widget.getOpacity();previousTiling=widget.getSpriteTiling();
+        previousOverride=client.getWidgetSpriteOverrides().get(InterfaceID.Questscroll.SCROLL);
+        replacement=sprite;
+        client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,sprite);
+        // Render through the native widget, at the native position and draw order.
+        // Changing MODEL to GRAPHIC makes the widget sprite override effective.
+        widget.setSpriteId(net.runelite.api.SpriteID.TAB_QUESTS);
+        widget.setSpriteTiling(false);widget.setOpacity(0);widget.setType(WidgetType.GRAPHIC);
         for(int id:TEXT){
             Widget text=client.getWidget(id);if(text==null)continue;
             int color=(id==InterfaceID.Questscroll.CONGRATULATIONS||id==InterfaceID.Questscroll.QUEST_POINTS)?GOLD:CREAM;
@@ -79,7 +91,15 @@ final class QuestWindowTheme {
     }
     private void restore(){
         for(TextStyle style:textStyles)style.restore();textStyles.clear();
-        if(scroll!=null)scroll.setHidden(previousHidden);
+        if(scroll!=null){
+            scroll.setType(previousType);scroll.setSpriteId(previousSprite);
+            scroll.setSpriteTiling(previousTiling);scroll.setOpacity(previousOpacity);
+        }
+        if(replacement!=null&&client.getWidgetSpriteOverrides().get(InterfaceID.Questscroll.SCROLL)==replacement){
+            if(previousOverride==null)client.getWidgetSpriteOverrides().remove(InterfaceID.Questscroll.SCROLL);
+            else client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,previousOverride);
+        }
+        replacement=null;previousOverride=null;
         scroll=null;
 
     }
