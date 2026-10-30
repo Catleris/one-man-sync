@@ -42,3 +42,6 @@ Alarm panel shows BUILD 0.11.0-alarms-test7 and Quest OFF / waiting for window /
 ## TEST8: persistent native widget background
 The decorative background widget is changed from its original type to GRAPHIC with a per-widget sprite override. No background overlay or hidden parchment remains. Native interface drawing keeps the skin visible for the entire reward-window lifetime, independently of preview duration. Original type, sprite, tiling, opacity and existing sprite override restore on close, disable and shutdown. No reward text, model, ribbon or controls are moved or replaced.
 Verify with the completion window left open longer than the configured preview duration; toggle style off/on and close normally/Escape. In-game result remains unverified.
+
+## TEST9: dynamic background child
+The legacy decorative background is temporarily a layer with a dynamic GRAPHIC child, using the per-widget texture override. Dynamic children use the IF3 drawing path. Native sibling reward texts, model, ribbon and close remain unchanged. Parent type/content and original children restore at cleanup. Verify actual background persistence and restoration manually; build success alone does not verify game rendering.

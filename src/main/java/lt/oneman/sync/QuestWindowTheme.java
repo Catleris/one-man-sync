@@ -29,7 +29,9 @@ final class QuestWindowTheme {
 
     private final List<TextStyle> textStyles=new ArrayList<>();
     private Widget scroll;
-    private int previousType,previousSprite,previousOpacity;
+    private int previousType,previousSprite,previousOpacity,previousContentType;
+    private Widget[] previousChildren;
+    private Widget backgroundChild;
     private boolean previousTiling;
     private SpritePixels replacement,previousOverride;
     private boolean active;
@@ -72,16 +74,24 @@ final class QuestWindowTheme {
         restore();
         SpritePixels sprite=ImageUtil.getImageSpritePixels(art.background(widget.getWidth(),widget.getHeight()),client);
         if(sprite==null)return false;
+        Widget[] children=widget.getChildren();
+        Widget child=widget.createChild(-1,WidgetType.GRAPHIC);
+        if(child==null)return false;
         scroll=widget;
+        previousChildren=children;backgroundChild=child;previousContentType=widget.getContentType();
         previousType=widget.getType();previousSprite=widget.getSpriteId();
         previousOpacity=widget.getOpacity();previousTiling=widget.getSpriteTiling();
         previousOverride=client.getWidgetSpriteOverrides().get(InterfaceID.Questscroll.SCROLL);
         replacement=sprite;
         client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,sprite);
-        // Render through the native widget, at the native position and draw order.
-        // Changing MODEL to GRAPHIC makes the widget sprite override effective.
-        widget.setSpriteId(net.runelite.api.SpriteID.TAB_QUESTS);
-        widget.setSpriteTiling(false);widget.setOpacity(0);widget.setType(WidgetType.GRAPHIC);
+        // Legacy IF1 graphics do not use the same sprite path as dynamic IF3 children.
+        // Keep the decoration's bounds, but let its dynamic graphic child draw the skin.
+        child.setOriginalX(0);child.setOriginalY(0);
+        child.setOriginalWidth(widget.getWidth());child.setOriginalHeight(widget.getHeight());
+        child.setSpriteId(net.runelite.api.SpriteID.TAB_QUESTS);
+        child.setSpriteTiling(false);child.setOpacity(0);
+        widget.setContentType(0);widget.setType(WidgetType.LAYER);
+        child.revalidate();
         for(int id:TEXT){
             Widget text=client.getWidget(id);if(text==null)continue;
             int color=(id==InterfaceID.Questscroll.CONGRATULATIONS||id==InterfaceID.Questscroll.QUEST_POINTS)?GOLD:CREAM;
@@ -92,6 +102,17 @@ final class QuestWindowTheme {
     private void restore(){
         for(TextStyle style:textStyles)style.restore();textStyles.clear();
         if(scroll!=null){
+            Widget[] current=scroll.getChildren();
+            // Only remove our own child; do not discard children another plugin added.
+            if(current!=null&&backgroundChild!=null){
+                boolean onlyOwn=true;
+                int originalLength=previousChildren==null?0:previousChildren.length;
+                for(int i=originalLength;i<current.length;i++)
+                    if(current[i]!=null&&current[i]!=backgroundChild)onlyOwn=false;
+                if(onlyOwn)scroll.setChildren(previousChildren);
+                else for(int i=0;i<current.length;i++)if(current[i]==backgroundChild)current[i]=null;
+            }
+            scroll.setContentType(previousContentType);
             scroll.setType(previousType);scroll.setSpriteId(previousSprite);
             scroll.setSpriteTiling(previousTiling);scroll.setOpacity(previousOpacity);
         }
@@ -99,7 +120,7 @@ final class QuestWindowTheme {
             if(previousOverride==null)client.getWidgetSpriteOverrides().remove(InterfaceID.Questscroll.SCROLL);
             else client.getWidgetSpriteOverrides().put(InterfaceID.Questscroll.SCROLL,previousOverride);
         }
-        replacement=null;previousOverride=null;
+        replacement=null;previousOverride=null;backgroundChild=null;previousChildren=null;
         scroll=null;
 
     }

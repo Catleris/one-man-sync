@@ -17,14 +17,14 @@ public class QuestWindowThemeTest {
     private final OneManSyncConfig config=mock(OneManSyncConfig.class);
     private final OverlayManager overlays=mock(OverlayManager.class);
     private final Widget scroll=mock(Widget.class),reward=mock(Widget.class),model=mock(Widget.class),ribbon=mock(Widget.class),close=mock(Widget.class);
-    private final Widget content=mock(Widget.class);
+    private final Widget content=mock(Widget.class),child=mock(Widget.class);
     private final AtomicBoolean hidden=new AtomicBoolean(false);
     private final AtomicInteger type=new AtomicInteger(net.runelite.api.widgets.WidgetType.MODEL);
     private final SpritePixels skin=mock(SpritePixels.class);
     private final Map<Integer,SpritePixels> sprites=new HashMap<>();
     private final AtomicInteger color=new AtomicInteger(0x123456);
     private final AtomicBoolean shadow=new AtomicBoolean(false);
-    private QuestWindowTheme theme;
+    private Widget[] children;\n    private QuestWindowTheme theme;
     @Before public void setup(){
         when(config.alarmQuests()).thenReturn(true);when(client.getGameState()).thenReturn(GameState.LOGGED_IN);
         when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(scroll);
@@ -33,6 +33,9 @@ public class QuestWindowThemeTest {
         when(client.getWidget(InterfaceID.Questscroll.CONTENT)).thenReturn(content);
         when(scroll.isSelfHidden()).thenAnswer(i->hidden.get());
         when(scroll.getType()).thenAnswer(i->type.get());
+        when(scroll.getChildren()).thenAnswer(i->children);
+        doAnswer(i->{children=i.getArgument(0);return null;}).when(scroll).setChildren(any());
+        when(scroll.createChild(eq(-1),eq(net.runelite.api.widgets.WidgetType.GRAPHIC))).thenAnswer(i->{children=new Widget[]{child};return child;});
         doAnswer(i->{type.set(i.getArgument(0));return null;}).when(scroll).setType(anyInt());
         when(client.createSpritePixels(any(int[].class),eq(488),eq(334))).thenReturn(skin);
         when(scroll.isHidden()).thenAnswer(i->hidden.get());
@@ -54,10 +57,10 @@ public class QuestWindowThemeTest {
     }
     @Test public void onlyBackgroundAndColorsChangeThenRestore(){
 
-        assertTrue(theme.apply());assertEquals(net.runelite.api.widgets.WidgetType.GRAPHIC,type.get());assertNotNull(theme.backgroundBounds());
+        assertTrue(theme.apply());assertEquals(net.runelite.api.widgets.WidgetType.LAYER,type.get());assertNotNull(theme.backgroundBounds());
         assertEquals(QuestWindowTheme.CREAM,color.get());assertTrue(shadow.get());assertEquals("1 Quest Point",reward.getText());
         verify(reward,never()).setText(anyString());verify(scroll,never()).setHidden(anyBoolean());
-        verify(scroll,never()).setWidth(anyInt());verify(scroll,never()).setHeight(anyInt());
+        verify(scroll,never()).setWidth(anyInt());verify(scroll,never()).setHeight(anyInt());verify(child).revalidate();\n        verify(child).setOriginalWidth(488);verify(child).setOriginalHeight(334);
         verifyNoInteractions(model,ribbon,close);
         when(config.alarmQuests()).thenReturn(false);theme.configChanged();
         assertFalse(hidden.get());assertEquals(0x123456,color.get());assertFalse(shadow.get());theme.shutDown();
@@ -73,7 +76,7 @@ public class QuestWindowThemeTest {
         assertTrue(theme.apply());assertSame(skin,sprites.get(InterfaceID.Questscroll.SCROLL));
         for(int i=0;i<50;i++)theme.tick();
         assertSame(skin,sprites.get(InterfaceID.Questscroll.SCROLL));
-        assertEquals(net.runelite.api.widgets.WidgetType.GRAPHIC,type.get());
+        assertEquals(net.runelite.api.widgets.WidgetType.LAYER,type.get());
         theme.shutDown();assertEquals(net.runelite.api.widgets.WidgetType.MODEL,type.get());
         assertFalse(sprites.containsKey(InterfaceID.Questscroll.SCROLL));
     }
@@ -82,7 +85,7 @@ public class QuestWindowThemeTest {
         for(int i=0;i<20;i++)theme.tick();
         assertFalse(hidden.get());
         when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(scroll);
-        theme.tick();assertEquals(net.runelite.api.widgets.WidgetType.GRAPHIC,type.get());assertNotNull(theme.backgroundBounds());
+        theme.tick();assertEquals(net.runelite.api.widgets.WidgetType.LAYER,type.get());assertNotNull(theme.backgroundBounds());
         when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(null);theme.tick();assertFalse(hidden.get());assertNull(theme.backgroundBounds());
     }
     @Test public void disabledOrAbsentScrollNeverGetsReplaced(){
