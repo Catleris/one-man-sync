@@ -31,6 +31,14 @@ final class QuestWindowTheme {
     private boolean active;
     private int retry;
     private long previewUntil;
+    private volatile String status="Quest: starting";
+    String status(){return status;}
+    private void updateStatus(){
+        Widget w=client.getWidget(InterfaceID.Questscroll.SCROLL);
+        Widget c=client.getWidget(InterfaceID.Questscroll.CONTENT);
+        status="Quest: "+(!active?"inactive":!config.alarmQuests()?"OFF":scroll!=null?"APPLIED":w==null?"waiting for window":
+            "found type="+w.getType()+" size="+w.getWidth()+"x"+w.getHeight()+" hidden="+w.isHidden()+" content="+(c==null?"missing":c.isHidden()?"hidden":"visible"));
+    }
     @Inject QuestWindowTheme(Client client,OneManSyncConfig config,OverlayManager overlays){this.client=client;this.config=config;this.overlays=overlays;}
     void startUp(){active=true;retry=10;overlays.add(previewOverlay);overlays.add(backgroundOverlay);}
     void shutDown(){active=false;previewUntil=0;retry=0;restore();overlays.remove(previewOverlay);overlays.remove(backgroundOverlay);}
@@ -44,6 +52,7 @@ final class QuestWindowTheme {
         retry=10;if(active&&client.getGameState()==GameState.LOGGED_IN)apply();
     }
     void tick(){
+        updateStatus();
         if(!active||!config.alarmQuests()){closed();return;}
         if(scroll!=null){
             if(client.getWidget(InterfaceID.Questscroll.SCROLL)==scroll&&contentVisible()){for(TextStyle style:textStyles)style.apply();return;}
@@ -54,7 +63,7 @@ final class QuestWindowTheme {
     boolean apply(){
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN)return false;
         Widget widget=client.getWidget(InterfaceID.Questscroll.SCROLL);
-        if(widget==null||!contentVisible()||(widget!=scroll&&widget.isHidden())||widget.getWidth()<100||widget.getHeight()<100)return false;
+        if(widget==null||!contentVisible()||(widget!=scroll&&widget.isHidden())||widget.getWidth()<1||widget.getHeight()<1)return false;
         if(widget==scroll)return true;
         restore();
         // Questscroll.SCROLL is background artwork, not a replaceable sprite on every client.
@@ -66,7 +75,7 @@ final class QuestWindowTheme {
             int color=(id==InterfaceID.Questscroll.CONGRATULATIONS||id==InterfaceID.Questscroll.QUEST_POINTS)?GOLD:CREAM;
             TextStyle style=new TextStyle(text,color);textStyles.add(style);style.apply();
         }
-        previewUntil=0;retry=0;return true;
+        previewUntil=0;retry=0;updateStatus();return true;
     }
     private void restore(){
         for(TextStyle style:textStyles)style.restore();textStyles.clear();
@@ -75,8 +84,13 @@ final class QuestWindowTheme {
 
     }
     private boolean contentVisible(){
-        Widget content=client.getWidget(InterfaceID.Questscroll.CONTENT);
-        return content!=null&&!content.isHidden();
+        Widget widget=client.getWidget(InterfaceID.Questscroll.SCROLL);
+        if(widget==null)return false;
+        // The visible background itself is authoritative. CONTENT may be an unused,
+        // hidden sibling on the live interface, so it must not gate completion styling.
+        if(widget!=scroll)return !widget.isHidden();
+        Widget parent=widget.getParent();
+        return parent==null||!parent.isHidden();
     }
     Rectangle backgroundBounds(){
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN||scroll==null||!contentVisible())return null;

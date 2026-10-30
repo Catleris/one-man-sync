@@ -63,13 +63,20 @@ public class QuestWindowThemeTest {
         assertTrue(theme.apply());SpritePixels other=mock(SpritePixels.class);sprites.put(InterfaceID.Questscroll.SCROLL,other);
         theme.shutDown();assertFalse(hidden.get());assertSame(other,sprites.get(InterfaceID.Questscroll.SCROLL));
     }
+    @Test public void hiddenContentSiblingDoesNotBlockVisibleCompletion(){
+        when(content.isHidden()).thenReturn(true);
+        assertTrue(theme.apply());assertTrue(hidden.get());
+        assertNotNull(theme.backgroundBounds());
+        theme.tick();assertNotNull(theme.backgroundBounds());
+        theme.shutDown();assertFalse(hidden.get());
+    }
     @Test public void lateWindowIsDetectedWithoutLoadEvent(){
-        when(client.getWidget(InterfaceID.Questscroll.CONTENT)).thenReturn(null);
+        when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(null);
         for(int i=0;i<20;i++)theme.tick();
         assertFalse(hidden.get());
-        when(client.getWidget(InterfaceID.Questscroll.CONTENT)).thenReturn(content);
+        when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(scroll);
         theme.tick();assertTrue(hidden.get());assertNotNull(theme.backgroundBounds());
-        when(content.isHidden()).thenReturn(true);theme.tick();assertFalse(hidden.get());assertNull(theme.backgroundBounds());
+        when(client.getWidget(InterfaceID.Questscroll.SCROLL)).thenReturn(null);theme.tick();assertFalse(hidden.get());assertNull(theme.backgroundBounds());
     }
     @Test public void disabledOrAbsentScrollNeverGetsReplaced(){
         when(config.alarmQuests()).thenReturn(false);assertFalse(theme.apply());assertTrue(sprites.isEmpty());

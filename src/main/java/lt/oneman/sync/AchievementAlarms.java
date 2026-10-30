@@ -41,6 +41,8 @@ final class AchievementAlarms
     private boolean active;
     private volatile AchievementAlarmQueue.Notice displayed;
     private volatile BufferedImage icon;
+    private JLabel questStatus;
+    private String lastQuestStatus="";
     private JCheckBox collectionBox,combatBox,tiersBox,diariesBox,questsBox;
     void startUp(){active=true;clear();resetProgress();overlays.add(overlay);questWindow.startUp();}
     void shutDown(){questWindow.shutDown();active=false;overlays.remove(overlay);clear();resetProgress();itemIds.clear();nextItem=0;}
@@ -102,6 +104,11 @@ final class AchievementAlarms
     void onGameTick() {
         if(!active||client.getGameState()!=GameState.LOGGED_IN)return;
         questWindow.tick();
+        String questState=questWindow.status();
+        if(!questState.equals(lastQuestStatus)){
+            lastQuestStatus=questState;
+            SwingUtilities.invokeLater(()->{if(questStatus!=null)questStatus.setText(questState);});
+        }
         pollProgress();
         // Bounded cache indexing includes untradeable items and pets, unlike the GE item list.
         if(config.alarmCollection()) {
@@ -170,7 +177,11 @@ final class AchievementAlarms
         rows.add(collectionBox);rows.add(combatBox);rows.add(tiersBox);rows.add(diariesBox);rows.add(questsBox);options.add(rows,BorderLayout.CENTER);cards.card(options);
         JPanel test=OneManCards.card();JPanel buttons=new JPanel(new GridLayout(0,1,0,8));buttons.setOpaque(false);
         JButton log=new JButton("Preview Collection Log");log.setName("alarmCollectionPreview");log.addActionListener(e->preview(AchievementAlarmQueue.Kind.COLLECTION,-1,""));buttons.add(log);
-        JButton quest=new JButton("Preview Quest Window");quest.setName("alarmQuestsPreview");quest.addActionListener(e->clientThread.invokeLater(questWindow::preview));buttons.add(quest);
+        JButton quest=new JButton("Enable & Preview Quest Window");quest.setName("alarmQuestsPreview");quest.addActionListener(e->{
+            configs.setConfiguration("one-man-sync","alarmQuests",true);
+            questsBox.setSelected(true);
+            clientThread.invokeLater(()->{questWindow.configChanged();questWindow.preview();});
+        });buttons.add(quest);
         JComboBox<String> combatTier=new JComboBox<>(AchievementAlarmQueue.TIERS);combatTier.setSelectedIndex(2);combatTier.setName("alarmCombatPreviewTier");
         combatTier.setToolTipText("Tier used by both combat previews");buttons.add(combatTier);
         JButton ca=new JButton("Preview Combat Task");ca.setName("alarmCombatPreview");ca.addActionListener(e->preview(AchievementAlarmQueue.Kind.COMBAT_TASK,combatTier.getSelectedIndex(),""));buttons.add(ca);
@@ -181,6 +192,9 @@ final class AchievementAlarms
         JButton diary=new JButton("Preview Achievement Diary");diary.setName("alarmDiariesPreview");diary.addActionListener(e->preview(AchievementAlarmQueue.Kind.DIARY,diaryTier.getSelectedIndex(),(String)diaryArea.getSelectedItem()));buttons.add(diary);
         test.add(buttons,BorderLayout.NORTH);test.add(OneManCards.text("Enable the matching alarm and log in to preview. Previews do not change progress."),BorderLayout.CENTER);cards.card(test);
         cards.card(OneManCards.text("New unlocks only. Collection and combat task chat notifications must be enabled in OSRS. Tier and Diary alarms use game progress; old completions are not replayed on login. The Quest option styles the original completion window; it adds no banner."));
+        cards.card(OneManCards.text("BUILD: "+OneManCompanion.VERSION));
+        questStatus=new JLabel(questWindow.status());questStatus.setForeground(java.awt.Color.ORANGE);
+        cards.card(questStatus);
         cards.finish();JPanel result=new JPanel(new BorderLayout());result.add(OneManCards.scroll(cards));return result;
     }
     private JCheckBox toggle(String label,String name,String key,boolean selected){

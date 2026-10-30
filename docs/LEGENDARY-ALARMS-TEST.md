@@ -35,3 +35,6 @@ Version: 0.11.0-alarms-test5. Public Plugin Hub release remains pending in-game 
 ## TEST6: native background rendering fix
 Uses an UNDER_WIDGETS background at native scroll bounds instead of sprite-only overrides. Only decorative SCROLL is hidden and restored; rewards, model, ribbon and controls remain game-owned. One widget lookup per tick detects late layout and already-open windows.
 Enable Quest window style in 0.11.0-alarms-test6. Toggle with real completion open, inspect rewards, ribbon and close/Escape. Preview remains illustrative. In-game confirmation required.
+
+## TEST7: visible activation diagnostics
+Alarm panel shows BUILD 0.11.0-alarms-test7 and Quest OFF / waiting for window / APPLIED / widget type, size and visibility. Enable & Preview Quest Window enables the style explicitly and previews without awarding any progress. Existing live windows can be tested by toggling, no additional quest required. New artifact and source zip names distinguish this build from older downloads.
