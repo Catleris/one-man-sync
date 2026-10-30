@@ -286,7 +286,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
-        if(event.getGameState()!=GameState.LOGGED_IN)achievementAlarms.clear();
+        achievementAlarms.onGameStateChanged(event);
         unlocksHub.onGameStateChanged(event);
         combatHub.onGameStateChanged(event);
         monstersHub.onGameStateChanged(event);
@@ -328,6 +328,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        achievementAlarms.progressChanged();
         combatHub.changed();
         unlocksHub.changed();
         if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))

@@ -34,13 +34,15 @@ final class LegendaryAlarmArt
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             g.drawImage(notice.combat?combat:collection,0,0,WIDTH,HEIGHT,null);
-            text(g,notice.combat?"COMBAT ACHIEVEMENT":"COLLECTION LOG",260,57,notice.combat?18:20,new Color(245,204,112),390);
+            String heading=notice.kind==AchievementAlarmQueue.Kind.DIARY?"ACHIEVEMENT DIARY":notice.kind==AchievementAlarmQueue.Kind.COMBAT_TIER?"COMBAT TIER UNLOCKED":notice.combat?"COMBAT ACHIEVEMENT":"COLLECTION LOG";
+            text(g,heading,260,57,notice.combat?18:20,new Color(245,204,112),390);
             text(g,notice.name,notice.combat?344:335,notice.combat?95:98,20,new Color(249,238,211),notice.combat?190:200);
             if(notice.combat) {
                 String[] tiers={"EASY","MEDIUM","HARD","ELITE","MASTER","GRANDMASTER"};
                 int tier=Math.max(0,Math.min(tiers.length-1,notice.tier));
                 text(g,tiers[tier],344,120,15,new Color(249,211,131),94);
-                text(g,"+"+(tier+1)+" points",344,148,14,new Color(239,223,188),190);
+                String detail=notice.kind==AchievementAlarmQueue.Kind.COMBAT_TASK?"+"+(tier+1)+" points":notice.detail;
+                text(g,detail,344,148,notice.kind==AchievementAlarmQueue.Kind.COMBAT_TASK?14:11,new Color(239,223,188),190);
             } else {
                 if(item!=null) {
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);

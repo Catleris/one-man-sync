@@ -12,3 +12,12 @@ Enable Collection log notifications and Combat task completion messages in OSRS 
 Test multiple unlocks in succession, duplicate game messages, disabling each feature during its banner, logout/login, world hop and plugin disable/re-enable. Queued banners are cleared on leaving LOGGED_IN and on shutdown. No game inputs are automated; no alert data leaves the client. Existing sync and Hubs remain unchanged.
 
 The branch is for manual in-game verification only. Do not submit to Plugin Hub until the owner confirms gameplay behavior and visual size.
+
+
+## TEST3: tier and Diary alarms
+
+Enable the new independent Combat tier unlocks and Achievement Diaries switches in the same alarm Hub. CA task messages remain a separate switch. Use the six-tier selector for both CA previews; use the twelve-region and four-tier selectors for Diary previews. All previews are local, marked Preview and never update completion or sync fake data.
+
+Real CA tier unlocks follow the game's current CA_POINTS and six threshold varbits (not fixed historical point cutoffs). Real Diary notifications follow all 48 completion states, including legacy Karamja Easy/Medium/Hard state 2. Completion means the game's completion flag, not a guessed chat phrase, an individual Diary task or reward collection. No bonus CA points are invented for unlocking a tier. Login, reconnect and world hop establish a silent baseline after ten logged-in ticks; already-completed tiers are not replayed. Ordinary scene loading preserves the progress baseline. Disabled categories are not backfilled on enabling.
+
+Test Collection Log, individual CA task, CA tier and Diary previews, each of the six CA tiers, each Diary tier and a long region name (Lumbridge & Draynor or Western Provinces). For real unlocks, test a task that crosses a CA points threshold (both banners should queue), final Diary tier completion, independent toggles, logout/login, world hop and plugin restart. The first ten logged-in ticks establish history; unlocks during that warm-up are intentionally not replayed. Public release remains pending in-game verification.

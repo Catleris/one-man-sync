@@ -11,6 +11,8 @@ import javax.inject.Singleton;
 import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -29,15 +31,48 @@ final class AchievementAlarms
     @Inject private AchievementAlarmOverlay overlay;
     private final AchievementAlarmQueue queue=new AchievementAlarmQueue();
     private final Map<String,Integer> itemIds=new HashMap<>();
+    private final AchievementTierTracker progress=new AchievementTierTracker();
+    private boolean progressDirty=true;
+    private int warmup=10;
     private int nextItem;
     private boolean searched;
     private boolean active;
     private volatile AchievementAlarmQueue.Notice displayed;
     private volatile BufferedImage icon;
-    private JCheckBox collectionBox,combatBox;
-    void startUp(){active=true;clear();overlays.add(overlay);}
-    void shutDown(){active=false;overlays.remove(overlay);clear();itemIds.clear();nextItem=0;}
+    private JCheckBox collectionBox,combatBox,tiersBox,diariesBox;
+    void startUp(){active=true;clear();resetProgress();overlays.add(overlay);}
+    void shutDown(){active=false;overlays.remove(overlay);clear();resetProgress();itemIds.clear();nextItem=0;}
     void clear(){queue.clear();displayed=null;icon=null;}
+    private void resetProgress(){progress.reset();warmup=10;progressDirty=true;}
+    void progressChanged(){progressDirty=true;}
+    void onGameStateChanged(GameStateChanged event){
+        GameState state=event.getGameState();
+        if(state!=GameState.LOGGED_IN)clear();
+        if(state==GameState.LOGIN_SCREEN||state==GameState.HOPPING||state==GameState.LOGGING_IN||state==GameState.CONNECTION_LOST)resetProgress();
+    }
+    boolean enabled(AchievementAlarmQueue.Notice notice){
+        switch(notice.kind){
+        case COLLECTION:return config.alarmCollection();
+        case COMBAT_TASK:return config.alarmCombat();
+        case COMBAT_TIER:return config.alarmCombatTiers();
+        case DIARY:return config.alarmDiaries();
+        default:return false;
+        }
+    }
+    private void pollProgress(){
+        if(warmup>0){warmup--;return;}
+        if(!progressDirty)return;
+        int[] thresholds=new int[CombatAchievementsHub.THRESHOLDS.length];
+        for(int i=0;i<thresholds.length;i++)thresholds[i]=client.getVarbitValue(CombatAchievementsHub.THRESHOLDS[i]);
+        boolean[] diaries=new boolean[DiaryUnlockCatalog.ENTRIES.size()];
+        for(int i=0;i<diaries.length;i++){
+            DiaryUnlockCatalog.Entry entry=DiaryUnlockCatalog.ENTRIES.get(i);
+            diaries[i]=entry.complete(client.getVarbitValue(entry.varbit));
+        }
+        for(AchievementAlarmQueue.Notice notice:progress.observe(client.getVarbitValue(VarbitID.CA_POINTS),thresholds,diaries,config.alarmCombatTiers(),config.alarmDiaries()))
+            queue.add(notice,System.currentTimeMillis());
+        progressDirty=false;
+    }
     AchievementAlarmQueue.Notice displayed(){return displayed;}
     BufferedImage icon(){return icon;}
     private static String key(String name){return name.toLowerCase(Locale.ROOT).trim();}
@@ -46,11 +81,12 @@ final class AchievementAlarms
         if(event.getType()!=ChatMessageType.GAMEMESSAGE&&event.getType()!=ChatMessageType.SPAM)return;
         String message=Text.removeTags(event.getMessage()).replace('\u00a0',' ').trim();
         AchievementAlarmQueue.Notice notice=AchievementAlarmQueue.parse(message);
-        if(notice==null||(notice.combat?!config.alarmCombat():!config.alarmCollection()))return;
+        if(notice==null||!enabled(notice))return;
         queue.add(notice,System.currentTimeMillis());refresh();
     }
     void onGameTick() {
         if(!active||client.getGameState()!=GameState.LOGGED_IN)return;
+        pollProgress();
         // Bounded cache indexing includes untradeable items and pets, unlike the GE item list.
         if(config.alarmCollection()) {
             int end=Math.min(client.getItemCount(),nextItem+256);
@@ -64,7 +100,7 @@ final class AchievementAlarms
         refresh();
     }
     void refresh() {
-        AchievementAlarmQueue.Notice next=queue.advance(System.currentTimeMillis(),config.alarmSeconds(),config.alarmCollection(),config.alarmCombat());
+        AchievementAlarmQueue.Notice next=queue.advance(System.currentTimeMillis(),config.alarmSeconds(),this::enabled);
         if(next!=displayed){displayed=next;icon=null;searched=false;
             if(next!=null&&config.alarmSound())client.playSoundEffect(SoundEffectID.UI_BOOP);
         }
@@ -79,29 +115,51 @@ final class AchievementAlarms
             if(id!=null)icon=items.getImage(id);
         }
     }
-    void onConfigChanged(){refresh();SwingUtilities.invokeLater(()->{if(collectionBox!=null){collectionBox.setSelected(config.alarmCollection());combatBox.setSelected(config.alarmCombat());}});}
-    private void preview(boolean combat) {
+    void onConfigChanged(){
+        refresh();SwingUtilities.invokeLater(()->{if(collectionBox!=null){
+            collectionBox.setSelected(config.alarmCollection());combatBox.setSelected(config.alarmCombat());
+            tiersBox.setSelected(config.alarmCombatTiers());diariesBox.setSelected(config.alarmDiaries());
+        }});
+    }
+    private void preview(AchievementAlarmQueue.Kind kind,int tier,String area) {
         clientThread.invokeLater(()->{
             if(!active||client.getGameState()!=GameState.LOGGED_IN)return;
-            boolean enabled=combat?config.alarmCombat():config.alarmCollection();
-            if(!enabled)return;
-            AchievementAlarmQueue.Notice n=new AchievementAlarmQueue.Notice(combat,combat?"Example combat task":"Dragon warhammer",combat?"HARD  •  +3 points":"NEW ITEM",combat?2:-1,true);
+            AchievementAlarmQueue.Notice n;
+            switch(kind){
+            case COLLECTION:n=new AchievementAlarmQueue.Notice(kind,"Dragon warhammer","NEW ITEM",-1,true);break;
+            case COMBAT_TASK:n=new AchievementAlarmQueue.Notice(kind,"Example combat task","",tier,true);break;
+            case COMBAT_TIER:n=new AchievementAlarmQueue.Notice(kind,AchievementAlarmQueue.TIERS[tier]+" tier unlocked","TIER UNLOCKED",tier,true);break;
+            case DIARY:n=new AchievementAlarmQueue.Notice(kind,area+" Diary","DIARY COMPLETED",tier,true);break;
+            default:return;
+            }
+            if(!enabled(n))return;
             queue.add(n,System.currentTimeMillis());refresh();
         });
     }
     JPanel companionPanel() {
-        OneManCards cards=new OneManCards();cards.card(OneManCards.banner("Collection / Combat alarms","Legendary • local game notifications"));
+        OneManCards cards=new OneManCards();cards.card(OneManCards.banner("Achievement alarms","Legendary • local game notifications"));
         JPanel options=OneManCards.card();JPanel rows=new JPanel(new GridLayout(0,1,0,8));rows.setOpaque(false);
-        collectionBox=new JCheckBox("Collection Log",config.alarmCollection());combatBox=new JCheckBox("Combat Achievements",config.alarmCombat());
-        collectionBox.setName("alarmCollectionToggle");combatBox.setName("alarmCombatToggle");
-        collectionBox.addActionListener(e->configs.setConfiguration("one-man-sync","alarmCollection",collectionBox.isSelected()));
-        combatBox.addActionListener(e->configs.setConfiguration("one-man-sync","alarmCombat",combatBox.isSelected()));
-        rows.add(collectionBox);rows.add(combatBox);options.add(rows,BorderLayout.CENTER);cards.card(options);
+        collectionBox=toggle("Collection Log","alarmCollectionToggle","alarmCollection",config.alarmCollection());
+        combatBox=toggle("Combat tasks","alarmCombatToggle","alarmCombat",config.alarmCombat());
+        tiersBox=toggle("Combat tier unlocks","alarmCombatTiersToggle","alarmCombatTiers",config.alarmCombatTiers());
+        diariesBox=toggle("Achievement Diaries","alarmDiariesToggle","alarmDiaries",config.alarmDiaries());
+        rows.add(collectionBox);rows.add(combatBox);rows.add(tiersBox);rows.add(diariesBox);options.add(rows,BorderLayout.CENTER);cards.card(options);
         JPanel test=OneManCards.card();JPanel buttons=new JPanel(new GridLayout(0,1,0,8));buttons.setOpaque(false);
-        JButton log=new JButton("Preview Collection Log");log.setName("alarmCollectionPreview");log.addActionListener(e->preview(false));buttons.add(log);
-        JButton ca=new JButton("Preview Combat Achievement");ca.setName("alarmCombatPreview");ca.addActionListener(e->preview(true));buttons.add(ca);
-        test.add(buttons,BorderLayout.NORTH);test.add(OneManCards.text("Enable the matching alarm and log in to preview. Preview messages do not change your progress."),BorderLayout.CENTER);cards.card(test);
-        cards.card(OneManCards.text("New unlocks only. Enable Collection log notifications and Combat task completion messages in OSRS settings. Old entries and opening your log do not trigger alarms."));
+        JButton log=new JButton("Preview Collection Log");log.setName("alarmCollectionPreview");log.addActionListener(e->preview(AchievementAlarmQueue.Kind.COLLECTION,-1,""));buttons.add(log);
+        JComboBox<String> combatTier=new JComboBox<>(AchievementAlarmQueue.TIERS);combatTier.setSelectedIndex(2);combatTier.setName("alarmCombatPreviewTier");
+        combatTier.setToolTipText("Tier used by both combat previews");buttons.add(combatTier);
+        JButton ca=new JButton("Preview Combat Task");ca.setName("alarmCombatPreview");ca.addActionListener(e->preview(AchievementAlarmQueue.Kind.COMBAT_TASK,combatTier.getSelectedIndex(),""));buttons.add(ca);
+        JButton tiers=new JButton("Preview CA Tier Unlock");tiers.setName("alarmCombatTiersPreview");tiers.addActionListener(e->preview(AchievementAlarmQueue.Kind.COMBAT_TIER,combatTier.getSelectedIndex(),""));buttons.add(tiers);
+        String[] areas=DiaryUnlockCatalog.ENTRIES.stream().map(entry->entry.area).distinct().toArray(String[]::new);
+        JComboBox<String> diaryArea=new JComboBox<>(areas);diaryArea.setName("alarmDiaryPreviewArea");buttons.add(diaryArea);
+        JComboBox<String> diaryTier=new JComboBox<>(java.util.Arrays.copyOf(AchievementAlarmQueue.TIERS,4));diaryTier.setName("alarmDiaryPreviewTier");buttons.add(diaryTier);
+        JButton diary=new JButton("Preview Achievement Diary");diary.setName("alarmDiariesPreview");diary.addActionListener(e->preview(AchievementAlarmQueue.Kind.DIARY,diaryTier.getSelectedIndex(),(String)diaryArea.getSelectedItem()));buttons.add(diary);
+        test.add(buttons,BorderLayout.NORTH);test.add(OneManCards.text("Enable the matching alarm and log in to preview. Previews do not change progress."),BorderLayout.CENTER);cards.card(test);
+        cards.card(OneManCards.text("New unlocks only. Collection and combat task chat notifications must be enabled in OSRS. Tier and Diary alarms use game progress; old completions are not replayed on login."));
         cards.finish();JPanel result=new JPanel(new BorderLayout());result.add(OneManCards.scroll(cards));return result;
+    }
+    private JCheckBox toggle(String label,String name,String key,boolean selected){
+        JCheckBox box=new JCheckBox(label,selected);box.setName(name);
+        box.addActionListener(e->configs.setConfiguration("one-man-sync",key,box.isSelected()));return box;
     }
 }

@@ -17,7 +17,7 @@ final class AchievementAlarmOverlay extends Overlay
     @Override public Dimension render(Graphics2D graphics) {
         AchievementAlarmQueue.Notice notice=alarms.displayed();
         if(notice==null||client.getGameState()!=GameState.LOGGED_IN)return null;
-        if(notice.combat?!config.alarmCombat():!config.alarmCollection())return null;
+        if(!alarms.enabled(notice))return null;
         int available=client.getViewportWidth();if(available<200)return null;
         double scale=Math.min(config.alarmScale()/100.0,(available-16)/520.0);
         int x=client.getViewportXOffset()+(int)((available-520*scale)/2);

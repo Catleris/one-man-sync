@@ -17,8 +17,12 @@ public interface OneManSyncConfig extends SlayerLabConfig
     String alarmSection="alarmSection";
     @ConfigItem(keyName="alarmCollection", name="Collection Log alarm", description="Show a Legendary banner for newly unlocked Collection Log items. Enable collection notifications in OSRS settings.", position=130, section=alarmSection)
     default boolean alarmCollection(){return false;}
-    @ConfigItem(keyName="alarmCombat", name="Combat Achievement alarm", description="Show a Legendary banner when the game announces a completed combat task.", position=131, section=alarmSection)
+    @ConfigItem(keyName="alarmCombat", name="Combat task alarm", description="Show a Legendary banner when the game announces a completed combat task.", position=131, section=alarmSection)
     default boolean alarmCombat(){return false;}
+    @ConfigItem(keyName="alarmCombatTiers", name="Combat tier unlock alarm", description="Show a banner when your points reach a new Combat Achievements tier. Existing tiers on login are not replayed.", position=135, section=alarmSection)
+    default boolean alarmCombatTiers(){return false;}
+    @ConfigItem(keyName="alarmDiaries", name="Achievement Diary alarm", description="Show a banner when a Diary region tier becomes complete. All twelve regions and Easy through Elite are supported.", position=136, section=alarmSection)
+    default boolean alarmDiaries(){return false;}
     @ConfigItem(keyName="alarmSound", name="Alarm sound", description="Play a short game UI sound when a banner begins", position=134, section=alarmSection)
     default boolean alarmSound(){return false;}
     @Range(min=3,max=15)
