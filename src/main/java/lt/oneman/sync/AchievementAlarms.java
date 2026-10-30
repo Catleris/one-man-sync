@@ -33,6 +33,7 @@ final class AchievementAlarms
     private final Map<String,Integer> itemIds=new HashMap<>();
     private final AchievementTierTracker progress=new AchievementTierTracker();
     private boolean progressDirty=true;
+    private boolean tiersEnabled,diariesEnabled;
     private int warmup=10;
     private int nextItem;
     private boolean searched;
@@ -43,7 +44,7 @@ final class AchievementAlarms
     void startUp(){active=true;clear();resetProgress();overlays.add(overlay);}
     void shutDown(){active=false;overlays.remove(overlay);clear();resetProgress();itemIds.clear();nextItem=0;}
     void clear(){queue.clear();displayed=null;icon=null;}
-    private void resetProgress(){progress.reset();warmup=10;progressDirty=true;}
+    private void resetProgress(){progress.reset();warmup=10;progressDirty=true;tiersEnabled=config.alarmCombatTiers();diariesEnabled=config.alarmDiaries();}
     void progressChanged(){progressDirty=true;}
     void onGameStateChanged(GameStateChanged event){
         GameState state=event.getGameState();
@@ -62,16 +63,23 @@ final class AchievementAlarms
     private void pollProgress(){
         if(warmup>0){warmup--;return;}
         if(!progressDirty)return;
-        int[] thresholds=new int[CombatAchievementsHub.THRESHOLDS.length];
-        for(int i=0;i<thresholds.length;i++)thresholds[i]=client.getVarbitValue(CombatAchievementsHub.THRESHOLDS[i]);
-        boolean[] diaries=new boolean[DiaryUnlockCatalog.ENTRIES.size()];
-        for(int i=0;i<diaries.length;i++){
-            DiaryUnlockCatalog.Entry entry=DiaryUnlockCatalog.ENTRIES.get(i);
-            diaries[i]=entry.complete(client.getVarbitValue(entry.varbit));
-        }
+        int[] thresholds=readThresholds();boolean[] diaries=readDiaries();
         for(AchievementAlarmQueue.Notice notice:progress.observe(client.getVarbitValue(VarbitID.CA_POINTS),thresholds,diaries,config.alarmCombatTiers(),config.alarmDiaries()))
             queue.add(notice,System.currentTimeMillis());
         progressDirty=false;
+    }
+    private int[] readThresholds(){
+        int[] result=new int[CombatAchievementsHub.THRESHOLDS.length];
+        for(int i=0;i<result.length;i++)result[i]=client.getVarbitValue(CombatAchievementsHub.THRESHOLDS[i]);
+        return result;
+    }
+    private boolean[] readDiaries(){
+        boolean[] result=new boolean[DiaryUnlockCatalog.ENTRIES.size()];
+        for(int i=0;i<result.length;i++){
+            DiaryUnlockCatalog.Entry entry=DiaryUnlockCatalog.ENTRIES.get(i);
+            result[i]=entry.complete(client.getVarbitValue(entry.varbit));
+        }
+        return result;
     }
     AchievementAlarmQueue.Notice displayed(){return displayed;}
     BufferedImage icon(){return icon;}
@@ -116,6 +124,12 @@ final class AchievementAlarms
         }
     }
     void onConfigChanged(){
+        // Enabling between a varbit event and the next game tick must not backfill it.
+        if(client.getGameState()==GameState.LOGGED_IN&&warmup==0){
+            if(config.alarmCombatTiers()&&!tiersEnabled)progress.baselineCombat(client.getVarbitValue(VarbitID.CA_POINTS),readThresholds());
+            if(config.alarmDiaries()&&!diariesEnabled)progress.baselineDiaries(readDiaries());
+        }
+        tiersEnabled=config.alarmCombatTiers();diariesEnabled=config.alarmDiaries();
         refresh();SwingUtilities.invokeLater(()->{if(collectionBox!=null){
             collectionBox.setSelected(config.alarmCollection());combatBox.setSelected(config.alarmCombat());
             tiersBox.setSelected(config.alarmCombatTiers());diariesBox.setSelected(config.alarmDiaries());

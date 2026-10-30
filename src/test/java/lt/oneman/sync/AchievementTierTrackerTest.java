@@ -40,6 +40,16 @@ public class AchievementTierTrackerTest {
         tracker.reset();assertTrue(tracker.observe(60,thresholds,states,true,true).isEmpty());
         int[] lower={5,10,15,20,25,30};assertTrue(tracker.observe(60,lower,states,true,true).isEmpty());
     }
+    @Test public void enablingBetweenEventAndTickDoesNotBackfillOrHideOtherCategory(){
+        AchievementTierTracker tracker=new AchievementTierTracker();boolean[] states=new boolean[48];
+        tracker.observe(0,thresholds,states,true,true);states[0]=true;
+        tracker.baselineCombat(40,thresholds);
+        List<AchievementAlarmQueue.Notice> result=tracker.observe(40,thresholds,states,true,true);
+        assertEquals(1,result.size());assertEquals(AchievementAlarmQueue.Kind.DIARY,result.get(0).kind);
+        tracker.reset();tracker.observe(0,thresholds,new boolean[48],true,true);
+        tracker.baselineDiaries(states);result=tracker.observe(40,thresholds,states,true,true);
+        assertEquals(4,result.size());for(AchievementAlarmQueue.Notice n:result)assertEquals(AchievementAlarmQueue.Kind.COMBAT_TIER,n.kind);
+    }
     @Test public void taskAndTierRemainSeparateAndDisablingOnePreservesTheOther(){
         AchievementAlarmQueue q=new AchievementAlarmQueue();
         AchievementAlarmQueue.Notice task=new AchievementAlarmQueue.Notice(true,"Example","",0,false);

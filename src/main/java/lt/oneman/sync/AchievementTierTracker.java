@@ -22,5 +22,7 @@ final class AchievementTierTracker {
         }
         this.points=points;this.thresholds=thresholds.clone();this.diaries=diaries.clone();return notices;
     }
+    void baselineCombat(int points,int[] thresholds){this.points=points;this.thresholds=thresholds.clone();}
+    void baselineDiaries(boolean[] diaries){this.diaries=diaries.clone();}
     void reset(){points=0;thresholds=null;diaries=null;}
 }
