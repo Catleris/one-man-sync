@@ -31,3 +31,7 @@ Use Preview Quest Window for a local, explicitly marked example of the texture. 
 Test a real quest completion: a single themed original scroll should remain, with no large banner above it. Check every actual reward line, total quest points, reward model and ribbon, then close the native window normally and with Escape. Toggle the style off/on while it is open and confirm original colors/background restore. Check logout, world hop, plugin disable/re-enable and other notification categories. Existing widget sprite overrides are restored rather than erased, and overrides subsequently supplied by another plugin are preserved. Actual game layout remains for owner verification; tests do not automate OSRS.
 
 Version: 0.11.0-alarms-test5. Public Plugin Hub release remains pending in-game verification.
+
+## TEST6: native background rendering fix
+Uses an UNDER_WIDGETS background at native scroll bounds instead of sprite-only overrides. Only decorative SCROLL is hidden and restored; rewards, model, ribbon and controls remain game-owned. One widget lookup per tick detects late layout and already-open windows.
+Enable Quest window style in 0.11.0-alarms-test6. Toggle with real completion open, inspect rewards, ribbon and close/Escape. Preview remains illustrative. In-game confirmation required.
