@@ -63,6 +63,20 @@ public class QuestWindowThemeTest {
         verify(scroll,never()).createChild(anyInt(),anyInt());
         theme.shutDown();assertEquals(WidgetType.MODEL,type.get());assertEquals(0x123456,color.get());
     }
+    @Test public void tinyLegacyModelViewportUsesNativeTextAnchorAndStillPaintsOpaqueBackground(){
+        when(scroll.getWidth()).thenReturn(1);when(scroll.getHeight()).thenReturn(1);
+        when(scroll.getBounds()).thenReturn(new Rectangle(274,187,1,1));
+        Widget heading=mock(Widget.class);
+        when(client.getWidget(InterfaceID.Questscroll.CONGRATULATIONS)).thenReturn(heading);
+        when(heading.getBounds()).thenReturn(new Rectangle(150,75,248,20));
+        assertTrue(theme.apply());
+        assertEquals(new Rectangle(30,20,488,334),theme.backgroundBounds());
+        BufferedImage canvas=new BufferedImage(600,400,BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g=canvas.createGraphics();
+        try{background.render(g);}finally{g.dispose();}
+        assertEquals(255,canvas.getRGB(270,180)>>>24);
+        theme.tick();assertTrue(theme.status().contains("model 1x1 paint 488x334"));
+    }
     @Test public void missingDrawCallbackRestoresOriginalInsteadOfLeavingTransparency(){
         assertTrue(theme.apply());
         theme.tick();theme.tick();theme.tick();

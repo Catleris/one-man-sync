@@ -36,11 +36,12 @@ final class QuestWindowTheme {
     private int retry;
     private long previewUntil;
     private volatile String status="Quest: starting";
+    private String lastGeometry="";
     String status(){return status;}
     private void updateStatus(){
         Widget w=client.getWidget(InterfaceID.Questscroll.SCROLL);
         Widget c=client.getWidget(InterfaceID.Questscroll.CONTENT);
-        status="Quest: "+(!active?"inactive":!config.alarmQuests()?"OFF":failed?"BACKGROUND HOOK MISSING - original restored":scroll!=null?(drawObserved?"DRAWING":"waiting for draw hook"):w==null?"waiting for window":
+        status="Quest: "+(!active?"inactive":!config.alarmQuests()?"OFF":failed?"BACKGROUND HOOK MISSING - original restored":scroll!=null?(drawObserved?"DRAWING"+lastGeometry:"waiting for draw hook"):w==null?"waiting for window":
             "found type="+w.getType()+" size="+w.getWidth()+"x"+w.getHeight()+" hidden="+w.isHidden()+" content="+(c==null?"missing":c.isHidden()?"hidden":"visible"));
     }
     @Inject QuestWindowTheme(Client client,OneManSyncConfig config,OverlayManager overlays){this.client=client;this.config=config;this.overlays=overlays;}
@@ -105,9 +106,25 @@ final class QuestWindowTheme {
     }
     Rectangle backgroundBounds(){
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN||scroll==null||!contentVisible())return null;
-        return scroll.getBounds();
+        Rectangle nativeBounds=scroll.getBounds();
+        if(usableBackground(nativeBounds))return nativeBounds;
+        Widget content=client.getWidget(InterfaceID.Questscroll.CONTENT);
+        Rectangle contentBounds=content==null?null:content.getBounds();
+        if(usableBackground(contentBounds))return contentBounds;
+        // A legacy 3D parchment can have a tiny model viewport. Its model is much
+        // larger than that viewport; scale bitmap art to the real completion layout.
+        Widget heading=client.getWidget(InterfaceID.Questscroll.CONGRATULATIONS);
+        Rectangle anchor=heading==null?null:heading.getBounds();
+        if(anchor==null||anchor.width<=0||anchor.height<=0)return null;
+        return new Rectangle(anchor.x+anchor.width/2-244,anchor.y-55,488,334);
     }
-    void backgroundDrawn(){drawObserved=true;}
+    private static boolean usableBackground(Rectangle b){
+        return b!=null&&b.width>=300&&b.height>=200;
+    }
+    void backgroundDrawn(){drawObserved=true;
+        Rectangle b=backgroundBounds();
+        lastGeometry=b==null?"":(" model "+scroll.getWidth()+"x"+scroll.getHeight()+" paint "+b.width+"x"+b.height);
+    }
     BufferedImage background(int width,int height){return art.background(width,height);}
     void preview(){
         if(!active||!config.alarmQuests()||client.getGameState()!=GameState.LOGGED_IN)return;
