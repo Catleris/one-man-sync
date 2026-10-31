@@ -14,7 +14,7 @@ final class QuestWindowArt {
     }
     BufferedImage background(int width,int height){
         BufferedImage result=new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);Graphics2D g=result.createGraphics();
-        try{g.setColor(new Color(23,23,22));g.fillRoundRect(width/20,height/12,width-width/10,height-height/6,16,16);g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);g.drawImage(source,0,0,width,height,null);}finally{g.dispose();}
+        try{g.setColor(new Color(23,23,22));g.fillRect(width*8/100,height*15/100,width*84/100,height*70/100);g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);g.drawImage(source,0,0,width,height,null);}finally{g.dispose();}
         return result;
     }
 }

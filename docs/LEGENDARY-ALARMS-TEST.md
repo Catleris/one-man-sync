@@ -53,3 +53,6 @@ Use the open reward window, toggle Quest window style, wait 15 seconds and check
 
 ## TEST11: bitmap geometry independent of tiny model viewport
 A 3D background's widget bounds need not match its rendered parchment. Never shrink the bitmap to a tiny model viewport: prefer a usable native scroll/content rectangle, otherwise use the real congratulations-text center with the established 488x334 completion layout. No native content or click target moves. Diagnostics show model and painted dimensions. Regression test uses a 1x1 model viewport, actual text anchor and checks opaque full-size output. Runtime geometry and appearance still require owner verification.
+
+## TEST12: backing stays inside gold border
+Inset only the opaque backing into the stone interior (8% horizontal, 15% vertical margins). The artwork, frame size, quest draw hook, geometry, native rewards and controls are unchanged. Regression checks transparent pixels above and below the gold rails at native and preview sizes and opaque center. Test Preview Quest Window first; no additional quest needed to inspect this cosmetic edge fix.
