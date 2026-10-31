@@ -4,7 +4,18 @@ Official source repository for the **OneMan Sync** RuneLite plugin used with [on
 
 OneMan Sync is an opt-in companion plugin for the OneMan OSRS progression tracker. It sends your own account progression data to your OneMan profile so the website can maintain Roadmap, Chronicle, boss/Collection Log history, and bank-aware planning.
 
-> **Plugin Hub status:** this repository is being prepared for RuneLite Plugin Hub review. It is not an official RuneLite or Jagex plugin unless/until it is accepted into the Plugin Hub.
+> Available through RuneLite Plugin Hub. New updates require Plugin Hub review before distribution.
+
+## OneMan Sync 0.11.0 — Legendary unlock notifications
+
+- Independent opt-in banners for new Collection Log items, Combat Achievement tasks, CA tier unlocks and Achievement Diary tiers.
+- Six CA tiers and all 48 Diary region/tier completion states, with silent login/enable baselines.
+- Optional Legendary styling for the original quest completion window. Real rewards, Quest Points, reward model, ribbon and close controls remain game-owned.
+- Local previews, optional sound, configurable banner duration and scale. Preview labels appear only on examples; previews never award or upload progress.
+- Quest artwork stays inside its gold border, with a solid interior and transparent outer edges.
+- These visual features work locally and do not require website sync or add network uploads.
+
+The owner confirmed the development build in-game before this release. See [validation notes](docs/LEGENDARY-ALARMS-TEST.md).
 
 ## OneMan Sync 0.8.1 — Clue and Farming hubs
 

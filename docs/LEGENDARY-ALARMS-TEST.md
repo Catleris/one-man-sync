@@ -1,58 +1,21 @@
-# Legendary alarms development test
+# OneMan Sync 0.11.0 validation
 
-Based on master 9ee4a3372a91619d916902fbac884fdcbaaa7bce (0.10.2).
-Run OneManSyncPluginTest in IntelliJ, or ./gradlew run. Disable the installed Plugin Hub copy while testing the development copy.
+The owner confirmed the final TEST12 build in-game and authorized release on 2026-10-31. Earlier screenshots demonstrated actual quest completion with native rewards, Quest Points, model, ribbon and close control; the final cosmetic backing correction was then accepted.
 
-Open OneMan tools > Collection / Combat alarms. Both switches are off by default and independent of website sync. Enable each switch, log in and use each Preview button. Preview never changes task/log completion or uploads an example unlock.
+## Released behavior
 
-The test2 banner uses bundled transparent artwork edited from the exact selected Legendary reference: textured gold wings, cracked stone, crest, hanging item frame and detailed crossed-sword shield. Dynamic text and native item icons are drawn over the artwork. It scales to the viewport. Configure duration (3–15 seconds) and scale in OneMan Sync settings.
+Four independent local banner categories: new Collection Log item, individual Combat Achievement task, Combat Achievements tier unlock, Achievement Diary region/tier completion. Quest window style is a separate opt-in cosmetic setting, not a queued quest banner.
 
-Enable Collection log notifications and Combat task completion messages in OSRS settings. A real new Collection Log message triggers the item banner; a real completed Combat Achievement message triggers the task name, tier and points. Every item name and all six task tiers are accepted without a hand-maintained whitelist or fixed task-ID limit. Item icons use the RuneLite item cache (including pets and untradeables); until resolved, a gold emblem is shown. No drop rates, source names or KC are guessed. Opening an old Collection Log/CA page does not replay historical unlocks.
+All switches default off and preserve existing configuration keys. Collection and CA task chat notifications must be enabled in OSRS. CA tiers use live game thresholds; Diary support covers all 12 regions and four tiers, including legacy Karamja completion states. Login/reconnect establishes a silent baseline; enabling a category does not replay history. The first ten logged-in ticks are baseline warm-up.
 
-Test multiple unlocks in succession, duplicate game messages, disabling each feature during its banner, logout/login, world hop and plugin disable/re-enable. Queued banners are cleared on leaving LOGGED_IN and on shutdown. No game inputs are automated; no alert data leaves the client. Existing sync and Hubs remain unchanged.
+Preview buttons produce clearly marked local examples without changing progress or uploading fake achievements. A real quest uses the original completion interface, with game-owned texts, reward model, ribbon and controls. Quests without that native interface do not receive an invented popup.
 
-The branch is for manual in-game verification only. Do not submit to Plugin Hub until the owner confirms gameplay behavior and visual size.
+## Quest implementation
 
+A MANUAL overlay draws after the decorative scroll layer, before native reward siblings. The original decoration's type/content and text styles restore on close, style disable and shutdown. Missing draw callbacks trigger restoration of the original decoration. Geometry uses usable native bounds or the actual congratulations-text anchor instead of a small 3D model viewport. The opaque backing is confined inside the gold frame.
 
-## TEST3: tier and Diary alarms
+## Automated validation
 
-Enable the new independent Combat tier unlocks and Achievement Diaries switches in the same alarm Hub. CA task messages remain a separate switch. Use the six-tier selector for both CA previews; use the twelve-region and four-tier selectors for Diary previews. All previews are local, marked Preview and never update completion or sync fake data.
+Java 11 clean build, unit tests and executable development packaging run in GitHub Actions. Tests cover parsing/queueing/deduplication, CA/Diary transitions and baselines, sidebar controls, quest rendering persistence, tiny-model geometry, opaque interior, transparent outer edges, restoration and missing-callback recovery.
 
-Real CA tier unlocks follow the game's current CA_POINTS and six threshold varbits (not fixed historical point cutoffs). Real Diary notifications follow all 48 completion states, including legacy Karamja Easy/Medium/Hard state 2. Completion means the game's completion flag, not a guessed chat phrase, an individual Diary task or reward collection. No bonus CA points are invented for unlocking a tier. Login, reconnect and world hop establish a silent baseline after ten logged-in ticks; already-completed tiers are not replayed. Ordinary scene loading preserves the progress baseline. Disabled categories are not backfilled on enabling.
-
-Test Collection Log, individual CA task, CA tier and Diary previews, each of the six CA tiers, each Diary tier and a long region name (Lumbridge & Draynor or Western Provinces). For real unlocks, test a task that crosses a CA points threshold (both banners should queue), final Diary tier completion, independent toggles, logout/login, world hop and plugin restart. The first ten logged-in ticks establish history; unlocks during that warm-up are intentionally not replayed. Public release remains pending in-game verification.
-
-## TEST5: original quest completion window skin
-
-TEST5 replaces TEST4's quest toast. The persisted alarmQuests key is retained, but its visible label is Quest window style. It themes only the native Questscroll background and text colors; there is no queued quest banner or quest status scanner. When OSRS opens that completion window, its real congratulation, quest title, reward texts, quest points, 3D reward model, original ribbon/rosette and close button remain owned by the game, in the original positions. Quests or miniquests without this native completion window do not get an extra invented popup.
-
-Use Preview Quest Window for a local, explicitly marked example of the texture. This preview is illustrative and does not open a server-owned interface, award rewards, modify progress or show fabricated XP/QP. If the real window is already open, Preview simply applies the skin to it.
-
-Test a real quest completion: a single themed original scroll should remain, with no large banner above it. Check every actual reward line, total quest points, reward model and ribbon, then close the native window normally and with Escape. Toggle the style off/on while it is open and confirm original colors/background restore. Check logout, world hop, plugin disable/re-enable and other notification categories. Existing widget sprite overrides are restored rather than erased, and overrides subsequently supplied by another plugin are preserved. Actual game layout remains for owner verification; tests do not automate OSRS.
-
-Version: 0.11.0-alarms-test5. Public Plugin Hub release remains pending in-game verification.
-
-## TEST6: native background rendering fix
-Uses an UNDER_WIDGETS background at native scroll bounds instead of sprite-only overrides. Only decorative SCROLL is hidden and restored; rewards, model, ribbon and controls remain game-owned. One widget lookup per tick detects late layout and already-open windows.
-Enable Quest window style in 0.11.0-alarms-test6. Toggle with real completion open, inspect rewards, ribbon and close/Escape. Preview remains illustrative. In-game confirmation required.
-
-## TEST7: visible activation diagnostics
-Alarm panel shows BUILD 0.11.0-alarms-test7 and Quest OFF / waiting for window / APPLIED / widget type, size and visibility. Enable & Preview Quest Window enables the style explicitly and previews without awarding any progress. Existing live windows can be tested by toggling, no additional quest required. New artifact and source zip names distinguish this build from older downloads.
-
-## TEST8: persistent native widget background
-The decorative background widget is changed from its original type to GRAPHIC with a per-widget sprite override. No background overlay or hidden parchment remains. Native interface drawing keeps the skin visible for the entire reward-window lifetime, independently of preview duration. Original type, sprite, tiling, opacity and existing sprite override restore on close, disable and shutdown. No reward text, model, ribbon or controls are moved or replaced.
-Verify with the completion window left open longer than the configured preview duration; toggle style off/on and close normally/Escape. In-game result remains unverified.
-
-## TEST9: dynamic background child
-The legacy decorative background is temporarily a layer with a dynamic GRAPHIC child, using the per-widget texture override. Dynamic children use the IF3 drawing path. Native sibling reward texts, model, ribbon and close remain unchanged. Parent type/content and original children restore at cleanup. Verify actual background persistence and restoration manually; build success alone does not verify game rendering.
-
-## TEST10: documented native layer draw hook
-Removes sprite overrides and dynamic children. The decorative SCROLL temporarily becomes a LAYER; a MANUAL overlay registered with drawAfterLayer(SCROLL) paints its background before native reward siblings. No above-window quest toast exists. Native model, ribbon, close, texts and click positions remain owned by OSRS.
-A draw watchdog restores the original decoration if three game ticks pass without the background draw callback, with an explicit diagnostic instead of a transparent window. Toggle the option to retry. Tests render real artwork to a BufferedImage through the overlay and verify opaque output, persistence, native-content preservation, cleanup and missing-callback fallback. Actual client draw-hook execution still needs owner confirmation.
-Use the open reward window, toggle Quest window style, wait 15 seconds and check normal close/Escape and style-off restoration. No extra quest is needed merely to test preview.
-
-## TEST11: bitmap geometry independent of tiny model viewport
-A 3D background's widget bounds need not match its rendered parchment. Never shrink the bitmap to a tiny model viewport: prefer a usable native scroll/content rectangle, otherwise use the real congratulations-text center with the established 488x334 completion layout. No native content or click target moves. Diagnostics show model and painted dimensions. Regression test uses a 1x1 model viewport, actual text anchor and checks opaque full-size output. Runtime geometry and appearance still require owner verification.
-
-## TEST12: backing stays inside gold border
-Inset only the opaque backing into the stone interior (8% horizontal, 15% vertical margins). The artwork, frame size, quest draw hook, geometry, native rewards and controls are unchanged. Regression checks transparent pixels above and below the gold rails at native and preview sizes and opaque center. Test Preview Quest Window first; no additional quest needed to inspect this cosmetic edge fix.
+No RuneScape input was automated. Automated rendering tests use mocked widgets and BufferedImage output; they do not replace the owner's in-game verification.
