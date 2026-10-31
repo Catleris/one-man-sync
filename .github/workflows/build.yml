@@ -29,13 +29,13 @@ jobs:
         run: ./gradlew clean build shadowJar
 
       - name: Package test source
-        run: git archive HEAD --format=zip --output=build/OneMan-Sync-Combat-Hub-TEST.zip
+        run: git archive HEAD --format=zip --output=build/OneMan-Sync-source.zip
 
       - name: Upload development build
         uses: actions/upload-artifact@v4
         with:
-          name: oneman-combat-hub-test
+          name: oneman-sync-build
           path: |
             build/libs/*-all.jar
-            build/OneMan-Sync-Combat-Hub-TEST.zip
+            build/OneMan-Sync-source.zip
             build/reports/tests/test/

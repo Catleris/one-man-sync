@@ -13,6 +13,27 @@ import java.awt.Color;
 @ConfigGroup("one-man-sync")
 public interface OneManSyncConfig extends SlayerLabConfig
 {
+    @ConfigSection(name="Collection / Combat alarms", description="Legendary unlock notifications", position=8, closedByDefault=true)
+    String alarmSection="alarmSection";
+    @ConfigItem(keyName="alarmCollection", name="Collection Log alarm", description="Show a Legendary banner for newly unlocked Collection Log items. Enable collection notifications in OSRS settings.", position=130, section=alarmSection)
+    default boolean alarmCollection(){return false;}
+    @ConfigItem(keyName="alarmCombat", name="Combat task alarm", description="Show a Legendary banner when the game announces a completed combat task.", position=131, section=alarmSection)
+    default boolean alarmCombat(){return false;}
+    @ConfigItem(keyName="alarmCombatTiers", name="Combat tier unlock alarm", description="Show a banner when your points reach a new Combat Achievements tier. Existing tiers on login are not replayed.", position=135, section=alarmSection)
+    default boolean alarmCombatTiers(){return false;}
+    @ConfigItem(keyName="alarmDiaries", name="Achievement Diary alarm", description="Show a banner when a Diary region tier becomes complete. All twelve regions and Easy through Elite are supported.", position=136, section=alarmSection)
+    default boolean alarmDiaries(){return false;}
+    @ConfigItem(keyName="alarmQuests", name="Quest completion window style", description="Apply a Legendary background and readable text colors to the original OSRS quest-completion window. Preserves real rewards, model, ribbon and controls; no extra quest banner.", position=137, section=alarmSection)
+    default boolean alarmQuests(){return false;}
+    @ConfigItem(keyName="alarmSound", name="Alarm sound", description="Play a short game UI sound when a banner begins", position=134, section=alarmSection)
+    default boolean alarmSound(){return false;}
+    @Range(min=3,max=15)
+    @ConfigItem(keyName="alarmSeconds", name="Display seconds", description="How long each queued notification is displayed", position=132, section=alarmSection)
+    default int alarmSeconds(){return 7;}
+    @Range(min=60,max=140)
+    @ConfigItem(keyName="alarmScale", name="Banner scale (%)", description="Notification size; automatically fits narrower viewports", position=133, section=alarmSection)
+    default int alarmScale(){return 100;}
+
     @ConfigSection(name="Sync / Account", description="Website connection and upload interval", position=0, closedByDefault=true)
     String syncSection = "syncSection";
 

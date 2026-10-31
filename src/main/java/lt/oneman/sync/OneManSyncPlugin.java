@@ -142,6 +142,7 @@ public class OneManSyncPlugin extends Plugin
     @Inject private UnlocksHub unlocksHub;
     @Inject private CombatAchievementsHub combatHub;
     @Inject private OneManMapLocations mapLocations;
+    @Inject private AchievementAlarms achievementAlarms;
     @Inject private StashMinimapOverlay stashMinimapOverlay;
     @Inject private net.runelite.client.ui.overlay.OverlayManager mapOverlays;
     @Inject private Client client;
@@ -197,6 +198,7 @@ public class OneManSyncPlugin extends Plugin
     @Override
     protected void startUp()
     {
+        achievementAlarms.startUp();
         mapLocations.startUp();
         mapOverlays.add(stashMinimapOverlay);
         clueHub.startUp();
@@ -216,6 +218,7 @@ public class OneManSyncPlugin extends Plugin
     protected void shutDown()
     {
         Call running=activeSyncCall;activeSyncCall=null;if(running!=null)running.cancel();
+        achievementAlarms.shutDown();
         mapOverlays.remove(stashMinimapOverlay);
         mapLocations.shutDown();
         unlocksHub.shutDown();
@@ -264,8 +267,14 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
     @Subscribe
+    public void onWidgetLoaded(net.runelite.api.events.WidgetLoaded event){achievementAlarms.onWidgetLoaded(event);}
+    @Subscribe
+    public void onWidgetClosed(net.runelite.api.events.WidgetClosed event){achievementAlarms.onWidgetClosed(event);}
+    @Subscribe
     public void onConfigChanged(net.runelite.client.events.ConfigChanged event)
     {
+        if ("one-man-sync".equals(event.getGroup()) && event.getKey().startsWith("alarm"))
+            clientThread.invokeLater(achievementAlarms::onConfigChanged);
         if ("one-man-sync".equals(event.getGroup()) && "companionRoadmapVisible".equals(event.getKey()))
             companion.refreshViews();
         if ("one-man-sync".equals(event.getGroup()) && "slayerHistoryVisible".equals(event.getKey()))
@@ -281,6 +290,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
+        achievementAlarms.onGameStateChanged(event);
         unlocksHub.onGameStateChanged(event);
         combatHub.onGameStateChanged(event);
         monstersHub.onGameStateChanged(event);
@@ -322,6 +332,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onVarbitChanged(VarbitChanged event)
     {
+        achievementAlarms.progressChanged();
         combatHub.changed();
         unlocksHub.changed();
         if(client.getGameState()==GameState.LOGGED_IN && isSlayerSignal(event))
@@ -449,6 +460,7 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
+        achievementAlarms.onChatMessage(event);
         clueHub.onChatMessage(event);
         slayerHelper.onChatMessage(event);
         if(client.getGameState()!=GameState.LOGGED_IN) return;
@@ -557,6 +569,7 @@ public class OneManSyncPlugin extends Plugin
     public void onGameTick(GameTick event)
     {
         mapLocations.tick();
+        achievementAlarms.onGameTick();
         clueHub.onGameTick();
         monstersHub.onGameTick();
         unlocksHub.onGameTick();
