@@ -55,7 +55,7 @@ public class QuestWindowThemeTest {
         try {
             for(int i=0;i<60;i++){background.render(graphics);theme.tick();}
         } finally {graphics.dispose();}
-        assertEquals(255,canvas.getRGB(270,180)>>>24);
+        assertEquals("bounds="+theme.backgroundBounds()+" status="+theme.status(),255,canvas.getRGB(270,180)>>>24);
         assertEquals(0,canvas.getRGB(0,0));
         assertEquals(WidgetType.LAYER,type.get());
         verify(reward,never()).setText(anyString());verifyNoInteractions(model,ribbon,close);
