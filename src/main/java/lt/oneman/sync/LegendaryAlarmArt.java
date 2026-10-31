@@ -12,20 +12,19 @@ final class LegendaryAlarmArt
     static final int WIDTH=520, HEIGHT=190;
     private final BufferedImage collection,combat;
     LegendaryAlarmArt() {
-        try(InputStream stream=getClass().getResourceAsStream("legendary-alarms.png")) {
-            if(stream==null)throw new IllegalStateException("Missing Legendary alarm artwork");
-            BufferedImage sheet=ImageIO.read(stream);
-            if(sheet==null||sheet.getWidth()!=1536||sheet.getHeight()!=1024)throw new IllegalStateException("Invalid Legendary alarm artwork");
-            collection=frame(sheet,4,512);combat=frame(sheet,520,504);
+        try {
+            collection=load("legendary-collection.png");
+            combat=load("legendary-combat.png");
         } catch(IOException error){throw new IllegalStateException("Cannot load Legendary alarm artwork",error);}
     }
-    private static BufferedImage frame(BufferedImage sheet,int y,int height) {
-        BufferedImage result=new BufferedImage(WIDTH*2,HEIGHT*2,BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g=result.createGraphics();
-        try {g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.drawImage(sheet,0,0,WIDTH*2,HEIGHT*2,70,y,1466,y+height,null);
-        }finally{g.dispose();}
-        return result;
+    private static BufferedImage load(String name) throws IOException {
+        try(InputStream stream=LegendaryAlarmArt.class.getResourceAsStream(name)){
+            if(stream==null)throw new IllegalStateException("Missing Legendary alarm artwork: "+name);
+            BufferedImage image=ImageIO.read(stream);
+            if(image==null||image.getWidth()!=728||image.getHeight()!=266)
+                throw new IllegalStateException("Invalid Legendary alarm artwork: "+name);
+            return image;
+        }
     }
     void draw(Graphics2D graphics,AchievementAlarmQueue.Notice notice,BufferedImage item) {
         Graphics2D g=(Graphics2D)graphics.create();
