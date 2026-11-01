@@ -100,6 +100,13 @@ public class OneManPluginBootstrapTest
                 assertNotNull("The real sidebar must expose all hubs and sync settings",hubs);
                 assertEquals("Tools",hubs.getItemAt(0));
                 assertEquals("Tools",hubs.getSelectedItem());
+                JButton back=findNamed(panel,"oneManBackToTools",JButton.class);
+                assertNotNull(back);assertFalse(back.isVisible());
+                for(int i=1;i<hubs.getItemCount();i++){
+                    hubs.setSelectedItem(hubs.getItemAt(i));
+                    assertTrue("Back button visible in every hub",back.isVisible());
+                    back.doClick();assertEquals("Tools",hubs.getSelectedItem());assertFalse(back.isVisible());
+                }
                 assertFalse("No duplicate account session feed in normal navigation",selectTab(panel,"Summary"));
                 assertFalse("Sync diagnostics are not a main Hub",selectTab(panel,"Sync"));
                 assertFalse("Screenshot history is not a main view",selectTab(panel,"Memories"));

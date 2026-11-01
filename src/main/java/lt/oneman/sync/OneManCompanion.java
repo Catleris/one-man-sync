@@ -86,14 +86,25 @@ final class OneManCompanion {
             cards.add(combatHub.companionPanel(),"Combat Achievements");
             cards.add(achievementAlarms.companionPanel(),"Collection / Combat alarms");
             sections.setName("oneManHubSelector");
-            sections.addActionListener(event->((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem()));
+            JButton backToTools=new JButton("← Back to Tools");
+            backToTools.setName("oneManBackToTools");backToTools.setVisible(false);
+            backToTools.setToolTipText("Return to the main hub selection");
+            backToTools.addActionListener(event->sections.setSelectedItem("Tools"));
+            sections.addActionListener(event->{
+                ((CardLayout)cards.getLayout()).show(cards,(String)sections.getSelectedItem());
+                backToTools.setVisible(!"Tools".equals(sections.getSelectedItem()));
+                root.revalidate();
+            });
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
             JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(OneManCards.BODY);
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
             JButton settings=new JButton("OneMan Sync settings");
             settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
             settings.addActionListener(event->openSettings.run());
-            hubNavigation.add(settings,BorderLayout.SOUTH);
+            JPanel navigationActions=new JPanel(new GridLayout(0,1,0,4));
+            navigationActions.setOpaque(false);
+            navigationActions.add(backToTools);navigationActions.add(settings);
+            hubNavigation.add(navigationActions,BorderLayout.SOUTH);
             root.add(hubNavigation,BorderLayout.NORTH);root.add(cards,BorderLayout.CENTER);
             OneManTheme.apply(root);
             navigation = NavigationButton.builder().tooltip("OneMan tools").icon(icon).priority(6).panel(root).build();
