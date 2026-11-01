@@ -32,6 +32,8 @@ final class AchievementAlarmQueue
     private Notice current;
     private long until;
     static Notice parse(String message) {
+        // OSRS prefixes completed-task names with this non-HTML formatting token.
+        message=message.replace("@ach_comp@","");
         Matcher item=COLLECTION.matcher(message);
         if(item.matches()&&!item.group(1).trim().isEmpty())return new Notice(false,item.group(1).trim(),"NEW ITEM",-1,false);
         Matcher task=COMBAT.matcher(message);

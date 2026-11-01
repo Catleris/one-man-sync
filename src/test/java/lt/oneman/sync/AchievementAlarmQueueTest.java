@@ -16,6 +16,21 @@ public class AchievementAlarmQueueTest {
         assertNotNull(AchievementAlarmQueue.parse("Congratulations, you've completed a hard combat task: Perfect kill."));
         assertNull(AchievementAlarmQueue.parse("A friend completed a hard combat task"));
     }
+    @Test public void stripsCombatCompletionMarkerFromEveryTierAndDeduplicatesCleanNames(){
+        String[] tiers={"easy","medium","hard","elite","master","grandmaster"};
+        for(int i=0;i<tiers.length;i++){
+            AchievementAlarmQueue.Notice notice=AchievementAlarmQueue.parse(
+                "CA_ID:700|Congratulations, you've completed an "+tiers[i]+" combat task: @ach_comp@Mummy! ("+(i+1)+" points).");
+            assertNotNull(notice);assertEquals("Mummy!",notice.name);assertEquals(i,notice.tier);
+        }
+        AchievementAlarmQueue.Notice tagged=AchievementAlarmQueue.parse(
+            "Congratulations, you've completed an easy combat task: @ach_comp@Mummy!");
+        AchievementAlarmQueue.Notice plain=AchievementAlarmQueue.parse(
+            "Congratulations, you've completed an easy combat task: Mummy!");
+        assertEquals(plain.key,tagged.key);
+        AchievementAlarmQueue queue=new AchievementAlarmQueue();queue.add(tagged,100);queue.add(plain,101);
+        assertSame(tagged,queue.advance(100,3,true,true));assertNull(queue.advance(3100,3,true,true));
+    }
     @Test public void deduplicatesQueuesExpiresAndClears(){
         AchievementAlarmQueue q=new AchievementAlarmQueue();
         AchievementAlarmQueue.Notice a=AchievementAlarmQueue.parse("New item added to your collection log: Bran");
