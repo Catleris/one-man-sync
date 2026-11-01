@@ -267,6 +267,8 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
     @Subscribe
+    public void onBeforeRender(net.runelite.api.events.BeforeRender event){achievementAlarms.beforeRender();}
+    @Subscribe
     public void onWidgetLoaded(net.runelite.api.events.WidgetLoaded event){achievementAlarms.onWidgetLoaded(event);}
     @Subscribe
     public void onWidgetClosed(net.runelite.api.events.WidgetClosed event){achievementAlarms.onWidgetClosed(event);}
