@@ -58,13 +58,25 @@ final class CombatAchievementsHub
     Snapshot snapshot(){return snapshot;}
     void changed(){dirty=true;}
     void onGameStateChanged(GameStateChanged event){
-        if(event.getGameState()==GameState.LOGGED_IN){delay=10;dirty=true;retry=0;}
-        else {profile="";tracked.clear();snapshot=Snapshot.empty();render();}
+        GameState state=event.getGameState();
+        if(state==GameState.LOGGED_IN){
+            // Scene loading does not end an account session. Refresh retained progress
+            // immediately; onGameTick checks the actual profile before reading it.
+            delay=snapshot.ready?0:10;dirty=true;retry=0;cooldown=0;
+        }
+        else if(state==GameState.LOGIN_SCREEN||state==GameState.LOGGING_IN
+            ||state==GameState.HOPPING||state==GameState.CONNECTION_LOST){
+            profile="";tracked.clear();snapshot=Snapshot.empty();
+            dirty=true;delay=10;retry=0;cooldown=0;render();
+        }
     }
     void onGameTick(){
         if(!active||client.getGameState()!=GameState.LOGGED_IN)return;
         String key=configs.getRSProfileKey();
-        if(key==null||key.isEmpty()){if(!profile.isEmpty()){profile="";tracked.clear();snapshot=Snapshot.empty();render();}return;}
+        // Profile lookup can briefly be unavailable after a scene rebuild. Real session
+        // boundaries clear the snapshot in onGameStateChanged; a missing key alone
+        // must not replace retained progress with a false login prompt.
+        if(key==null||key.isEmpty())return;
         if(!key.equals(profile)){
             profile=key;tracked.clear();snapshot=Snapshot.empty();render();dirty=true;delay=10;
             try {String saved=configs.getConfiguration("one-man-sync",key,TRACKED_KEY);

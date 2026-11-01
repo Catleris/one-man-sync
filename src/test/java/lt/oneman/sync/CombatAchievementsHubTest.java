@@ -72,6 +72,40 @@ public class CombatAchievementsHubTest
         GameStateChanged out=new GameStateChanged();out.setGameState(GameState.LOGIN_SCREEN);hub.onGameStateChanged(out);assertFalse(hub.snapshot().ready);assertTrue(hub.snapshot().completed.isEmpty());
         hub.shutDown();hub.onGameTick();assertFalse(hub.snapshot().ready);SwingUtilities.invokeAndWait(()->{});
     }
+    @Test public void sceneLoadingKeepsProgressAndTrackingButSessionBoundariesClearIt() throws Exception {
+        Client client=cache();ConfigManager configs=mock(ConfigManager.class);ClientThread thread=mock(ClientThread.class);
+        when(client.getGameState()).thenReturn(GameState.LOGGED_IN);
+        when(configs.getRSProfileKey()).thenReturn("account-a");
+        when(configs.getConfiguration("one-man-sync","account-a",CombatAchievementsHub.TRACKED_KEY)).thenReturn("[1]");
+        when(client.getVarpValue(CombatAchievementsHub.VARPS[0])).thenReturn(1);
+        CombatAchievementsHub hub=Guice.createInjector(new AbstractModule(){protected void configure(){
+            bind(Client.class).toInstance(client);bind(ConfigManager.class).toInstance(configs);
+            bind(ClientThread.class).toInstance(thread);bind(com.google.gson.Gson.class).toInstance(new GsonBuilder().create());
+            bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
+            bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
+        }}).getInstance(CombatAchievementsHub.class);
+        hub.startUp();for(int i=0;i<16;i++)hub.onGameTick();
+        CombatAchievementsHub.Snapshot before=hub.snapshot();assertTrue(before.ready);
+        for(int cycle=0;cycle<3;cycle++){
+            GameStateChanged loading=new GameStateChanged();loading.setGameState(GameState.LOADING);
+            when(client.getGameState()).thenReturn(GameState.LOADING);hub.onGameStateChanged(loading);
+            for(int i=0;i<20;i++)hub.onGameTick();
+            assertSame(before,hub.snapshot());
+            GameStateChanged resumed=new GameStateChanged();resumed.setGameState(GameState.LOGGED_IN);
+            when(client.getGameState()).thenReturn(GameState.LOGGED_IN);hub.onGameStateChanged(resumed);
+            when(configs.getRSProfileKey()).thenReturn(null);hub.onGameTick();assertSame(before,hub.snapshot());
+            when(configs.getRSProfileKey()).thenReturn("account-a");hub.onGameTick();
+            assertTrue(hub.snapshot().ready);assertTrue(hub.snapshot().completed.contains(0));
+            assertEquals(Collections.singleton(1),hub.snapshot().tracked);before=hub.snapshot();
+        }
+        // Resume refreshes completion on its first tick, without the login warm-up.
+        GameStateChanged resumed=new GameStateChanged();resumed.setGameState(GameState.LOGGED_IN);
+        hub.onGameStateChanged(resumed);when(client.getVarpValue(CombatAchievementsHub.VARPS[0])).thenReturn(3);
+        hub.onGameTick();assertTrue(hub.snapshot().completed.contains(1));
+        GameStateChanged hop=new GameStateChanged();hop.setGameState(GameState.HOPPING);hub.onGameStateChanged(hop);
+        assertFalse(hub.snapshot().ready);assertTrue(hub.snapshot().tracked.isEmpty());
+        hub.shutDown();SwingUtilities.invokeAndWait(()->{});
+    }
     @Test public void expandedBossFiltersAndTaskViewsFitNarrowSidebar() throws Exception {
         List<Task> tasks=new ArrayList<>();for(int i=0;i<40;i++)tasks.add(new Task(i,"Long readable combat achievement task "+i,"Complete this task using the requirements shown in game.","Barrows","Restriction",Tier.EASY));
         CombatAchievementsHub.Snapshot state=new CombatAchievementsHub.Snapshot(tasks,Collections.singleton(0),Collections.singleton(1),new int[]{33,115,304,820,1465,2300},1,true,"account");
