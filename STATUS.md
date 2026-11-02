@@ -43,4 +43,6 @@ Version 0.11.2-hubs-test.4 adds compact superior-kill/elapsed/notable-loot sessi
 
 ## Release submission · 2026-11-02
 
-Owner explicitly authorized merging PR #10 and submitting the combined release to RuneLite review without an owner game test. Release notes: docs/RELEASE-0.11.2.md. Functional code passed Java 11 run 41509955333; release-version CI pending. Owner game checks remain pending and must not be represented as passed. Previous Plugin Hub PR #19815 is merged; a new manifest update is required.
+Owner explicitly authorized merging PR #10 and submitting the combined release to RuneLite review without an owner game test. Release notes: docs/RELEASE-0.11.2.md. Functional code passed Java 11 run 41509955333; release-version Java 11 clean build/test/shadowJar passed (run 41512072580). Owner game checks remain pending and must not be represented as passed. Previous Plugin Hub PR #19815 is merged; a new manifest update is required.
+
+PR #10 merged into master as 49bcc90d059661e18f92282a3c6445e54e5b16ea. Plugin Hub fork branch `Catleris/plugin-hub:update-one-man-sync-0.11.2` pins that exact commit and changes only plugins/one-man-sync. Upstream PR creation was blocked by the GitHub integration with HTTP 403 (Resource not accessible by integration); no new RuneLite review PR exists yet. Maintainer review/publication remains pending.
