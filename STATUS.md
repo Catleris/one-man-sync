@@ -22,3 +22,9 @@ Validation: checked the existing LICENSE, repository guidance and RuneLite Plugi
 At the next authorized feature/fix, inspect current code and the relevant checklist, run appropriate checks, and record the exact outcome here. For in-game changes, list specific owner checks and wait for the result before marking behavior confirmed.
 
 Related details: [known issues](KNOWN_ISSUES.md), [notification/quest validation](docs/LEGENDARY-ALARMS-TEST.md), [icon checklist](docs/COMBAT-ICON-FIX-TEST.md), [Shaman notes](docs/MONSTERS-HUB-TEST.md).
+
+## Smart Slayer preparation MVP · 2026-11-02
+
+Implemented on `dev/slayer-smart-bank-prep` from master `51ad900`: compact special-item status rows, required/utility bank outlines, carried/equipped alternative suppression, charged-spray filtering, and elite Kourend diary boot exemption. Does not change master publication or Plugin Hub pin. Added domain regression tests and docs/SLAYER-SMART-BANK-TEST.md.
+
+Validation so far: `git diff --check` passed. Local `./gradlew test --no-daemon` could not download Gradle because services.gradle.org is unreachable in the workspace; only JDK 17 is installed locally. Java 11 CI build and owner game checks remain pending. See PR for current CI result.

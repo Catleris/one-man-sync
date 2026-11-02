@@ -18,6 +18,7 @@ import net.runelite.client.Notifier;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.api.coords.WorldPoint;
@@ -39,6 +40,7 @@ public class OneManSlayerHelper
     @Inject private SlayerLabMinimapOverlay minimapOverlay;
     @Inject private SlayerRequirementOverlay requirementOverlay;
     @Inject private SlayerLabAccount account;
+    @Inject private CompanionBankOverlay bankOverlay;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
     private final SuperiorAlert superiorAlert=new SuperiorAlert();
@@ -78,6 +80,7 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
+        bankOverlay.slayerNeeded=Collections.emptyMap();
         taskState=JsonObject::new;
         superiorAlert.reset();
         overlayManager.remove(minimapOverlay);
@@ -93,6 +96,7 @@ public class OneManSlayerHelper
     public void onGameStateChanged(GameStateChanged event)
     {
         nextRefresh = 0;
+        bankOverlay.slayerNeeded=Collections.emptyMap();
         requirementOverlay.rows=Collections.emptyList();
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
@@ -124,6 +128,7 @@ public class OneManSlayerHelper
         // Refresh item hints every tick so equipping an item updates immediately.
         int liveRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
         OneManSlayerState.LocalTask task=OneManSlayerState.localTask(taskState.get(),liveRemaining);
+        refreshTaskItems(task);
         SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(task.name);
         if(task.known() && hintGuide!=null) {
             Set<String> inv=itemNames(InventoryID.INV), worn=itemNames(InventoryID.WORN);
@@ -231,6 +236,7 @@ public class OneManSlayerHelper
         String profileKey=configManager.getRSProfileKey();
         if(!Objects.equals(profileKey,account.profile))
         {
+            bankOverlay.slayerNeeded=Collections.emptyMap();
             prayerMonitor.reset();
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
@@ -241,6 +247,8 @@ public class OneManSlayerHelper
     public void onItemContainerChanged(ItemContainerChanged event)
     {
         nextRefresh=0;
+        if(active && client.getGameState()==GameState.LOGGED_IN && bindAccount(System.currentTimeMillis()))
+            refreshTaskItems(OneManSlayerState.localTask(taskState.get(),client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
         if(event.getContainerId()==InventoryID.WORN) prayerMonitor.resetEstimate();
         if(event.getContainerId()!=InventoryID.BANK || client.getGameState()!=GameState.LOGGED_IN) return;
         if(!bindAccount(System.currentTimeMillis())) return;
@@ -253,6 +261,7 @@ public class OneManSlayerHelper
             items.merge(SlayerLabKnowledge.normalize(d.getName()),item.getQuantity(),Integer::sum);
         }
         account.captureBank(items,System.currentTimeMillis());
+        refreshTaskItems(OneManSlayerState.localTask(taskState.get(),client.getVarpValue(VarPlayerID.SLAYER_COUNT)));
     }
     public void onStatChanged(StatChanged event)
     {
@@ -273,6 +282,25 @@ public class OneManSlayerHelper
         }
         account.journal.loot(loot); nextRefresh=0;
     }
+    private void refreshTaskItems(OneManSlayerState.LocalTask task)
+    {
+        java.util.List<SlayerTaskItems.Rule> rules=task.known() && task.remaining>0 ?
+            SlayerTaskItems.rules(task.name,client.getVarbitValue(VarbitID.KOUREND_DIARY_ELITE_COMPLETE)==1,variant) : Collections.emptyList();
+        java.util.List<SlayerTaskItems.Row> rows=SlayerTaskItems.evaluate(rules,itemNames(InventoryID.INV),itemNames(InventoryID.WORN),account.bank.items,account.bank.seen>0);
+        Map<Integer,Color> highlights=new HashMap<>();
+        ItemContainer bank=client.getItemContainer(InventoryID.BANK);
+        if(bank!=null) for(Item item:bank.getItems())
+        {
+            if(item.getId()<0 || item.getQuantity()<=0) continue;
+            ItemComposition definition=itemManager.getItemComposition(item.getId());
+            if(definition.getPlaceholderTemplateId()!=-1 || definition.getNote()!=-1) continue;
+            Color color=SlayerTaskItems.highlight(definition.getName(),rows);
+            if(color!=null) highlights.put(item.getId(),color);
+        }
+        bankOverlay.slayerNeeded=Collections.unmodifiableMap(highlights);
+        SwingUtilities.invokeLater(()->{if(active && panel!=null) panel.showTaskItems(rows);});
+    }
+
     private SlayerLabSupplies.Counts supplyCounts()
     {
         Map<String,Integer> counts=new TreeMap<>(); Set<String> edible=new HashSet<>(),drinkable=new HashSet<>();
@@ -360,6 +388,8 @@ public class OneManSlayerHelper
         private String url = "";
         private final JComboBox<SlayerLabLocations.Destination> choices = new JComboBox<>();
         private final JTextArea access = new JTextArea();
+        private final JPanel taskItems=new JPanel();
+        private String taskItemsSignature="";
         private final JTextArea taskSummary = new JTextArea(3,0);
         private final JButton centre = new JButton("Centre map");
         private final JButton track = new JButton("Track entrance");
@@ -429,8 +459,29 @@ public class OneManSlayerHelper
             header.add(OneManCards.banner("Slayer Hub","Task preparation & locations"), BorderLayout.NORTH);
             JPanel summary=OneManCards.card();summary.add(taskSummary);header.add(summary, BorderLayout.CENTER);
             pages[2].add(OneManTheme.collapsible("Map & travel controls",controls),BorderLayout.NORTH);
+            taskItems.setLayout(new BoxLayout(taskItems,BoxLayout.Y_AXIS));
+            taskItems.setOpaque(false);
+            header.add(taskItems,BorderLayout.SOUTH);
             add(header, BorderLayout.NORTH);
             OneManTheme.apply(this);
+        }
+        void showTaskItems(java.util.List<SlayerTaskItems.Row> rows)
+        {
+            StringBuilder key=new StringBuilder();
+            for(SlayerTaskItems.Row row:rows) key.append(row.text()).append(row.rule.note);
+            String signature=key.toString();
+            if(signature.equals(taskItemsSignature)) return;
+            taskItemsSignature=signature;taskItems.removeAll();
+            taskItems.setVisible(!rows.isEmpty());
+            if(!rows.isEmpty()) {
+                JLabel title=new JLabel("Required / Recommended items");title.setFont(OneManCards.HEADING);taskItems.add(title);
+                for(SlayerTaskItems.Row row:rows) {
+                    JTextArea label=OneManCards.text("● "+row.text());label.setForeground(row.color());
+                    label.setToolTipText((row.rule.tier==SlayerTaskItems.Tier.MANDATORY?"Required: ":"Utility: ")+row.rule.note);
+                    taskItems.add(label);
+                }
+            }
+            taskItems.revalidate();taskItems.repaint();
         }
         void showLocations(java.util.List<SlayerLabLocations.Destination> locations)
         {
@@ -469,6 +520,7 @@ public class OneManSlayerHelper
         void showView(String view, String link)
         {
             updating=true; shownTask=""; shownProfile="";
+            showTaskItems(Collections.emptyList());
             taskSummary.setText(view);
             for(int i=0;i<8;i++) sections[i].setText(view.length()<100&&!view.contains("\n")?"":view);
             variants.removeAllItems(); goals.removeAllItems();

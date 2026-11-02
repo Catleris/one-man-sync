@@ -4,6 +4,9 @@ Updated: 2026-11-02. This is a short handoff list, not a claim that every histor
 
 ## Pending verification
 
+- 2026-11-02: Smart Slayer bank MVP requires owner checks in [Slayer test checklist](docs/SLAYER-SMART-BANK-TEST.md). Bank status uses a dated per-profile snapshot; generic dragonfire loadouts are outside this MVP.
+
+
 | Item | Evidence / current status | Next check |
 |---|---|---|
 | Combat Achievement category icons | docs/COMBAT-ICON-FIX-TEST.md documents mappings and regression checks for previously reported icons. Current in-game appearance was not reverified in this task. | Follow the linked icon checklist on the current build, including Gauntlet variants and scroll/filter behavior; record owner results. |

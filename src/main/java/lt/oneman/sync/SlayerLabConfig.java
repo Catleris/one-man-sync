@@ -5,6 +5,8 @@ import net.runelite.client.config.*;
 public interface SlayerLabConfig extends Config
 {
     String GROUP = "one-man-slayer-lab";
+    @ConfigItem(keyName="slayerBankItems", name="Slayer task bank hints", description="Mark missing special task items in the bank: orange required, blue utility. No automatic withdrawals.", position=19)
+    default boolean slayerBankItems() { return true; }
     enum CombatStyle { MELEE, RANGED, MAGIC }
     @ConfigItem(keyName="combatStyle", name="Supplies combat style", description="Controls ammunition or rune quantity warnings; does not select combat actions.", position=10)
     default CombatStyle combatStyle() { return CombatStyle.MELEE; }
