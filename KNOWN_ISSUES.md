@@ -4,7 +4,7 @@ Updated: 2026-11-02. This is a short handoff list, not a claim that every histor
 
 ## Pending verification
 
-- 2026-11-02: Owner screenshot reproduced missing unrestricted Lizardmen choices. Source-location fallback implemented in test.2; CI and owner retest pending. Reference-only destinations intentionally disable map tracking but allow Location guide.
+- 2026-11-02: Owner screenshot reproduced missing unrestricted Lizardmen choices. Source-location fallback implemented in test.2; Java 11 CI passed (run 41503842167), owner retest pending. Reference-only destinations intentionally disable map tracking but allow Location guide.
 
 - 2026-11-02: Smart Slayer bank MVP requires owner checks in [Slayer test checklist](docs/SLAYER-SMART-BANK-TEST.md). Bank status uses a dated per-profile snapshot; generic dragonfire loadouts are outside this MVP.
 
