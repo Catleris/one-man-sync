@@ -125,6 +125,8 @@ final class OneManMapPanel extends JPanel
             }
             required.finish();
         }
+        if(group==OneManMapCatalog.Group.FARMING)
+            descriptions.get(category).setForeground(status!=null && (status.contains("Diseased!") || status.endsWith("— Dead")) ? new Color(245,110,100) : OneManCards.MUTED);
         descriptions.get(category).setText(status==null?(group==OneManMapCatalog.Group.STASH?site.name+"\n":"")+hint:status);
     }
 }

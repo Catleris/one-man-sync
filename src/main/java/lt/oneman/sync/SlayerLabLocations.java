@@ -23,7 +23,7 @@ final class SlayerLabLocations
             for (String alias : aliases) this.aliases.add(normalize(alias));
         }
         Destination(String name,String access,String... aliases) {
-            this.name=name;this.access=access;this.entrance=null;this.wilderness=false;
+            this.name=name;this.access=access;this.entrance=null;this.wilderness=normalize(name).contains("wilderness");
             this.aliases=new HashSet<>();this.aliases.add(normalize(name));for(String alias:aliases)this.aliases.add(normalize(alias));
         }
         @Override public String toString() { return (wilderness ? "[WILDERNESS] " : "") + name; }
@@ -98,19 +98,30 @@ final class SlayerLabLocations
         add("Cave kraken",KRAKEN); add("Smoke devils",DEVIL); add("Skeletal wyverns",ICE);
         add("Fossil Island wyverns",WYVERN); add("Araxytes",SPIDER);
         add("Basilisks",FREMENNIK,JORMUNGAND);
-        Destination[] known = {TAVERLEY,HEROES,TOWER,CATACOMBS,FREMENNIK,STRONGHOLD,SMOKE,SWAMP,HORRORS,IORWERTH,EDGEVILLE,DEN,SEWERS,CHASM,VOLCANO,LIGHTHOUSE,KALPHITE_CAVE,KALPHITE_LAIR,WILD,KARUULM,KRAKEN,DEVIL,ICE,WYVERN,JORMUNGAND,SPIDER,ANCIENT,BRIMHAVEN};
+        List<Destination> known = new ArrayList<>(Arrays.asList(TAVERLEY,HEROES,TOWER,CATACOMBS,FREMENNIK,STRONGHOLD,SMOKE,SWAMP,HORRORS,IORWERTH,EDGEVILLE,DEN,SEWERS,CHASM,VOLCANO,LIGHTHOUSE,KALPHITE_CAVE,KALPHITE_LAIR,WILD,KARUULM,KRAKEN,DEVIL,ICE,WYVERN,JORMUNGAND,SPIDER,ANCIENT,BRIMHAVEN,GOD_WARS,MEIYERDITCH));
+        known.addAll(ASSIGNED_ONLY);
         for (SlayerLabKnowledge.Entry entry : SlayerLabKnowledge.all())
         {
             List<Destination> existing = new ArrayList<>(TASKS.getOrDefault(normalize(entry.task), Collections.emptyList()));
-            for (String place : entry.locations.split("; "))
-                for (Destination destination : known)
-                    if (destination.matches(place) && !existing.contains(destination)) existing.add(destination);
+            for (String place : entry.locations.split(";\\s*"))
+            {
+                if(place.trim().isEmpty() || place.equalsIgnoreCase("N/A")) continue;
+                Destination destination=null;
+                for(Destination candidate:known) if(candidate.matches(place)) { destination=candidate; break; }
+                if(destination==null) destination=new Destination(place.trim(),
+                    "Task source location. Check the location guide for access and the chosen monster variant; no verified entrance pin is available.");
+                final Destination choice=destination;
+                if(existing.stream().noneMatch(d->d.matches(choice.name))) existing.add(choice);
+            }
             if (!existing.isEmpty()) TASKS.put(normalize(entry.task), Collections.unmodifiableList(existing));
         }
     }
+
     static List<Destination> forTask(String task, String assignedLocation)
     {
-        List<Destination> available = TASKS.getOrDefault(SlayerLabCatalog.taskKey(task), Collections.emptyList());
+        String taskKey=SlayerLabCatalog.taskKey(task);
+        if(taskKey.equals("lizardman")) taskKey="lizardmen";
+        List<Destination> available = TASKS.getOrDefault(taskKey, Collections.emptyList());
         if (normalize(assignedLocation).isEmpty()) return available;
         List<Destination> filtered = new ArrayList<>();
         for (Destination destination : available) if (destination.matches(assignedLocation)) filtered.add(destination);

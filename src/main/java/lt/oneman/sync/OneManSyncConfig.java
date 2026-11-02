@@ -194,4 +194,13 @@ public interface OneManSyncConfig extends SlayerLabConfig
     }
     @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Optional local notification when an observed birdhouse becomes ready.", position=19, section=farmingSection)
     default boolean notifyBirdhousesReady() { return false; }
+    @ConfigItem(keyName="farmingHealthWarnings", name="Farming health & compost hints", description="Show observed disease/death and last reported bottomless bucket amount in Farming Hub.", position=20, section=farmingSection)
+    default boolean farmingHealthWarnings() { return true; }
+    @ConfigItem(keyName="notifyFarmingDisease", name="Notify diseased/dead patches", description="One local alert per observed unhealthy episode; requires Time Tracking observations.", position=21, section=farmingSection)
+    default boolean notifyFarmingDisease() { return false; }
+    @Range(min=0,max=10000)
+    @ConfigItem(keyName="bottomlessRefillBelow", name="Bottomless refill at/below", description="Warn at or below this last reported use count. Zero warns only when empty.", position=22, section=farmingSection)
+    default int bottomlessRefillBelow() { return 50; }
+    @ConfigItem(keyName="notifyBottomlessRefill", name="Notify bottomless refill", description="Optional local alert from explicit game bucket messages; no inferred consumption.", position=23, section=farmingSection)
+    default boolean notifyBottomlessRefill() { return false; }
 }

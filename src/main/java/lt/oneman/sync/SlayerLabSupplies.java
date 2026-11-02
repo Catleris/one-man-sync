@@ -5,6 +5,13 @@ import java.util.regex.*;
 
 final class SlayerLabSupplies
 {
+    static String taskPreparation(List<SlayerTaskItems.Row> rows)
+    {
+        if(rows.isEmpty()) return "Required / Recommended items\nNo special items in this MVP for the current task. Choose your combat setup and check the variant guide.\n";
+        StringBuilder text=new StringBuilder("Required / Recommended items");
+        for(SlayerTaskItems.Row row:rows) text.append("\n").append(row.text()).append("\n").append(row.rule.note);
+        return text.append("\n\nCarried protection must be equipped before combat; check consumable quantities and charges.\n").toString();
+    }
     static final class Counts
     {
         int food, doses, ammo, runes;

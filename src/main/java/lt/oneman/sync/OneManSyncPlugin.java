@@ -414,6 +414,7 @@ public class OneManSyncPlugin extends Plugin
         unlocksHub.onItemContainerChanged(event);
         clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
+        companion.onFarmingItems(event);
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
         ItemContainer container=event.getItemContainer();
@@ -465,6 +466,7 @@ public class OneManSyncPlugin extends Plugin
         achievementAlarms.onChatMessage(event);
         clueHub.onChatMessage(event);
         slayerHelper.onChatMessage(event);
+        companion.onFarmingChat(event);
         if(client.getGameState()!=GameState.LOGGED_IN) return;
         ChatMessageType type=event.getType();
         boolean normalGameMessage=type==ChatMessageType.GAMEMESSAGE || type==ChatMessageType.SPAM;

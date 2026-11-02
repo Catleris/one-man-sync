@@ -13,6 +13,14 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.client.plugins.timetracking.farming.CropState;
 import net.runelite.api.GameState;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
@@ -42,10 +50,12 @@ public class FarmingRunTracker {
     private volatile int nextFarmingRefresh = 0;
     private String profile = "";
     private boolean baseline;
+    private final FarmingHealth health=new FarmingHealth();
     private boolean[] lastBirdhouseReady = new boolean[4];
     public static final List<TrackedPatchDef> TRACKED_PATCHES;
 
     void startUp() {
+        health.reset();
         this.active = true;
         this.nextFarmingRefresh = 0;
         this.profile = ""; this.baseline = false;
@@ -62,6 +72,7 @@ public class FarmingRunTracker {
 
     void shutDown() {
         this.active = false;
+        health.reset();
         SwingUtilities.invokeLater(() -> {
             this.panel = null;
         });
@@ -76,7 +87,7 @@ public class FarmingRunTracker {
 
     void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN) {
-            this.baseline = false; this.profile = "";
+            this.baseline = false; this.profile = "";health.reset();
             this.nextFarmingRefresh = 0;
             SwingUtilities.invokeLater(() -> {
                 if (this.active && this.panel != null) {
@@ -104,7 +115,7 @@ public class FarmingRunTracker {
         String key = configManager.getRSProfileKey();
         if (key == null || key.isEmpty()) return;
         if (!key.equals(profile)) {
-            profile = key; baseline = false;
+            profile = key; baseline = false;health.reset();
             java.util.Arrays.fill(lastBirdhouseReady, false);
         }
         int[] birdVarps = new int[]{VarPlayerID.BIRDHOUSE_TRANSMIT_A, VarPlayerID.BIRDHOUSE_TRANSMIT_B, VarPlayerID.BIRDHOUSE_TRANSMIT_C, VarPlayerID.BIRDHOUSE_TRANSMIT_D};
@@ -119,21 +130,64 @@ public class FarmingRunTracker {
             lastBirdhouseReady[i]=ready;
         }
         baseline = true;
+        readBuckets();
+        List<String> warnings=new ArrayList<>();
         Map<String,String> patchStatuses=new HashMap<>();
         for (TrackedPatchDef def : TRACKED_PATCHES) {
             String raw=this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, def.configKey());
             FarmingPatchDecoder.DecodedPatch decoded=FarmingPatchDecoder.decode(def.getImplementation(),raw);
             String status=decoded==null?"Unknown — visit patch with Time Tracking enabled.":decoded.getDisplayStatus(now);
             patchStatuses.put(def.getName(),status);
+            boolean newProblem=health.observe(def.getName(),decoded);
+            if(decoded!=null && (decoded.getCropState()==CropState.DISEASED || decoded.getCropState()==CropState.DEAD)) {
+                warnings.add(def.getName()+" · "+status);
+                if(newProblem && config.notifyFarmingDisease()) notifier.notify("OneMan: "+def.getName()+" — "+status+" (last observed; visit to confirm)");
+            }
         }
         String contractId = this.configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP, "contract");
         String contractState=contractId!=null&&!contractId.trim().isEmpty()
             ?(client.getVarbitValue(VarbitID.FARMGUILD_CONTRACT_COMPLETE)>0?"Complete":"In progress"):"None detected";
+        String bucket=health.bucketText(config.bottomlessRefillBelow(),now);
+        boolean bucketLow=health.low(config.bottomlessRefillBelow());
         SwingUtilities.invokeLater(() -> {
             if (this.active && this.panel != null) {
+                this.panel.showHealth(warnings,bucket,bucketLow);
                 this.panel.showStatus(runs,contractState,patchStatuses);
             }
         });
+    }
+
+    private boolean bindProfile()
+    {
+        String key=configManager.getRSProfileKey();
+        if(key==null || key.isEmpty()) return false;
+        if(!key.equals(profile)) {health.reset();profile=key;baseline=false;java.util.Arrays.fill(lastBirdhouseReady,false);}
+        return true;
+    }
+    private void readBuckets()
+    {
+        int count=0;boolean empty=false;
+        ItemContainer inventory=client.getItemContainer(InventoryID.INV);
+        if(inventory!=null) for(Item item:inventory.getItems())
+            if(item.getQuantity()>0 && (item.getId()==ItemID.BOTTOMLESS_COMPOST_BUCKET || item.getId()==ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED)) {count+=item.getQuantity();empty|=item.getId()==ItemID.BOTTOMLESS_COMPOST_BUCKET;}
+        health.buckets(count);
+        if(count==1 && empty) health.empty(System.currentTimeMillis()/1000L);
+    }
+    void onItemContainerChanged(ItemContainerChanged event)
+    {
+        if(!active || client.getGameState()!=GameState.LOGGED_IN || event.getContainerId()!=InventoryID.INV || !bindProfile()) return;
+        readBuckets();nextFarmingRefresh=0;
+    }
+    void onChatMessage(ChatMessage event)
+    {
+        if(!active || client.getGameState()!=GameState.LOGGED_IN || !bindProfile()) return;
+        if(event.getType()!=ChatMessageType.GAMEMESSAGE && event.getType()!=ChatMessageType.SPAM) return;
+        readBuckets();
+        if(health.message(event.getMessage(),System.currentTimeMillis()/1000L)) {
+            nextFarmingRefresh=0;
+            if(health.notifyLow(config.bottomlessRefillBelow()) && config.notifyBottomlessRefill())
+                notifier.notify("OneMan: Bottomless compost bucket is low — refill before your next run.");
+        }
     }
 
     static {
@@ -160,6 +214,8 @@ public class FarmingRunTracker {
 
     private final class FarmingPanel
     extends JPanel {
+        private final javax.swing.JTextArea disease=OneManCards.text("");
+        private final javax.swing.JTextArea bucket=OneManCards.text("");
         private final BirdhouseRunsPanel runs=new BirdhouseRunsPanel(items,()->clientThread.invokeLater(()->nextFarmingRefresh=0));
         private final OneManMapPanel patches=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.FARMING);
 
@@ -169,10 +225,18 @@ public class FarmingRunTracker {
             JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);tabs.setFont(OneManCards.BODY);tabs.addTab("Patches",patches);
             tabs.addTab("Seeds",new FarmingSeedPanel(mapLocations,category->{patches.chooseCategory(category);tabs.setSelectedIndex(0);}));
             tabs.addTab("Runs",runs);
+            JPanel alerts=new JPanel();alerts.setLayout(new javax.swing.BoxLayout(alerts,javax.swing.BoxLayout.Y_AXIS));
+            alerts.add(disease);alerts.add(bucket);this.add(alerts,BorderLayout.NORTH);
             this.add(tabs,BorderLayout.CENTER);
         }
 
-        void showLoggedOut() { runs.loggedOut();patches.setStatuses(Collections.emptyMap()); }
+        void showHealth(List<String> warnings,String bucketText,boolean low) {
+            disease.setText(warnings.isEmpty()?"":"⚠ "+warnings.size()+" patch(es) need attention\n"+String.join("\n",warnings.subList(0,Math.min(3,warnings.size())))+"\nLast observed · visit to confirm.");
+            disease.setForeground(new java.awt.Color(245,110,100));disease.setVisible(config.farmingHealthWarnings() && !warnings.isEmpty());
+            disease.setToolTipText(String.join("; ",warnings));
+            bucket.setText(bucketText);bucket.setForeground(low?new java.awt.Color(245,165,75):OneManCards.MUTED);bucket.setVisible(config.farmingHealthWarnings() && !bucketText.isEmpty());
+        }
+        void showLoggedOut() { disease.setVisible(false);bucket.setVisible(false);runs.loggedOut();patches.setStatuses(Collections.emptyMap()); }
         void showStatus(List<BirdhouseRun> observations,String contract,Map<String,String> observed) {
             runs.update(observations,contract);
             Map<String,String> status=new HashMap<>();
