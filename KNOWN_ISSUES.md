@@ -4,7 +4,7 @@ Updated: 2026-11-02. This is a short handoff list, not a claim that every histor
 
 ## Pending verification
 
-- 2026-11-02: Session drops test.4 awaits CI and owner checks in docs/SLAYER-SESSION-DROPS-TEST.md. Superior names/notable items are curated; attributed loot does not verify pickup or RDT origin.
+- 2026-11-02: Session drops test.4 passed Java 11 CI (run 41509955333) and awaits owner checks in docs/SLAYER-SESSION-DROPS-TEST.md. Superior names/notable items are curated; attributed loot does not verify pickup or RDT origin.
 
 - 2026-11-02: Farming health/compost test.3 passed Java 11 CI (run 41505449762) and awaits owner checks in docs/FARMING-HEALTH-TEST.md. Disease is last observed through Time Tracking, bucket amount is last reported; neither predicts unobserved changes.
 
