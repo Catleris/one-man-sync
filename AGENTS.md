@@ -11,6 +11,10 @@ Read [STATUS.md](STATUS.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before starti
 - Never store Sync Keys, credentials, bank snapshots, personal account records or private logs in these public documents.
 - Communicate with the owner in Lithuanian; follow the existing language conventions in code and UI.
 
+## Attribution and branding
+
+- Read BRANDING.md before reusing external code, publishing a fork or changing licensing/branding. Preserve LICENSE and third-party notices; do not describe the voluntary reuse contact request as a mandatory BSD restriction.
+
 ## OneMan UI and regression expectations
 
 - Preserve the compact shared card/theme system and normal sidebar viewport scrolling.

@@ -114,6 +114,16 @@ The development runner is `lt.oneman.sync.OneManSyncPluginTest`.
 
 Run locally with the Gradle `run` task after following RuneLite's Jagex Account development-login instructions.
 
+## Authorship, reuse and OneMan branding
+
+Copyright (c) 2026, Catleris; third-party rights and notices remain with their respective holders.
+
+Code reuse is governed by the [BSD 2-Clause license](LICENSE). Required copyright and license notices must be preserved. Please contact Catleris before substantial reuse; this is a courtesy request, not an extra BSD restriction.
+
+Prior written permission is requested for use of OneMan names/logos as the identity of a separate or modified product or for official partnership/endorsement claims. Independent forks should use distinct branding and clearly state that they are unofficial. Ordinary use of the plugin requires no personal permission.
+
+See [branding, attribution and permission policy](BRANDING.md) and [open a permission request](https://github.com/Catleris/one-man-sync/issues/new).
+
 ## License
 
 BSD 2-Clause. See [LICENSE](LICENSE).

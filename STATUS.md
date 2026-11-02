@@ -13,9 +13,9 @@ Baseline inspected: `e8d07cd5936ea9726c894b1e35358f78527ed58c`.
 
 ## This change
 
-Adopted the three-file workflow: extended existing AGENTS.md without removing RuneLite guidelines; added this status file and KNOWN_ISSUES.md. No runtime code, assets or build settings changed.
+Added BRANDING.md and README links covering attribution, permission requests and separation of official OneMan identity from independent forks. BSD LICENSE and all existing third-party/asset grants are unchanged. Contact before substantial code reuse is explicitly voluntary; no permission gate or tracking was added to the plugin.
 
-Validation: reviewed the existing guidelines, README, build configuration, CI workflow and referenced issue checklists. No build or in-game test was run for these documentation-only edits.
+Validation: checked the existing LICENSE, repository guidance and RuneLite Plugin Hub licensing instructions. Reviewed policy links and wording for consistency with BSD. Documentation only; no runtime build/game test needed. Trademark registration, legal enforceability and asset ownership were not established by this task.
 
 ## Next step
 
