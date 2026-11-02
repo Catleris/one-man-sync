@@ -1,11 +1,11 @@
 # Project status
 
 Updated: 2026-11-02. Repository: Catleris/one-man-sync, branch master.
-Baseline inspected: `e8d07cd5936ea9726c894b1e35358f78527ed58c`.
+Release preparation: PR #10, OneMan Sync 0.11.2.
 
 ## Current source
 
-- build.gradle declares version 0.11.1 and Java 11 bytecode.
+- build.gradle and the sidebar declare version 0.11.2 and Java 11 bytecode.
 - Latest inspected commit adds shared Back to Tools navigation in OneManCompanion.java and corresponding bootstrap assertions in OneManPluginBootstrapTest.java. Assertions exist in source; they were not executed during this documentation task.
 - README.md describes opt-in Collection Log/Combat Achievement/Diary notifications and original quest reward-window styling. It records owner confirmation for the 0.11.0 development release; this is historical documentation, not a fresh test of the current head.
 - GitHub Actions is configured to run `./gradlew clean build shadowJar` on master pushes and master pull requests. Current run results were not checked in this task.
@@ -40,3 +40,7 @@ Version 0.11.2-hubs-test.3 adds observed herb/tree disease/death summary and pat
 ## Slayer Session drops · 2026-11-02
 
 Version 0.11.2-hubs-test.4 adds compact superior-kill/elapsed/notable-loot session card in the existing Loot tab, recent-three display/last-five source tooltip and profile-guarded Reset session. Attributed loot only; spawn messages do not count, pickup and RDT provenance are not inferred. Session continues across tasks and clears on logout/profile/plugin changes. Added seven model regression tests and docs/SLAYER-SESSION-DROPS-TEST.md. Combined Java 11 clean build/test/shadowJar passed on d28bacc8dc3d745b6c808ccce823be65c9f37f6c, including seven new Session drops tests: https://github.com/Catleris/one-man-sync/actions/runs/41509955333 . Artifact upload succeeded. All owner gameplay checks remain pending.
+
+## Release submission · 2026-11-02
+
+Owner explicitly authorized merging PR #10 and submitting the combined release to RuneLite review without an owner game test. Release notes: docs/RELEASE-0.11.2.md. Functional code passed Java 11 run 41509955333; release-version CI pending. Owner game checks remain pending and must not be represented as passed. Previous Plugin Hub PR #19815 is merged; a new manifest update is required.
