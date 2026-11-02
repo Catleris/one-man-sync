@@ -239,6 +239,7 @@ public class OneManSlayerHelper
         {
             bankOverlay.slayerNeeded=Collections.emptyMap();
             sessionDrops.reset(0);lastDropTask="";
+            publishSessionDrops(now);nextRefresh=0;
             prayerMonitor.reset();
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
