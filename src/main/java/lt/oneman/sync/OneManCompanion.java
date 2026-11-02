@@ -24,7 +24,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.11.2-slayer-test.2";
+    static final String VERSION = "0.11.2-hubs-test.3";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -121,6 +121,8 @@ final class OneManCompanion {
         if(e.getGameState()==GameState.LOGGED_IN)loginDelay=10;
         if(e.getGameState()==GameState.LOGIN_SCREEN) { baseline=false; overlay.needed=Collections.emptySet(); baseline=false; levels.clear();completed.clear(); showLoggedOut(); }
     }
+    void onFarmingChat(ChatMessage e) { farmingTracker.onChatMessage(e); }
+    void onFarmingItems(ItemContainerChanged e) { farmingTracker.onItemContainerChanged(e); }
     void onGameTick(GameTick e) {
         farmingTracker.onGameTick(e);
         if(!active || client.getGameState()!=GameState.LOGGED_IN || client.getLocalPlayer()==null) return;

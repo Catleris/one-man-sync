@@ -32,3 +32,7 @@ Validation: `git diff --check` passed. Java 11 GitHub Actions run https://github
 ## Unrestricted Slayer locations · 2026-11-02
 
 Owner screenshot confirms Lizardmen has source locations but an empty destination selector without a Konar assigned area. The catalog now retains every named source location as a selectable reference, reuses verified entrances where available, and keeps unverified locations without invented map pins. Assigned-area filtering remains authoritative. Added catalog-wide source-location coverage plus Lizardmen/singular/assigned-area/Wilderness regression checks. Version 0.11.2-slayer-test.2. Java 11 clean build/test/shadowJar passed on code commit d5a3e7221e2368e0da3d9e8aa373acb9aefae583: https://github.com/Catleris/one-man-sync/actions/runs/41503842167 . Artifact upload succeeded. Both the item MVP and location fix remain untested in-game.
+
+## Farming health and compost · 2026-11-02
+
+Version 0.11.2-hubs-test.3 adds observed herb/tree disease/death summary and patch colors, optional deduplicated local notifications, and session bottomless-bucket Check/fill/remaining/empty observations with configurable refill threshold. Unknown and multiple buckets never imply empty. Keeps prior Slayer work on the development branch. Added seven focused state/protocol tests and docs/FARMING-HEALTH-TEST.md. CI pending; owner game checks remain pending for the combined update.
