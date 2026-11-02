@@ -1,3 +1,36 @@
+# OneMan working notes
+
+Read [STATUS.md](STATUS.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before starting a task, then inspect the current branch and relevant code. These notes describe this repository only; website and Android work have separate repositories.
+
+## Keep the handoff small and accurate
+
+- After meaningful work, update STATUS.md with what changed, the checks actually run and the next step. Update KNOWN_ISSUES.md when an issue is discovered, retested or resolved. Skip entries for routine activity that changes no project state.
+- Separate implemented code, automated checks, owner-confirmed in-game behavior and Plugin Hub publication. A source commit or preview does not prove any of the other stages.
+- Include a date and evidence (commit, file, test result or owner report). Label older reports awaiting retest; never turn an old report into a newly confirmed bug.
+- Keep resolved issues as short dated entries; avoid duplicating detailed checklists already in docs/.
+- Never store Sync Keys, credentials, bank snapshots, personal account records or private logs in these public documents.
+- Communicate with the owner in Lithuanian; follow the existing language conventions in code and UI.
+
+## OneMan UI and regression expectations
+
+- Preserve the compact shared card/theme system and normal sidebar viewport scrolling.
+- Keep the Tools home, hub selector, Back to Tools navigation and native OneMan Sync settings accessible.
+- Do not reintroduce removed Overview/History/Syncs/Summary views without an explicit request.
+- Keep travel information short and actionable; do not invent coordinates, unlocks or timing.
+- Quest styling belongs to the original reward window: preserve game-owned rewards, ribbon and close controls; avoid an extra quest toast and remove styling/overlays when the window closes.
+- Preserve existing config keys and saved preferences. Local tools must remain usable with website sync disabled.
+
+## Build and test
+
+- Production sources: src/main/java/lt/oneman/sync/; tests and development launcher: src/test/java/lt/oneman/sync/.
+- Use JDK 11 for the CI-matching build: `./gradlew clean build shadowJar` (Windows: `.\\gradlew.bat clean build shadowJar`).
+- Development launch: `./gradlew run` (Windows: `.\\gradlew.bat run`). Optional isolated profile: `-Poneman.isolatedProfile`. The default uses the normal RuneLite home; preserve existing profiles.
+- See README.md, build.gradle and .github/workflows/build.yml for the actual configuration; recheck commands if those files change.
+- For code changes, run relevant checks and report their results honestly. Documentation-only changes need link/content review, not a game launch.
+- In-game testing requirements below apply to gameplay/UI behavior changes; documentation maintenance does not require owner game confirmation.
+
+---
+
 # RuneLite Plugin Development — Agent Guidelines
 
 ## Logging
