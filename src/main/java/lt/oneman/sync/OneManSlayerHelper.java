@@ -56,6 +56,7 @@ public class OneManSlayerHelper
     private String lastView = "";
     private int nextRefresh;
     private volatile boolean active;
+    private java.util.List<SlayerTaskItems.Row> taskItemRows=Collections.emptyList();
 
     private java.util.function.Supplier<JsonObject> taskState=JsonObject::new;
 
@@ -129,14 +130,6 @@ public class OneManSlayerHelper
         int liveRemaining=client.getVarpValue(VarPlayerID.SLAYER_COUNT);
         OneManSlayerState.LocalTask task=OneManSlayerState.localTask(taskState.get(),liveRemaining);
         refreshTaskItems(task);
-        SlayerLabCatalog.Guide hintGuide=SlayerLabCatalog.find(task.name);
-        if(task.known() && hintGuide!=null) {
-            Set<String> inv=itemNames(InventoryID.INV), worn=itemNames(InventoryID.WORN);
-            java.util.List<SlayerRequirementOverlay.Row> rows=new ArrayList<>();
-            for(SlayerLabCatalog.Requirement requirement:hintGuide.requirements)
-                rows.add(SlayerRequirementOverlay.row(requirement,inv,worn,account.bank.items,account.bank.seen>0));
-            requirementOverlay.rows=Collections.unmodifiableList(rows);
-        }
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();
@@ -181,7 +174,7 @@ public class OneManSlayerHelper
         SlayerLabCatalog.Guide guide = SlayerLabCatalog.find(name);
         SlayerLabKnowledge.Entry knowledge = SlayerLabKnowledge.find(name);
         String summary = name + "\nRemaining: " + remaining + "\nAssigned area: " + (location == null || location.isEmpty() ? "any eligible location" : location);
-        String prep = account.preparation(guide, inventory, equipment, now)
+        String prep = SlayerLabSupplies.taskPreparation(taskItemRows) + "\n" + account.bankAge(now)
             + "\n\n" + (guide == null ? "Use Task Wiki for requirements." : guide.advice)
             + "\n\n" + (knowledge == null ? "" : knowledge.overview())
             + "\n\nYour Slayer level: " + client.getRealSkillLevel(Skill.SLAYER);
@@ -285,8 +278,14 @@ public class OneManSlayerHelper
     private void refreshTaskItems(OneManSlayerState.LocalTask task)
     {
         java.util.List<SlayerTaskItems.Rule> rules=task.known() && task.remaining>0 ?
-            SlayerTaskItems.rules(task.name,client.getVarbitValue(VarbitID.KOUREND_DIARY_ELITE_COMPLETE)==1,variant) : Collections.emptyList();
+            SlayerTaskItems.rules(task.name,client.getVarbitValue(VarbitID.KOUREND_DIARY_ELITE_COMPLETE)==1) : Collections.emptyList();
         java.util.List<SlayerTaskItems.Row> rows=SlayerTaskItems.evaluate(rules,itemNames(InventoryID.INV),itemNames(InventoryID.WORN),account.bank.items,account.bank.seen>0);
+        taskItemRows=rows;
+        java.util.List<SlayerRequirementOverlay.Row> overlayRows=new ArrayList<>();
+        for(SlayerTaskItems.Row row:rows)
+            overlayRows.add(new SlayerRequirementOverlay.Row(row.rule.item.label,
+                row.status==SlayerTaskItems.Status.CARRIED ? "Carried — check item notes" : row.text().substring(row.rule.item.label.length()+3),row.color()));
+        requirementOverlay.rows=Collections.unmodifiableList(overlayRows);
         Map<Integer,Color> highlights=new HashMap<>();
         ItemContainer bank=client.getItemContainer(InventoryID.BANK);
         if(bank!=null) for(Item item:bank.getItems())

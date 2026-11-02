@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 public class SlayerTaskItemsTest
 {
     private List<SlayerTaskItems.Row> rows(String task, Set<String> inv, Set<String> worn, Map<String,Integer> bank, boolean known)
-    { return SlayerTaskItems.evaluate(SlayerTaskItems.rules(task,false,SlayerLabAdvice.REGULAR),inv,worn,bank,known); }
+    { return SlayerTaskItems.evaluate(SlayerTaskItems.rules(task,false),inv,worn,bank,known); }
     private Set<String> items(String... names) { return new HashSet<>(Arrays.asList(names)); }
     @Test public void standardTasksDoNotRequestGenericGear()
     {
@@ -56,7 +56,7 @@ public class SlayerTaskItemsTest
     @Test public void bootsAreSuppressedByEliteDiary()
     {
         for(String task:Arrays.asList("Wyrms","Drakes","Hydras")) {
-            assertTrue(SlayerTaskItems.rules(task,true,SlayerLabAdvice.REGULAR).isEmpty());
+            assertTrue(SlayerTaskItems.rules(task,true).isEmpty());
             List<SlayerTaskItems.Row> rows=rows(task,items(),items(),Collections.singletonMap("boots of stone",1),true);
             assertEquals(SlayerTaskItems.UTILITY,SlayerTaskItems.highlight("boots of stone",rows));
             assertNull(SlayerTaskItems.highlight("boots of stone",rows(task,items("granite boots"),items(),Collections.emptyMap(),true)));

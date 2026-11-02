@@ -44,7 +44,7 @@ final class SlayerTaskItems
     }
     private static Rule mandatory(String label,String note,String... names) { return new Rule(Tier.MANDATORY,label,note,names); }
     private static Rule utility(String label,String note,String... names) { return new Rule(Tier.UTILITY,label,note,names); }
-    static List<Rule> rules(String task, boolean eliteKourend, String variant)
+    static List<Rule> rules(String task, boolean eliteKourend)
     {
         String key=SlayerLabCatalog.taskKey(task);
         switch(key)

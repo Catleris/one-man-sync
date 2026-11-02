@@ -1,6 +1,6 @@
 # Smart Slayer preparation MVP
 
-2026-11-02 · branch `dev/slayer-smart-bank-prep` · based on master `51ad900`.
+2026-11-02 · version `0.11.2-slayer-test.1` · branch `dev/slayer-smart-bank-prep` · based on master `51ad900`.
 
 The Slayer Hub header lists special required/recommended items. Green means carried/equipped (wear protective equipment before combat), yellow means found in the profile's dated bank snapshot, red means absent from that snapshot, and grey means the bank has not been observed. Hover a row for restrictions. A dated snapshot cannot prove current ownership.
 
