@@ -36,3 +36,7 @@ Owner screenshot confirms Lizardmen has source locations but an empty destinatio
 ## Farming health and compost · 2026-11-02
 
 Version 0.11.2-hubs-test.3 adds observed herb/tree disease/death summary and patch colors, optional deduplicated local notifications, and session bottomless-bucket Check/fill/remaining/empty observations with configurable refill threshold. Unknown and multiple buckets never imply empty. Keeps prior Slayer work on the development branch. Added seven focused state/protocol tests and docs/FARMING-HEALTH-TEST.md. Java 11 clean build/test/shadowJar passed on code commit e0469b9522a473e8484598830c4ef16c9fbed895 (including seven new Farming tests): https://github.com/Catleris/one-man-sync/actions/runs/41505449762 . Artifact upload succeeded. Owner game checks remain pending for the combined update.
+
+## Slayer Session drops · 2026-11-02
+
+Version 0.11.2-hubs-test.4 adds compact superior-kill/elapsed/notable-loot session card in the existing Loot tab, recent-three display/last-five source tooltip and profile-guarded Reset session. Attributed loot only; spawn messages do not count, pickup and RDT provenance are not inferred. Session continues across tasks and clears on logout/profile/plugin changes. Added seven model regression tests and docs/SLAYER-SESSION-DROPS-TEST.md. Combined CI pending; all owner gameplay checks remain pending.

@@ -44,6 +44,8 @@ public class OneManSlayerHelper
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
     private final SuperiorAlert superiorAlert=new SuperiorAlert();
+    private final SlayerSessionDrops sessionDrops=new SlayerSessionDrops();
+    private String lastDropTask="";
     private String variant = SlayerLabAdvice.REGULAR, goal = "", lastWarning = "";
     private final SlayerLabPrayer prayerMonitor = new SlayerLabPrayer();
     private int lastXp = -1;
@@ -63,6 +65,7 @@ public class OneManSlayerHelper
     void startUp(java.util.function.Supplier<JsonObject> taskState)
     {
         this.taskState=taskState;
+        sessionDrops.reset(0);lastDropTask="";
         prayerMonitor.reset();
         superiorAlert.reset();
         active = true;
@@ -81,6 +84,7 @@ public class OneManSlayerHelper
         prayerMonitor.reset();
         account.pause("Plugin stopped", System.currentTimeMillis());
         active = false;
+        sessionDrops.reset(0);lastDropTask="";
         bankOverlay.slayerNeeded=Collections.emptyMap();
         taskState=JsonObject::new;
         superiorAlert.reset();
@@ -102,6 +106,8 @@ public class OneManSlayerHelper
         if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
             prayerMonitor.reset();
+            sessionDrops.reset(0);lastDropTask="";
+            publishSessionDrops(System.currentTimeMillis());
             superiorAlert.reset();
             account.pause("Logged out", System.currentTimeMillis());
             lastXp = -1; currentTask = ""; lastWarning = "";
@@ -133,6 +139,8 @@ public class OneManSlayerHelper
         if (client.getTickCount() < nextRefresh) return;
         nextRefresh = client.getTickCount() + 5;
         long now = System.currentTimeMillis();
+        if(task.known() && task.remaining>0) { sessionDrops.start(now);lastDropTask=task.name; }
+        publishSessionDrops(now);
         goal = Optional.ofNullable(configManager.getConfiguration(SlayerLabConfig.GROUP, account.profile, "lootGoal")).orElse("");
         if (lastXp < 0) lastXp = client.getSkillExperience(Skill.SLAYER);
         String name=task.name, location=task.location;
@@ -230,6 +238,7 @@ public class OneManSlayerHelper
         if(!Objects.equals(profileKey,account.profile))
         {
             bankOverlay.slayerNeeded=Collections.emptyMap();
+            sessionDrops.reset(0);lastDropTask="";
             prayerMonitor.reset();
             lastXp=-1; currentTask=""; lastWarning=""; clearLocations();
             variant=SlayerLabAdvice.REGULAR;
@@ -264,16 +273,31 @@ public class OneManSlayerHelper
     }
     public void onNpcLootReceived(NpcLootReceived event)
     {
-        if(account.journal.active==null || !Objects.equals(account.profile,configManager.getRSProfileKey())) return;
-        SlayerLabKnowledge.Entry entry=SlayerLabKnowledge.find(currentTask);
-        if(entry==null || !entry.matchesNpc(event.getNpc().getName())) return;
+        if(!active || client.getGameState()!=GameState.LOGGED_IN || event.getNpc()==null || !bindAccount(System.currentTimeMillis())) return;
+        String source=event.getNpc().getName();
+        SlayerLabKnowledge.Entry entry=SlayerLabKnowledge.find(lastDropTask);
+        boolean matching=entry!=null && entry.matchesNpc(source);
+        if(!matching && !SlayerSessionDrops.superior(source)) return;
         Map<String,Integer> loot=new TreeMap<>();
         for(ItemStack stack:event.getItems()) {
             ItemComposition d=itemManager.getItemComposition(stack.getId());
             if(d.getNote()!=-1) d=itemManager.getItemComposition(d.getLinkedNoteId());
-            loot.merge(SlayerLabKnowledge.normalize(d.getName()),stack.getQuantity(),Integer::sum);
+            loot.merge(d.getName(),stack.getQuantity(),Integer::sum);
         }
-        account.journal.loot(loot); nextRefresh=0;
+        String eventKey=event.getNpc().getIndex()+":"+event.getNpc().getId()+":"+client.getTickCount();
+        if(!sessionDrops.loot(eventKey,source,loot,matching,System.currentTimeMillis())) return;
+        if(account.journal.active!=null && matching) {
+            Map<String,Integer> journalLoot=new TreeMap<>();
+            loot.forEach((name,quantity)->journalLoot.merge(SlayerLabKnowledge.normalize(name),quantity,Integer::sum));
+            account.journal.loot(journalLoot);
+        }
+        nextRefresh=0;
+        publishSessionDrops(System.currentTimeMillis());
+    }
+    private void publishSessionDrops(long now)
+    {
+        String summary=sessionDrops.summary(now), detail=sessionDrops.detail(), profile=account.profile;
+        SwingUtilities.invokeLater(()->{if(active && panel!=null) panel.showSessionDrops(summary,detail,profile);});
     }
     private void refreshTaskItems(OneManSlayerState.LocalTask task)
     {
@@ -387,6 +411,8 @@ public class OneManSlayerHelper
         private String url = "";
         private final JComboBox<SlayerLabLocations.Destination> choices = new JComboBox<>();
         private final JTextArea access = new JTextArea();
+        private final JTextArea dropsText=OneManCards.text("Waiting for a Slayer task.");
+        private String dropsProfile="";
         private final JPanel taskItems=new JPanel();
         private String taskItemsSignature="";
         private final JTextArea taskSummary = new JTextArea(3,0);
@@ -413,6 +439,20 @@ public class OneManSlayerHelper
                     saveGoal.addActionListener(e -> { String entered=String.valueOf(goals.getEditor().getItem()).trim(); String value=entered.substring(0,Math.min(120,entered.length())); String profile=shownProfile; clientThread.invokeLater(()->{ if(!profile.isEmpty() && Objects.equals(profile,account.profile) && Objects.equals(profile,configManager.getRSProfileKey())) { configManager.setConfiguration(SlayerLabConfig.GROUP,account.profile,"lootGoal",value); nextRefresh=0; } }); }); }
                 pages[i]=page;
             }
+            JPanel dropCard=OneManCards.card();dropCard.setName("slayerSessionDrops");
+            JLabel dropsTitle=new JLabel("Session drops");dropsTitle.setFont(OneManCards.HEADING);dropsTitle.setForeground(OneManCards.ACCENT);
+            dropCard.add(dropsTitle,BorderLayout.NORTH);dropCard.add(dropsText,BorderLayout.CENTER);
+            JButton resetDrops=new JButton("Reset session");resetDrops.setName("resetSlayerSessionDrops");
+            resetDrops.addActionListener(e->{String profile=dropsProfile;clientThread.invokeLater(()->{
+                if(active && client.getGameState()==GameState.LOGGED_IN && !profile.isEmpty() && Objects.equals(profile,configManager.getRSProfileKey()) && Objects.equals(profile,account.profile)) {
+                    sessionDrops.reset(System.currentTimeMillis());publishSessionDrops(System.currentTimeMillis());nextRefresh=0;
+                }
+            });});
+            dropCard.add(resetDrops,BorderLayout.SOUTH);
+            Component lootOptions=((BorderLayout)pages[6].getLayout()).getLayoutComponent(BorderLayout.NORTH);
+            JPanel lootHeader=new JPanel(new BorderLayout(0,6));lootHeader.add(dropCard,BorderLayout.NORTH);
+            if(lootOptions!=null) lootHeader.add(lootOptions,BorderLayout.SOUTH);
+            pages[6].add(lootHeader,BorderLayout.NORTH);
             optionalViews();
             add(tabs, BorderLayout.CENTER);
             variants.addActionListener(e -> { if(updating) return; String value=(String)variants.getSelectedItem(); if(value!=null) clientThread.invokeLater(()->{variant=value; nextRefresh=0;}); });
@@ -463,6 +503,10 @@ public class OneManSlayerHelper
             header.add(taskItems,BorderLayout.SOUTH);
             add(header, BorderLayout.NORTH);
             OneManTheme.apply(this);
+        }
+        void showSessionDrops(String text,String detail,String profile)
+        {
+            CompanionText.update(dropsText,text);dropsText.setToolTipText(detail);dropsProfile=profile;
         }
         void showTaskItems(java.util.List<SlayerTaskItems.Row> rows)
         {
@@ -519,6 +563,7 @@ public class OneManSlayerHelper
         void showView(String view, String link)
         {
             updating=true; shownTask=""; shownProfile="";
+
             showTaskItems(Collections.emptyList());
             taskSummary.setText(view);
             for(int i=0;i<8;i++) sections[i].setText(view.length()<100&&!view.contains("\n")?"":view);
