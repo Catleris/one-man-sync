@@ -441,7 +441,7 @@ public class OneManSlayerHelper
             }
             choices.addActionListener(e -> {
                 SlayerLabLocations.Destination choice = (SlayerLabLocations.Destination) choices.getSelectedItem();
-                access.setText(choice == null ? "No mapped entrance available." : SlayerLabAdvice.comparison(choice,shownTask));
+                access.setText(choice == null ? "No task locations available." : SlayerLabAdvice.comparison(choice,shownTask));
                 boolean pin=choice!=null&&choice.entrance!=null;centre.setEnabled(pin);track.setEnabled(pin);
             });
             locationWiki.addActionListener(e->{SlayerLabLocations.Destination choice=(SlayerLabLocations.Destination)choices.getSelectedItem();if(choice!=null)LinkBrowser.browse("https://oldschool.runescape.wiki/w/"+java.net.URLEncoder.encode(choice.name.replace(' ','_'),java.nio.charset.StandardCharsets.UTF_8));});

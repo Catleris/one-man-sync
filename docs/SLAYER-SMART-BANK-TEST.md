@@ -1,6 +1,6 @@
 # Smart Slayer preparation MVP
 
-2026-11-02 · version `0.11.2-slayer-test.1` · branch `dev/slayer-smart-bank-prep` · based on master `51ad900`.
+2026-11-02 · version `0.11.2-slayer-test.2` · branch `dev/slayer-smart-bank-prep` · based on master `51ad900`.
 
 The Slayer Hub header lists special required/recommended items. Green means carried/equipped (wear protective equipment before combat), yellow means found in the profile's dated bank snapshot, red means absent from that snapshot, and grey means the bank has not been observed. Hover a row for restrictions. A dated snapshot cannot prove current ownership.
 
@@ -23,3 +23,7 @@ Launch from this branch with `.\gradlew.bat run` or IntelliJ `OneManSyncPluginTe
 No Plugin Hub manifest is updated by this test PR. Automated checks do not establish game behavior.
 
 Reference mechanics: https://oldschool.runescape.wiki/w/Slayer_equipment , https://oldschool.runescape.wiki/w/Slayer_helmet , https://oldschool.runescape.wiki/w/Witchwood_icon .
+
+## Unrestricted task locations (test.2)
+
+With a non-Konar Lizardmen task, Places must list Lizardmen Settlement and Lizardman canyon. Select each and open Location guide. These references have no verified entrance pin, so Centre map / Track entrance stay disabled. Check Hellhounds, Dark beasts and Lizards as available. A Konar assignment must still show only its assigned area; known entrances should retain map tracking. Existing item highlights still need owner testing.

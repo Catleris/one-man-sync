@@ -10,7 +10,7 @@ public class SlayerLabLocationsTest
     @Test public void blueDragonsHaveTwoDistinctEntrances()
     {
         List<SlayerLabLocations.Destination> choices = SlayerLabLocations.forTask("Blue dragons", "");
-        assertEquals(2, choices.size());
+        assertTrue(choices.size() >= 2);
         assertNotEquals(choices.get(0).entrance, choices.get(1).entrance);
         assertTrue(choices.get(1).access.contains("Heroes' Quest"));
     }
@@ -29,7 +29,8 @@ public class SlayerLabLocationsTest
     @Test public void unknownTasksAndUnmappedLocationsDoNotInventPins()
     {
         assertTrue(SlayerLabLocations.forTask("Unknown monster", "").isEmpty());
-        assertTrue(SlayerLabLocations.forTask("Lizards", "").isEmpty());
+        assertFalse(SlayerLabLocations.forTask("Lizards", "").isEmpty());
+        assertNull(SlayerLabLocations.forTask("Lizards", "").get(0).entrance);
         assertTrue(SlayerLabLocations.forTask("Blue dragons", "Wilderness Slayer Cave").get(0).wilderness);
     }
     @Test public void wildernessIsExplicitAndNotFirstChoice()
@@ -37,6 +38,31 @@ public class SlayerLabLocationsTest
         List<SlayerLabLocations.Destination> choices = SlayerLabLocations.forTask("Greater demons", "");
         assertFalse(choices.get(0).wilderness);
         assertTrue(choices.stream().anyMatch(d -> d.wilderness && d.toString().contains("WILDERNESS")));
+    }
+    @Test public void unrestrictedLizardmenExposeSourceLocations()
+    {
+        List<SlayerLabLocations.Destination> choices=SlayerLabLocations.forTask("Lizardmen", "");
+        assertTrue(choices.stream().anyMatch(d->d.name.equalsIgnoreCase("Lizardmen Settlement")));
+        assertTrue(choices.stream().anyMatch(d->d.name.equalsIgnoreCase("Lizardman canyon")));
+        assertEquals(choices,SlayerLabLocations.forTask("Lizardman", ""));
+        assertTrue(choices.stream().allMatch(d->d.entrance==null));
+    }
+    @Test public void everySourceLocationIsSelectableWithoutAnAssignedArea()
+    {
+        for(SlayerLabKnowledge.Entry entry:SlayerLabKnowledge.all())
+            for(String place:entry.locations.split(";\\s*"))
+                if(!place.trim().isEmpty() && !place.equalsIgnoreCase("N/A"))
+                    assertTrue(entry.task+" / "+place,SlayerLabLocations.forTask(entry.task,"").stream().anyMatch(d->d.matches(place)));
+    }
+    @Test public void sourceFallbackKeepsAssignedAreaRestrictionAndWildWarning()
+    {
+        List<SlayerLabLocations.Destination> choices=SlayerLabLocations.forTask("Lizardmen","Lizardman canyon");
+        assertEquals(1,choices.size());
+        assertEquals("Lizardman canyon",choices.get(0).name);
+        assertNull(choices.get(0).entrance);
+        assertTrue(new SlayerLabLocations.Destination("Wilderness reference","No pin").wilderness);
+        assertFalse(SlayerLabLocations.forTask("Hellhounds","").isEmpty());
+        assertFalse(SlayerLabLocations.forTask("Dark beasts","").isEmpty());
     }
     @Test public void directionHandlesArrivalAndFloors()
     {
