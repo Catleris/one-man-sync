@@ -28,3 +28,7 @@ Updated: 2026-11-02. This is a short handoff list, not a claim that every histor
 ## Resolved / confirmed
 
 No new runtime issue was resolved or tested by this documentation-only change. Add dated results here when evidence is available; do not silently delete unresolved reports.
+
+## Collection Log popup duplication · 2026-11-04
+
+Owner reports native and OneMan Collection Log popups overlap. Fix implemented on fix/collection-popup-duplicate; automated build and in-game retest pending. Verify a new real collection entry shows one OneMan banner; disabling OneMan Collection Log keeps the native notification, and preview does not suppress it.
