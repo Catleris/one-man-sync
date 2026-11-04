@@ -60,7 +60,7 @@ final class TargetInfoOverlay extends Overlay
         Rectangle bounds=inventory.getBounds();
         if(bounds==null||bounds.width<140||bounds.height<180)return null;
         // Avoid taking control of an item drag already started in the native inventory.
-        if(client.getDraggedWidget()!=null)return null;
+        if(client.getDraggedWidget()!=null||client.isMenuOpen())return null;
         Graphics2D g=(Graphics2D)graphics.create();
         try{
             Font font=FontManager.getRunescapeSmallFont();g.setFont(font);
