@@ -128,7 +128,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="clueGroundLabelHeight", name="Clue ground label height", description="Height above a ground item's layer; adjust to separate from Ground Items labels.", position=87, section=clueSection)
     default int clueGroundLabelHeight() { return 70; }
 
-    @ConfigItem(keyName="monstersTargetInfo", name="Target info by inventory (beta)", description="Show static reference weaknesses for your current NPC target beside the inventory. Alt-drag to move. Works with website sync off.", position=102, section=monstersSection)
+    @ConfigItem(keyName="monstersTargetInfo", name="Target info in inventory (beta)", description="Show an Items / Target info page in the inventory area. Remembers the last NPC after combat. Works with website sync off.", position=102, section=monstersSection)
     default boolean monstersTargetInfo() { return false; }
     @ConfigItem(keyName="monstersTargetExpanded", name="Target info details", description="Expand reference defence bonuses, base HP and base attack speed. These are not live combat stats or DPS advice.", position=103, section=monstersSection)
     default boolean monstersTargetExpanded() { return false; }

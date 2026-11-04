@@ -175,6 +175,6 @@ Test build `0.9.0-unlocks-test` adds a searchable, collapsible account unlock re
 
 `0.9.1-clean-ui-test` starts on a compact Tools home. Roadmap and Slayer session/history views are optional; Unlocks use short actionable instructions. See [changes and manual checks](docs/CLEAN-UI-TEST.md).
 
-### Development trial: target info by inventory
+### Development trial: target info in inventory
 
-Branch `dev/target-info` adds an opt-in compact NPC reference card in Monsters Hub. Open inventory, target an NPC, and Alt-drag the card beside your items; right-click to toggle details. Exact NPC variants only, static bonuses rather than live DPS advice. [Trial instructions](docs/TARGET-INFO-TEST.md). Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).
+Branch `dev/target-info` (0.11.4-target-test.2) adds an opt-in NPC reference page inside the inventory area, with Items / Target info tabs and stat icons. It retains the last NPC after combat. Open it from Monsters Hub or the small i under the item grid. Exact NPC variants only, static bonuses rather than live DPS advice. [Trial instructions](docs/TARGET-INFO-TEST.md). Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).

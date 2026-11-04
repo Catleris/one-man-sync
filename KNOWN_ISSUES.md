@@ -38,3 +38,5 @@ Owner reports native and OneMan Collection Log popups overlap. Fix implemented i
 ## Target info trial · 2026-11-04
 
 Development-only 0.11.4-target-test.1 requires owner inventory-layout, switching/death and Slayer-filter checks in docs/TARGET-INFO-TEST.md. Static source bonuses are not live weakness/DPS calculations; scaled/drained/phase stats are not inferred. Missing/conflicting IDs display unavailable. Card defaults beside the inventory and can be Alt-dragged; it does not replace the game's inventory tab. Java 11 clean build/test/shadowJar passed (run 41792634099, source 82cd740); owner game/layout checks pending.
+
+- 2026-11-04 owner trial: test.1 floated beside chatbox and disappeared after combat; rejected layout. Test.2 implements inventory-bound page and last-target retention. Java 11 CI pending. Owner must confirm lower-rim i placement, item click protection, tab/bank access and retention on fixed/resizable/stretched layouts before release.

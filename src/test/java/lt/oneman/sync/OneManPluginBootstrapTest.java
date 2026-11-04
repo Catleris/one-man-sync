@@ -66,6 +66,7 @@ public class OneManPluginBootstrapTest
                 bind(ClientToolbar.class).toInstance(toolbar);
                 bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(overlays);
+                bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
                 bind(WorldMapPointManager.class).toInstance(mock(WorldMapPointManager.class));
                 bind(Notifier.class).toInstance(mock(Notifier.class));
                 bind(DrawManager.class).toInstance(mock(DrawManager.class));

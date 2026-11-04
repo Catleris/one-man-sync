@@ -131,7 +131,7 @@ final class MonstersHub
 
     void onGameStateChanged(GameStateChanged event)
     {
-        targetInfo.clear();
+        targetInfo.gameStateChanged(event.getGameState());
         clear();
         scanPending = true;
         suggestion = "Select a profile to use it without a Slayer task.";
@@ -140,7 +140,7 @@ final class MonstersHub
 
     void onConfigChanged()
     {
-        targetInfo.clear();
+        targetInfo.configChanged();
         if (!active) return;
         clear();
         scanPending = true;
@@ -208,7 +208,7 @@ final class MonstersHub
 
     private final class Panel extends JPanel
     {
-        private final JCheckBox targetEnabled = new JCheckBox("Target info by inventory (beta)");
+        private final JCheckBox targetEnabled = new JCheckBox("Target info in inventory (beta)");
         private final JCheckBox targetExpanded = new JCheckBox("Expanded target stats");
         private final JCheckBox targetSlayer = new JCheckBox("Only my Slayer task monsters");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
@@ -233,8 +233,11 @@ final class MonstersHub
             OneManCards targetControls = new OneManCards();
             for(JCheckBox box:new JCheckBox[]{targetEnabled,targetExpanded,targetSlayer}){box.setOpaque(false);targetControls.card(box);}
             targetEnabled.setName("monstersTargetInfo");targetExpanded.setName("monstersTargetExpanded");targetSlayer.setName("monstersTargetSlayerOnly");
-            targetControls.card(OneManCards.text("Appears by your open inventory while targeting an NPC. Alt-drag to move; right-click for details. Static reference, not DPS advice."));
+            targetControls.card(OneManCards.text("Inventory page with Items / Target info tabs. Keeps the last NPC after combat. Use the small i below your items to reopen. Static reference stats."));
             targetControls.card(OneManCards.text("Data: Monster Stats / OSRS Wiki · 4 Nov 2026"));
+            JButton openTarget=new JButton("Open inventory info");openTarget.setName("monstersOpenTargetInfo");
+            openTarget.addActionListener(event->clientThread.invokeLater(()->{configs.setConfiguration("one-man-sync","monstersTargetInfo",true);targetInfo.open();}));
+            targetControls.card(openTarget);
             cards.card(targetControls);
             targetEnabled.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetInfo",targetEnabled.isSelected());});
             targetExpanded.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetExpanded",targetExpanded.isSelected());});
