@@ -58,6 +58,6 @@ final class AchievementAlarmQueue
         if(current==null&&!pending.isEmpty()){current=pending.removeFirst();until=now+seconds*1000L;}
         return current;
     }
-    boolean contains(Kind kind){return (current!=null&&current.kind==kind)||pending.stream().anyMatch(n->n.kind==kind);}
+    boolean containsReal(Kind kind){return (current!=null&&!current.preview&&current.kind==kind)||pending.stream().anyMatch(n->!n.preview&&n.kind==kind);}
     void clear(){pending.clear();seen.clear();current=null;until=0;}
 }

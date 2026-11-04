@@ -26,7 +26,7 @@ final class AchievementAlarms
     @Inject private ClientThread clientThread;
     @Inject private ItemManager items;
     @Inject private QuestWindowTheme questWindow;
-    @Inject private NativeCombatNotice nativeCombatNotice;
+    @Inject private NativeAchievementNotice nativeAchievementNotice;
     @Inject private ConfigManager configs;
     @Inject private OneManSyncConfig config;
     @Inject private OverlayManager overlays;
@@ -46,9 +46,14 @@ final class AchievementAlarms
     private String lastQuestStatus="";
     private JCheckBox collectionBox,combatBox,tiersBox,diariesBox,questsBox;
     void startUp(){active=true;clear();resetProgress();overlays.add(overlay);questWindow.startUp();}
-    void shutDown(){nativeCombatNotice.restore();questWindow.shutDown();active=false;overlays.remove(overlay);clear();resetProgress();itemIds.clear();nextItem=0;}
-    void beforeRender(){nativeCombatNotice.update(active&&config.alarmCombat()&&client.getGameState()==GameState.LOGGED_IN&&queue.contains(AchievementAlarmQueue.Kind.COMBAT_TASK));}
-    void clear(){nativeCombatNotice.restore();queue.clear();displayed=null;icon=null;}
+    void shutDown(){nativeAchievementNotice.restore();questWindow.shutDown();active=false;overlays.remove(overlay);clear();resetProgress();itemIds.clear();nextItem=0;}
+    void beforeRender(){
+        boolean replacing=active&&client.getGameState()==GameState.LOGGED_IN;
+        nativeAchievementNotice.update(
+            replacing&&config.alarmCombat()&&queue.containsReal(AchievementAlarmQueue.Kind.COMBAT_TASK),
+            replacing&&config.alarmCollection()&&queue.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+    }
+    void clear(){nativeAchievementNotice.restore();queue.clear();displayed=null;icon=null;}
     private void resetProgress(){progress.reset();warmup=10;progressDirty=true;tiersEnabled=config.alarmCombatTiers();diariesEnabled=config.alarmDiaries();}
     void progressChanged(){progressDirty=true;}
     void onGameStateChanged(GameStateChanged event){
@@ -141,7 +146,7 @@ final class AchievementAlarms
         }
     }
     void onConfigChanged(){
-        if(!config.alarmCombat())nativeCombatNotice.restore();
+        nativeAchievementNotice.restore();
         // Enabling between a varbit event and the next game tick must not backfill it.
         if(client.getGameState()==GameState.LOGGED_IN&&warmup==0){
             if(config.alarmCombatTiers()&&!tiersEnabled)progress.baselineCombat(client.getVarbitValue(VarbitID.CA_POINTS),readThresholds());

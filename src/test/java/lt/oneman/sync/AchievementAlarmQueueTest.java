@@ -41,4 +41,18 @@ public class AchievementAlarmQueueTest {
         q.add(a,12000);assertSame(a,q.advance(12000,3,true,true));assertNull(q.advance(12001,3,false,true));
         q.add(b,22000);q.clear();assertNull(q.advance(22000,3,true,true));
     }
+    @Test public void onlyRealCurrentOrPendingNoticesReplaceNativePopups(){
+        AchievementAlarmQueue q=new AchievementAlarmQueue();
+        q.add(new AchievementAlarmQueue.Notice(false,"Preview","NEW ITEM",-1,true),100);
+        q.advance(100,3,true,true);
+        assertFalse(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+        q.add(AchievementAlarmQueue.parse("New item added to your collection log: Huasca seed"),101);
+        assertTrue(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+        assertFalse(q.containsReal(AchievementAlarmQueue.Kind.COMBAT_TASK));
+        q.advance(3100,3,true,true);assertTrue(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+        q.advance(6100,3,true,true);assertFalse(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+        q.add(AchievementAlarmQueue.parse("New item added to your collection log: Another item"),6200);
+        q.advance(6200,3,false,true);assertFalse(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+        q.clear();assertFalse(q.containsReal(AchievementAlarmQueue.Kind.COLLECTION));
+    }
 }
