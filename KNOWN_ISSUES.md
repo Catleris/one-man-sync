@@ -41,4 +41,4 @@ Development-only 0.11.4-target-test.1 requires owner inventory-layout, switching
 
 - 2026-11-04 owner trial: test.1 floated beside chatbox and disappeared after combat; rejected layout. Test.2 implements inventory-bound page and last-target retention. Java 11 clean build/test/shadowJar passed, 188 tests (run 41871982510, source 18aea45). Owner must confirm lower-rim i placement, item click protection, tab/bank access and retention on fixed/resizable/stretched layouts before release.
 
-- 2026-11-04 owner screenshot: test.2 lower-rim i overlaps native bottom tab. Fixed in test.3 with larger side dock and geometry checks; full Java 11 CI and owner layout retest pending. If no side fits on the canvas, use Monsters Hub Open inventory info.
+- 2026-11-04 owner screenshot: test.2 lower-rim i overlaps native bottom tab. Fixed in test.3 with larger side dock and geometry checks; nine focused tests passed locally with Java 11-compatible compilation on JDK 17; full Java 11 CI queued (run 41879083630) and owner layout retest pending. If no side fits on the canvas, use Monsters Hub Open inventory info.
