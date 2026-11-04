@@ -31,4 +31,4 @@ No new runtime issue was resolved or tested by this documentation-only change. A
 
 ## Collection Log popup duplication · 2026-11-04
 
-Owner reports native and OneMan Collection Log popups overlap. Fix implemented on fix/collection-popup-duplicate; automated build and in-game retest pending. Verify a new real collection entry shows one OneMan banner; disabling OneMan Collection Log keeps the native notification, and preview does not suppress it.
+Owner reports native and OneMan Collection Log popups overlap. Fix implemented in PR #11 on fix/collection-popup-duplicate; Java 11 clean build/test/shadowJar passed (run 41787835899, source d883124). In-game retest pending. Verify a new real collection entry shows one OneMan banner; disabling OneMan Collection Log keeps the native notification, and preview does not suppress it.
