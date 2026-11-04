@@ -47,6 +47,7 @@ final class MonstersHub
     @Inject private ConfigManager configs;
     @Inject private OverlayManager overlays;
     @Inject private ShamanMinionOverlay overlay;
+    @Inject private TargetInfo targetInfo;
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
     private volatile boolean active;
@@ -67,6 +68,7 @@ final class MonstersHub
     void startUp(Supplier<JsonObject> slayerState)
     {
         this.slayerState = slayerState;
+        targetInfo.startUp();
         active = true;
         scanPending = true;
         minions.clear();
@@ -79,6 +81,7 @@ final class MonstersHub
     void shutDown()
     {
         active = false;
+        targetInfo.shutDown();
         clear();
         slayerState = null;
         overlays.remove(overlay);
@@ -128,6 +131,7 @@ final class MonstersHub
 
     void onGameStateChanged(GameStateChanged event)
     {
+        targetInfo.clear();
         clear();
         scanPending = true;
         suggestion = "Select a profile to use it without a Slayer task.";
@@ -136,6 +140,7 @@ final class MonstersHub
 
     void onConfigChanged()
     {
+        targetInfo.clear();
         if (!active) return;
         clear();
         scanPending = true;
@@ -147,6 +152,7 @@ final class MonstersHub
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
+        targetInfo.tick(task);
         suggestion = suggestsShaman(task)
             ? "Suggested for your task: Lizardman Shaman."
             : "Choose a profile above.";
@@ -202,6 +208,9 @@ final class MonstersHub
 
     private final class Panel extends JPanel
     {
+        private final JCheckBox targetEnabled = new JCheckBox("Target info by inventory (beta)");
+        private final JCheckBox targetExpanded = new JCheckBox("Expanded target stats");
+        private final JCheckBox targetSlayer = new JCheckBox("Only my Slayer task monsters");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
         private final JCheckBox pulse = new JCheckBox("Gentle outline pulse");
         private final JCheckBox tiles = new JCheckBox("Mark current minion tiles");
@@ -220,7 +229,16 @@ final class MonstersHub
         {
             super(new BorderLayout());
             OneManCards cards = new OneManCards();
-            cards.card(OneManCards.banner("Monsters Hub", "Lizardman Shaman"));
+            cards.card(OneManCards.banner("Monsters Hub", "Target info & Shaman"));
+            OneManCards targetControls = new OneManCards();
+            for(JCheckBox box:new JCheckBox[]{targetEnabled,targetExpanded,targetSlayer}){box.setOpaque(false);targetControls.card(box);}
+            targetEnabled.setName("monstersTargetInfo");targetExpanded.setName("monstersTargetExpanded");targetSlayer.setName("monstersTargetSlayerOnly");
+            targetControls.card(OneManCards.text("Appears by your open inventory while targeting an NPC. Alt-drag to move; right-click for details. Static reference, not DPS advice."));
+            targetControls.card(OneManCards.text("Data: Monster Stats / OSRS Wiki · 4 Nov 2026"));
+            cards.card(targetControls);
+            targetEnabled.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetInfo",targetEnabled.isSelected());});
+            targetExpanded.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetExpanded",targetExpanded.isSelected());});
+            targetSlayer.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetSlayerOnly",targetSlayer.isSelected());});
             JPanel settings = OneManCards.card();
             OneManCards controls = new OneManCards();
             controls.setOpaque(false);
@@ -298,6 +316,7 @@ final class MonstersHub
         void refresh(String message)
         {
             updating = true;
+            targetEnabled.setSelected(config.monstersTargetInfo());targetExpanded.setSelected(config.monstersTargetExpanded());targetSlayer.setSelected(config.monstersTargetSlayerOnly());
             profile.setSelectedItem(config.monstersProfile());
             tiles.setSelected(config.monstersShamanTiles());
             pulse.setSelected(config.monstersShamanPulse());

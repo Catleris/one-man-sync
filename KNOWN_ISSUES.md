@@ -34,3 +34,7 @@ No new runtime issue was resolved or tested by this documentation-only change. A
 Owner reports native and OneMan Collection Log popups overlap. Fix implemented in PR #11 on fix/collection-popup-duplicate; Java 11 clean build/test/shadowJar passed (run 41787835899, source d883124). In-game retest pending. Verify a new real collection entry shows one OneMan banner; disabling OneMan Collection Log keeps the native notification, and preview does not suppress it.
 
 - 2026-11-04 release status: Collection Log duplication fix 0.11.3 merged via source PR #11 (284c81fa90843acf404b329eca070ade7ab6e094); release-version Java 11 build/tests passed (run 41788334454). Plugin Hub PR https://github.com/runelite/plugin-hub/pull/20096 submitted and awaiting review. In-game retest pending.
+
+## Target info trial · 2026-11-04
+
+Development-only 0.11.4-target-test.1 requires owner inventory-layout, switching/death and Slayer-filter checks in docs/TARGET-INFO-TEST.md. Static source bonuses are not live weakness/DPS calculations; scaled/drained/phase stats are not inferred. Missing/conflicting IDs display unavailable. Card defaults beside the inventory and can be Alt-dragged; it does not replace the game's inventory tab. Automated Java 11 build pending.

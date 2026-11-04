@@ -54,3 +54,7 @@ Owner reported the native Collection Log popup showing behind the custom OneMan 
 ## Collection Log fix release submission · 2026-11-04
 
 Owner authorized the 0.11.3 release and RuneLite submission. Release-version Java 11 clean build/test/shadowJar passed: https://github.com/Catleris/one-man-sync/actions/runs/41788334454 . Source PR #11 merged as 284c81fa90843acf404b329eca070ade7ab6e094. Submitted https://github.com/runelite/plugin-hub/pull/20096 using the owner-authorized browser fallback after the integration returned HTTP 403. The manifest changes only plugins/one-man-sync and pins that merge commit; warning unchanged. PR is open for RuneLite review, not yet approved/distributed. Owner in-game retest remains pending.
+
+## Target info inventory-side trial · 2026-11-04
+
+Implemented on dev/target-info from master 22f2726, version 0.11.4-target-test.1. Opt-in movable compact/expanded reference card by open inventory, current NPC interaction only, optional active-Slayer-match filter. No network calls, live combat calculations or mechanics predictions. Exact transformed NPC IDs from a bundled Monster Stats snapshot; 3,974 unique IDs retained and 74 conflicting IDs omitted. Data attribution/upstream BSD license preserved in target-info-LICENSE.txt. Unknown/non-scalar fields remain unknown; tied melee bonuses are explicit. Existing 0.11.3 Plugin Hub submission is unchanged. Added focused controller/catalog/rendering tests and docs/TARGET-INFO-TEST.md. Java 11 CI pending; owner game verification pending.
