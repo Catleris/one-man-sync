@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.GradientPaint;
+import java.awt.RenderingHints;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
@@ -35,15 +37,16 @@ final class TargetInfoOverlay extends Overlay
     private BufferedImage[] icons;
     TargetInfoOverlay(){setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.ABOVE_WIDGETS);}
     static final class HitAreas {
-        static final HitAreas EMPTY=new HitAreas(new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),false);
-        final Rectangle panel, items, info, details, clear;final boolean page;
-        HitAreas(Rectangle panel,Rectangle items,Rectangle info,Rectangle details,Rectangle clear,boolean page){
-            this.panel=panel;this.items=items;this.info=info;this.details=details;this.clear=clear;this.page=page;
+        static final HitAreas EMPTY=new HitAreas(new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),false,new Rectangle(),OUTSIDE);
+        final Rectangle panel, items, info, details, clear, side;final boolean page;final int sideAction;
+        HitAreas(Rectangle panel,Rectangle items,Rectangle info,Rectangle details,Rectangle clear,boolean page,Rectangle side,int sideAction){
+            this.panel=panel;this.items=items;this.info=info;this.details=details;this.clear=clear;this.page=page;this.side=side;this.sideAction=sideAction;
         }
     }
     void hideHitAreas(){hitAreas=HitAreas.EMPTY;}
     int hit(int x,int y){
         HitAreas h=hitAreas;
+        if(h.side.contains(x,y))return h.sideAction;
         if(h.items.contains(x,y))return ITEMS;
         if(h.info.contains(x,y))return INFO;
         if(h.details.contains(x,y))return DETAILS;
@@ -63,64 +66,73 @@ final class TargetInfoOverlay extends Overlay
         if(client.getDraggedWidget()!=null||client.isMenuOpen())return null;
         Graphics2D g=(Graphics2D)graphics.create();
         try{
-            Font font=FontManager.getRunescapeSmallFont();g.setFont(font);
+            Font body=FontManager.getRunescapeFont(),small=FontManager.getRunescapeSmallFont();
+            g.setFont(body);g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            Rectangle side=sideButtonBounds(bounds,client.getCanvasWidth(),client.getCanvasHeight());
+            if(!side.isEmpty())sideButton(g,side,infoView);
             if(!infoView){
-                // A small i in the lower rim, outside all item-slot click zones.
-                Rectangle toggle=new Rectangle(bounds.x+bounds.width-16,bounds.y+bounds.height+1,15,13);
-                if(toggle.y+toggle.height<=client.getCanvasHeight()){
-                    button(g,toggle,"i",true);
-                    hitAreas=new HitAreas(new Rectangle(),new Rectangle(),toggle,new Rectangle(),new Rectangle(),false);
-                }
+                hitAreas=new HitAreas(new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),false,side,INFO);
                 return null;
             }
             g.clip(bounds);
-            g.setColor(new Color(60,54,42));g.fillRect(bounds.x,bounds.y,bounds.width,bounds.height);
-            g.setColor(new Color(129,111,69));g.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);
-            int x=bounds.x+6,w=bounds.width-12,y=bounds.y+5;
-            Rectangle itemTab=new Rectangle(x,y,52,18), infoTab=new Rectangle(x+54,y,w-54,18);
+            g.setPaint(new GradientPaint(bounds.x,bounds.y,new Color(35,45,38),bounds.x,bounds.y+bounds.height,new Color(21,29,25)));
+            g.fillRect(bounds.x,bounds.y,bounds.width,bounds.height);
+            g.setColor(new Color(145,121,67));g.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);
+            g.setColor(new Color(66,77,60));g.drawRect(bounds.x+2,bounds.y+2,bounds.width-5,bounds.height-5);
+            int x=bounds.x+7,w=bounds.width-14;
+            Rectangle itemTab=new Rectangle(x,bounds.y+6,w/2-2,21),infoTab=new Rectangle(x+w/2+2,bounds.y+6,w-w/2-2,21);
             button(g,itemTab,"Items",false);button(g,infoTab,"Target info",true);
             TargetInfo.Snapshot current=snapshot;
-            y+=34;g.setColor(GOLD);
-            g.drawString(fit(current==null?"No target selected":current.name,g.getFontMetrics(),w),x,y);
+            g.setColor(new Color(44,55,44));g.fillRoundRect(x,bounds.y+33,w,33,6,6);
+            g.setFont(small);g.setColor(MUTED);g.drawString("LAST TARGET",x+6,bounds.y+44);
+            g.setFont(body);g.setColor(GOLD);
+            g.drawString(fit(current==null?"No target selected":current.name,g.getFontMetrics(),w-12),x+6,bounds.y+59);
             TargetInfoData.Stats s=current==null?null:current.stats;
-            Rectangle details=new Rectangle(x,bounds.y+bounds.height-23,64,18);
-            Rectangle clear=new Rectangle(bounds.x+bounds.width-48,bounds.y+bounds.height-23,42,18);
-            if(current==null){
-                g.setColor(MUTED);g.drawString("Attack an NPC to select it.",x,y+24);
-                g.drawString("Its info stays after combat.",x,y+39);
-                g.drawString("Use Items to see your bag.",x,y+64);
-            }else if(s==null){
-                g.setColor(MUTED);g.drawString("Reference stats unavailable.",x,y+24);
-                g.drawString("This NPC variant is unknown.",x,y+39);
+            Rectangle details=new Rectangle(x,bounds.y+bounds.height-28,w/2-3,22);
+            Rectangle clear=new Rectangle(x+w/2+3,bounds.y+bounds.height-28,w-w/2-3,22);
+            if(current==null||s==null){
+                g.setColor(MUTED);
+                g.drawString(current==null?"Attack an NPC to select it.":"Reference stats unavailable.",x,bounds.y+91);
+                g.setFont(small);
+                g.drawString(current==null?"Its info stays after combat.":"This NPC variant is unknown.",x,bounds.y+108);
+                g.drawString("Use Items to see your bag.",x,bounds.y+137);
             }else{
-                row(g,x,y+21,w,"Element",s.elementText(),GREEN);
-                row(g,x,y+37,w,"Melee",s.meleeText(),GOLD);
+                g.setColor(new Color(39,55,43));g.fillRoundRect(x,bounds.y+72,w,22,5,5);
+                row(g,x+5,bounds.y+87,w-10,"Element",s.elementText(),GREEN);
+                g.setFont(small);row(g,x+3,bounds.y+103,w-6,"Lowest melee",s.meleeText(),GOLD);
                 if(icons==null)icons=new BufferedImage[]{items.getImage(ItemID.BRONZE_DAGGER),items.getImage(ItemID.BRONZE_SCIMITAR),items.getImage(ItemID.BRONZE_WARHAMMER),items.getImage(ItemID.MINDRUNE)};
                 Integer[] values={s.stab,s.slash,s.crush,s.magic};
                 String[] labels={"Stab","Slash","Crush","Magic"};
                 int cell=w/4;
                 for(int i=0;i<4;i++){
-                    int cx=x+i*cell;
-                    g.setColor(new Color(83,74,54));g.fillRect(cx,y+46,cell-2,55);
-                    if(icons[i]!=null)g.drawImage(icons[i],cx+(cell-24)/2,y+46,24,24,null);
-                    centered(g,labels[i],cx,cell,y+81,MUTED);
-                    centered(g,TargetInfoData.value(values[i]),cx,cell,y+96,Color.WHITE);
+                    int cx=x+i*cell,cy=bounds.y+110;
+                    g.setPaint(new GradientPaint(cx,cy,new Color(61,67,48),cx,cy+52,new Color(37,45,35)));
+                    g.fillRoundRect(cx,cy,cell-3,52,5,5);
+                    g.setColor(new Color(94,99,65));g.drawRoundRect(cx,cy,cell-4,51,5,5);
+                    if(icons[i]!=null)g.drawImage(icons[i],cx+(cell-3-23)/2,cy+2,23,23,null);
+                    g.setFont(small);centered(g,labels[i],cx,cell-3,cy+35,MUTED);
+                    g.setFont(body);centered(g,TargetInfoData.value(values[i]),cx,cell-3,cy+48,Color.WHITE);
                 }
-                int bottom=details.y-6;
+                int bottom=details.y-7;
+                g.setFont(small);
                 if(config.monstersTargetExpanded()){
                     String[][] rows={{"Ranged L / S / H",TargetInfoData.value(s.light)+" / "+TargetInfoData.value(s.standard)+" / "+TargetInfoData.value(s.heavy)},
                         {"Def / Magic lvl",TargetInfoData.value(s.defence)+" / "+TargetInfoData.value(s.magicLevel)},
                         {"Base HP",TargetInfoData.value(s.hp)},
-                        {"Base attack speed",s.speed==null||s.speed<=0?"?":s.speed+" ticks"}};
-                    int lineY=y+118;
-                    for(String[] r:rows){if(lineY<bottom){row(g,x,lineY,w,r[0],r[1],Color.WHITE);lineY+=14;}}
-                }
-                if(y+104<bottom&&!config.monstersTargetExpanded()){
-                    g.setColor(MUTED);g.drawString("Defence bonuses, not DPS.",x,y+121);
+                        {"Attack speed",s.speed==null||s.speed<=0?"?":s.speed+" ticks"}};
+                    int lineY=bounds.y+178;
+                    for(int i=0;i<rows.length;i++)if(lineY<bottom){
+                        if(i%2==0){g.setColor(new Color(35,44,36));g.fillRect(x,lineY-10,w,14);}
+                        row(g,x+3,lineY,w-6,rows[i][0],rows[i][1],Color.WHITE);lineY+=14;
+                    }
+                }else{
+                    g.setColor(MUTED);g.drawString("Reference defence bonuses",x+3,bounds.y+183);
+                    g.drawString("Open Details for base stats.",x+3,bounds.y+198);
                 }
             }
+            g.setFont(body);
             button(g,details,config.monstersTargetExpanded()?"Less":"Details",false);button(g,clear,"Clear",false);
-            hitAreas=new HitAreas(new Rectangle(bounds),itemTab,infoTab,details,clear,true);
+            hitAreas=new HitAreas(new Rectangle(bounds),itemTab,infoTab,details,clear,true,side,ITEMS);
         }finally{g.dispose();}
         return null;
     }
@@ -129,10 +141,31 @@ final class TargetInfoOverlay extends Overlay
         g.drawString(value,x+width-g.getFontMetrics().stringWidth(value),y);
     }
     private static void centered(Graphics2D g,String text,int x,int width,int y,Color color){g.setColor(color);g.drawString(text,x+(width-g.getFontMetrics().stringWidth(text))/2,y);}
+    /** Side dock leaves both the item rectangle and native top/bottom tab rows untouched. */
+    static Rectangle sideButtonBounds(Rectangle inventory,int canvasWidth,int canvasHeight){
+        int width=42,height=50,gap=14;
+        int x=inventory.x-gap-width;
+        if(x<2)x=inventory.x+inventory.width+gap;
+        int y=Math.max(2,Math.min(inventory.y+(inventory.height-height)/2,canvasHeight-height-2));
+        if(x<2||x+width>canvasWidth-2||y+height>canvasHeight-2)return new Rectangle();
+        return new Rectangle(x,y,width,height);
+    }
+    private static void sideButton(Graphics2D g,Rectangle r,boolean showingInfo){
+        g.setColor(new Color(0,0,0,95));g.fillRoundRect(r.x+2,r.y+2,r.width,r.height,9,9);
+        g.setPaint(new GradientPaint(r.x,r.y,new Color(80,78,48),r.x,r.y+r.height,new Color(30,41,32)));
+        g.fillRoundRect(r.x,r.y,r.width,r.height,9,9);
+        g.setColor(GOLD);g.drawRoundRect(r.x,r.y,r.width-1,r.height-1,9,9);
+        // Original simple book glyph: no extra bitmap assets or game click zones.
+        int bx=r.x+10,by=r.y+8;
+        g.drawRoundRect(bx,by,22,18,3,3);g.drawLine(bx+11,by+2,bx+11,by+16);
+        g.setColor(MUTED);g.drawLine(bx+3,by+5,bx+8,by+5);g.drawLine(bx+14,by+5,bx+19,by+5);
+        centered(g,showingInfo?"Items":"Info",r.x,r.width,r.y+41,GOLD);
+    }
     private static void button(Graphics2D g,Rectangle r,String text,boolean selected){
-        g.setColor(selected?new Color(106,86,43):new Color(48,44,35));g.fillRect(r.x,r.y,r.width,r.height);
-        g.setColor(selected?GOLD:new Color(139,122,78));g.drawRect(r.x,r.y,r.width-1,r.height-1);
-        centered(g,text,r.x,r.width,r.y+r.height-5,selected?GOLD:MUTED);
+        g.setPaint(new GradientPaint(r.x,r.y,selected?new Color(115,94,49):new Color(52,64,49),r.x,r.y+r.height,selected?new Color(72,65,36):new Color(30,40,31)));
+        g.fillRoundRect(r.x,r.y,r.width,r.height,5,5);
+        g.setColor(selected?GOLD:new Color(110,119,78));g.drawRoundRect(r.x,r.y,r.width-1,r.height-1,5,5);
+        centered(g,text,r.x,r.width,r.y+r.height-6,selected?GOLD:MUTED);
     }
     static String fit(String name,FontMetrics metrics,int width){
         if(metrics.stringWidth(name)<=width)return name;

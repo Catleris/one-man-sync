@@ -35,7 +35,7 @@ public class TargetInfoTest
         npc=mock(NPC.class);composition=mock(NPCComposition.class);mouse=mock(MouseManager.class);bus=new EventBus();
         thread=mock(ClientThread.class);
         doAnswer(call->{((Runnable)call.getArgument(0)).run();return null;}).when(thread).invokeLater(any(Runnable.class));
-        when(client.getGameState()).thenReturn(GameState.LOGGED_IN);when(client.getCanvasHeight()).thenReturn(600);
+        when(client.getGameState()).thenReturn(GameState.LOGGED_IN);when(client.getCanvasHeight()).thenReturn(600);when(client.getCanvasWidth()).thenReturn(400);
         when(client.getLocalPlayer()).thenReturn(player);when(player.getInteracting()).thenReturn(npc);
         when(config.monstersTargetInfo()).thenReturn(true);
         when(npc.getName()).thenReturn("Gargoyle");when(npc.getTransformedComposition()).thenReturn(composition);
@@ -78,7 +78,7 @@ public class TargetInfoTest
     }
     @Test public void drawsInsideInventoryAndBlocksOnlyItsInfoPage(){
         info.tick(null);when(config.monstersTargetExpanded()).thenReturn(true);render();
-        assertEquals(TargetInfoOverlay.BODY,overlay.hit(30,100));assertTrue(overlay.blocksItems(30,100));
+        assertEquals(TargetInfoOverlay.BODY,overlay.hit(30,105));assertTrue(overlay.blocksItems(30,100));
         assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(15,100));assertEquals(0,image.getRGB(15,100));assertNotEquals(0,image.getRGB(30,100));
         assertEquals(TargetInfoOverlay.ITEMS,overlay.hit(35,30));
         when(inventory.isHidden()).thenReturn(true);render();assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
@@ -90,14 +90,14 @@ public class TargetInfoTest
         MouseEvent release=event(MouseEvent.MOUSE_RELEASED,35,30,MouseEvent.BUTTON1);info.mouseReleased(release);assertTrue(release.isConsumed());
         render();assertFalse(overlay.blocksItems(30,100));assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
         MouseEvent ordinary=event(MouseEvent.MOUSE_PRESSED,30,100,MouseEvent.BUTTON1);info.mousePressed(ordinary);assertFalse(ordinary.isConsumed());
-        assertEquals(TargetInfoOverlay.INFO,overlay.hit(200,285));
-        MouseEvent open=event(MouseEvent.MOUSE_PRESSED,200,285,MouseEvent.BUTTON1);info.mousePressed(open);assertTrue(open.isConsumed());assertTrue(overlay.infoView);
+        assertEquals(TargetInfoOverlay.INFO,overlay.hit(240,150));
+        MouseEvent open=event(MouseEvent.MOUSE_PRESSED,240,150,MouseEvent.BUTTON1);info.mousePressed(open);assertTrue(open.isConsumed());assertTrue(overlay.infoView);
         render();MouseEvent hiddenItem=event(MouseEvent.MOUSE_PRESSED,30,100,MouseEvent.BUTTON3);info.mousePressed(hiddenItem);assertTrue(hiddenItem.isConsumed());
         when(client.getMouseCanvasPosition()).thenReturn(new net.runelite.api.Point(30,100));bus.post(new PostMenuSort());verify(client).setMenuEntries(any(MenuEntry[].class));
     }
     @Test public void detailTogglePreservesSelectionAndClearWaitsForAnotherTarget(){
         info.tick(null);TargetInfo.Snapshot selected=overlay.snapshot;info.configChanged();assertSame(selected,overlay.snapshot);
-        render();info.mousePressed(event(MouseEvent.MOUSE_PRESSED,195,263,MouseEvent.BUTTON1));assertNull(overlay.snapshot);
+        render();info.mousePressed(event(MouseEvent.MOUSE_PRESSED,190,263,MouseEvent.BUTTON1));assertNull(overlay.snapshot);
         info.tick(null);assertNull(overlay.snapshot);when(player.getInteracting()).thenReturn(null);info.tick(null);
         when(player.getInteracting()).thenReturn(npc);info.tick(null);assertNotNull(overlay.snapshot);
         when(config.monstersTargetInfo()).thenReturn(false);info.configChanged();assertNull(overlay.snapshot);

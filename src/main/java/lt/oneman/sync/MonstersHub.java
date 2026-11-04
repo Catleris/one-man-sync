@@ -233,7 +233,7 @@ final class MonstersHub
             OneManCards targetControls = new OneManCards();
             for(JCheckBox box:new JCheckBox[]{targetEnabled,targetExpanded,targetSlayer}){box.setOpaque(false);targetControls.card(box);}
             targetEnabled.setName("monstersTargetInfo");targetExpanded.setName("monstersTargetExpanded");targetSlayer.setName("monstersTargetSlayerOnly");
-            targetControls.card(OneManCards.text("Inventory page with Items / Target info tabs. Keeps the last NPC after combat. Use the small i below your items to reopen. Static reference stats."));
+            targetControls.card(OneManCards.text("Inventory page with Items / Target info tabs. Keeps the last NPC after combat. Use the large side Info button to reopen. Static reference stats."));
             targetControls.card(OneManCards.text("Data: Monster Stats / OSRS Wiki · 4 Nov 2026"));
             JButton openTarget=new JButton("Open inventory info");openTarget.setName("monstersOpenTargetInfo");
             openTarget.addActionListener(event->clientThread.invokeLater(()->{configs.setConfiguration("one-man-sync","monstersTargetInfo",true);targetInfo.open();}));
