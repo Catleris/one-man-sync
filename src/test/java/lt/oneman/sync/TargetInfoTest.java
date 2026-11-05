@@ -97,7 +97,10 @@ public class TargetInfoTest
         assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(15,100));assertEquals(0,image.getRGB(15,100));assertNotEquals(0,image.getRGB(30,100));
         assertEquals(TargetInfoOverlay.ITEMS,overlay.hit(35,30));
         when(inventory.isHidden()).thenReturn(true);render();assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
-        when(inventory.isHidden()).thenReturn(false);when(client.getDraggedWidget()).thenReturn(mock(Widget.class));render();assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
+        when(inventory.isHidden()).thenReturn(false);when(client.getDraggedWidget()).thenReturn(mock(Widget.class));
+        image=new BufferedImage(400,400,BufferedImage.TYPE_INT_ARGB);render();
+        assertEquals(0,image.getRGB(30,100));assertNotEquals(0,image.getRGB(240,150));
+        assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(240,150));
     }
     @Test public void switchesToItemsAndBackWithoutPassingClicksToHiddenItems(){
         info.tick(null);info.open();render();

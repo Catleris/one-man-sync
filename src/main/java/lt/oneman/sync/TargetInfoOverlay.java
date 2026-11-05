@@ -62,14 +62,14 @@ final class TargetInfoOverlay extends Overlay
         if(inventory==null||inventory.isHidden())return null;
         Rectangle bounds=inventory.getBounds();
         if(bounds==null||bounds.width<140||bounds.height<180)return null;
-        // Avoid taking control of an item drag already started in the native inventory.
-        if(client.getDraggedWidget()!=null||client.isMenuOpen())return null;
         Graphics2D g=(Graphics2D)graphics.create();
         try{
             Font body=FontManager.getRunescapeFont(),small=FontManager.getRunescapeSmallFont();
             g.setFont(body);g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             Rectangle side=sideButtonBounds(bounds,client.getCanvasWidth(),client.getCanvasHeight());
             if(!side.isEmpty())sideButton(g,side,infoView);
+            // Keep the shield visible without intercepting a native drag or menu.
+            if(client.getDraggedWidget()!=null||client.isMenuOpen())return null;
             if(!infoView){
                 hitAreas=new HitAreas(new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),new Rectangle(),false,side,INFO);
                 return null;

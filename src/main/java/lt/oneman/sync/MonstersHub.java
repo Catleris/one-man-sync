@@ -48,6 +48,7 @@ final class MonstersHub
     @Inject private OverlayManager overlays;
     @Inject private ShamanMinionOverlay overlay;
     @Inject private TargetInfo targetInfo;
+    @Inject private GemCrabAlert gemCrab;
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
     private volatile boolean active;
@@ -75,6 +76,7 @@ final class MonstersHub
         markers = Collections.emptyList();
         overlay.setHub(this);
         overlays.add(overlay);
+        overlays.add(gemCrab);
         lastStatus = "";
     }
 
@@ -85,6 +87,8 @@ final class MonstersHub
         clear();
         slayerState = null;
         overlays.remove(overlay);
+        overlays.remove(gemCrab);
+        gemCrab.reset();
         overlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
     }
@@ -109,6 +113,7 @@ final class MonstersHub
 
     void onNpcSpawned(NpcSpawned event)
     {
+        gemCrab.appeared(event.getNpc());
         if (enabled() && isMinion(event.getNpc().getId()))
         {
             minions.add(event.getNpc());
@@ -118,12 +123,14 @@ final class MonstersHub
 
     void onNpcDespawned(NpcDespawned event)
     {
+        gemCrab.despawned(event.getNpc());
         if (minions.remove(event.getNpc())) publishMarkers();
     }
 
     void onNpcChanged(NpcChanged event)
     {
         NPC npc = event.getNpc();
+        gemCrab.appeared(npc);
         if (enabled() && isMinion(npc.getId())) minions.add(npc);
         else minions.remove(npc);
         publishMarkers();
@@ -132,6 +139,7 @@ final class MonstersHub
     void onGameStateChanged(GameStateChanged event)
     {
         targetInfo.gameStateChanged(event.getGameState());
+        gemCrab.reset();
         clear();
         scanPending = true;
         suggestion = "Select a profile to use it without a Slayer task.";
@@ -141,6 +149,7 @@ final class MonstersHub
     void onConfigChanged()
     {
         targetInfo.configChanged();
+        if (!config.monstersGemCrabAlert()) gemCrab.reset();
         if (!active) return;
         clear();
         scanPending = true;
@@ -153,6 +162,7 @@ final class MonstersHub
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
         targetInfo.tick(task);
+        gemCrab.tick();
         suggestion = suggestsShaman(task)
             ? "Suggested for your task: Lizardman Shaman."
             : "Choose a profile above.";
@@ -211,6 +221,7 @@ final class MonstersHub
         private final JCheckBox targetEnabled = new JCheckBox("Target info in inventory (beta)");
         private final JCheckBox targetExpanded = new JCheckBox("Expanded target stats");
         private final JCheckBox targetSlayer = new JCheckBox("Only my Slayer task monsters");
+        private final JCheckBox gemAlert = new JCheckBox("Gemstone Crab alert");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
         private final JCheckBox pulse = new JCheckBox("Gentle outline pulse");
         private final JCheckBox tiles = new JCheckBox("Mark current minion tiles");
@@ -229,7 +240,7 @@ final class MonstersHub
         {
             super(new BorderLayout());
             OneManCards cards = new OneManCards();
-            cards.card(OneManCards.banner("Monsters Hub", "Target info & Shaman"));
+            cards.card(OneManCards.banner("Monsters Hub", "Target info & monster tools"));
             OneManCards targetControls = new OneManCards();
             for(JCheckBox box:new JCheckBox[]{targetEnabled,targetExpanded,targetSlayer}){box.setOpaque(false);targetControls.card(box);}
             targetEnabled.setName("monstersTargetInfo");targetExpanded.setName("monstersTargetExpanded");targetSlayer.setName("monstersTargetSlayerOnly");
@@ -242,6 +253,15 @@ final class MonstersHub
             targetEnabled.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetInfo",targetEnabled.isSelected());});
             targetExpanded.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetExpanded",targetExpanded.isSelected());});
             targetSlayer.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetSlayerOnly",targetSlayer.isSelected());});
+            OneManCards crabControls = new OneManCards();
+            gemAlert.setName("monstersGemCrabAlert");
+            gemAlert.setOpaque(false);
+            gemAlert.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGemCrabAlert", gemAlert.isSelected());
+            });
+            crabControls.card(gemAlert);
+            crabControls.card(OneManCards.text("Sound and screen flash when your crab burrows. Click in the game to stop the flash."));
+            cards.card(crabControls);
             JPanel settings = OneManCards.card();
             OneManCards controls = new OneManCards();
             controls.setOpaque(false);
@@ -320,6 +340,7 @@ final class MonstersHub
         {
             updating = true;
             targetEnabled.setSelected(config.monstersTargetInfo());targetExpanded.setSelected(config.monstersTargetExpanded());targetSlayer.setSelected(config.monstersTargetSlayerOnly());
+            gemAlert.setSelected(config.monstersGemCrabAlert());
             profile.setSelectedItem(config.monstersProfile());
             tiles.setSelected(config.monstersShamanTiles());
             pulse.setSelected(config.monstersShamanPulse());

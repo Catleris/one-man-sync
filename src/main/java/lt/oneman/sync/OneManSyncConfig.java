@@ -135,6 +135,9 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="monstersTargetSlayerOnly", name="Target info: Slayer only", description="Show only NPCs matching your active Slayer task. Unknown task matches stay hidden.", position=104, section=monstersSection)
     default boolean monstersTargetSlayerOnly() { return false; }
 
+    @ConfigItem(keyName="monstersGemCrabAlert", name="Gemstone Crab alert", description="Play a sound and flash the screen when your Gemstone Crab burrows. Click in the game to dismiss.", position=105, section=monstersSection)
+    default boolean monstersGemCrabAlert() { return false; }
+
     @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works without a Slayer task or website sync.", position=90, section=monstersSection)
     default MonstersProfile monstersProfile() { return MonstersProfile.NONE; }
     @ConfigItem(keyName="monstersShamanTiles", name="Shaman minion tiles", description="Mark only the current occupied tile of observed Shaman spawns. No explosion radius or prediction.", position=91, section=monstersSection)
