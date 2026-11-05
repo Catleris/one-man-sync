@@ -87,8 +87,10 @@ Owner verified the combined test.1 inventory view with Blue dragon and reported 
 
 Test.2 CI passed in run 42065867080. The owner chose concept C for test.3, a green monster eye in a gold shield. The active shield carries a backpack icon for returning to items. Both states use the existing 32 × 36 dock bounds. Test.3 CI and in-game visual check pending.
 
-## Gemstone Crab alert and inventory shield
+## Gemstone Crab alert and inventory shield · 2026-11-05
 
 The opt-in Monsters Hub alert watches for remains from the crab the player engaged. It plays a RuneLite notification and pulses the game canvas until a mouse press. The inventory Target Info shield stays visible during native item drags, with its click area disabled during the drag.
 
 In-game checks: enable Gemstone Crab alert, attack the crab, and verify one sound and repeated pulses on burrow. Move the mouse, then click to confirm only the click dismisses the pulses. Hold and drag a food item to check that the shield remains visible and the inventory receives the drag.
+
+Java 11 build and regression tests passed for the feature commit `8cb704a` in [GitHub Actions](https://github.com/Catleris/one-man-sync/actions/runs/42074611928). The 0.11.4 release candidate also includes Farming Hub seed lookup from the item menu and the optional birdhouse-ready sound.

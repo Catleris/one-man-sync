@@ -177,4 +177,6 @@ Test build `0.9.0-unlocks-test` adds a searchable, collapsible account unlock re
 
 ### Development trial: target info in inventory
 
-Branch `dev/target-info` (0.11.4-target-test.3) adds an opt-in NPC reference page inside the inventory area, with Items / Target info tabs and stat icons. It retains the last NPC after combat. Open it from Monsters Hub or the large Info button beside the inventory. Exact NPC variants only, static bonuses rather than live DPS advice. [Trial instructions](docs/TARGET-INFO-TEST.md). Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).
+Enable Target Info in Monsters Hub to view an NPC reference page in the inventory. It retains the last NPC after combat and opens on demand from the hub or the shield beside the inventory. The shield stays visible while dragging items. Stats are static and matched by NPC variant. Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).
+
+Monsters Hub also offers an opt-in Gemstone Crab alert. A sound plays when the crab you fought burrows, and the screen pulses until you click in the game.
