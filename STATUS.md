@@ -66,3 +66,15 @@ Owner screenshot rejected the floating test.1 card and confirmed it disappears a
 ## Target info appearance and side dock · 2026-11-04
 
 Owner test.2 screenshots confirm the inventory page renders; reported the tiny lower-rim i overlaps a native tab and requested a larger side control and better styling. Test.3 replaces it with a 42x50 book/Info dock at the inventory side (left preferred, right fallback, hidden if neither fits). Native item rectangle and top/bottom tab rows stay untouched. Refined green/gold gradients, grouped target header, larger regular-font primary values, framed stat tiles, alternating detail rows and larger footer controls. Last-target retention and click protection preserved. Added dock geometry regression checks. Changed sources compiled with Java 11 release compatibility using local JDK 17 compiler; all nine focused target-info/rendering/dock tests passed locally on JDK 17. Full Java 11 GitHub Actions run 41879083630 is queued; owner appearance/layout confirmation pending.
+
+## Farming seed menu · 2026-11-05
+
+Added an opt-in Farming Hub entry beside Examine for catalogued planting items in inventory and bank. It opens the exact seed in the existing Seeds tab. The development branch starts from master 22f2726, which includes the prior Slayer and Farming release. Changed Java sources compiled with release 11 compatibility against the existing development dependencies. All 12 focused Farming tests passed locally. Owner inventory and bank checks remain pending.
+
+## Birdhouse ready alerts · 2026-11-05
+
+Owner confirmed the Farming seed menu works. Birdhouse alerts now use a desktop notification and optional RuneLite sound, including while focused. Houses that become ready in the same refresh share one notification. The existing enable setting and ready-transition baseline are retained. Changed sources compiled with Java 11 compatibility and 12 focused Farming tests passed locally. Sound and desktop delivery await the owner’s in-game check.
+
+## Combined hub trial · 2026-11-05
+
+Combined Target Info test.3 with the Farming seed menu and Birdhouse ready notifications in 0.11.4-hubs-test.1. Combined CI and in-game checks pending.

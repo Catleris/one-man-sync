@@ -34,6 +34,15 @@ public class FarmingSeedCatalogTest
     {
         for(String query:new String[]{"", "seed", "dark acorn", "crystal weapon seed", "this is not a seed"}) assertTrue(query,seeds.search(query).isEmpty());
     }
+    @Test public void contextMenuMatchesPlantingItemsInsteadOfFuzzyProduceNames()
+    {
+        assertEquals("Herb", seeds.findSeedItem("Ranarr seed").category);
+        assertEquals("Tree", seeds.findSeedItem("Acorn").category);
+        assertEquals("Crystal Tree", seeds.findSeedItem("Crystal acorn").category);
+        assertNull(seeds.findSeedItem("Ranarr weed"));
+        assertNull(seeds.findSeedItem("Crystal weapon seed"));
+    }
+
     private FarmingSeedCatalog.Seed first(String query)
     {
         assertFalse("Expected a verified crop match: "+query,seeds.search(query).isEmpty());return seeds.search(query).get(0);
