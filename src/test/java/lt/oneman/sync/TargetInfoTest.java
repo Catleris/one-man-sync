@@ -76,8 +76,23 @@ public class TargetInfoTest
         when(player.getInteracting()).thenReturn(null);
         info.tick(new OneManSlayerState.LocalTask("Gargoyles","",0,10));assertNull(overlay.snapshot);
     }
+    @Test public void combatUpdatesTheSnapshotWithoutOpeningTheInventoryPage()
+    {
+        info.tick(null);
+        render();
+        assertEquals("Gargoyle", overlay.snapshot.name);
+        assertFalse(overlay.infoView);
+        assertFalse(overlay.blocksItems(30, 100));
+
+        info.mousePressed(event(MouseEvent.MOUSE_PRESSED, 240, 150, MouseEvent.BUTTON1));
+        assertTrue(overlay.infoView);
+
+        info.showItems();
+        info.tick(null);
+        assertFalse(overlay.infoView);
+    }
     @Test public void drawsInsideInventoryAndBlocksOnlyItsInfoPage(){
-        info.tick(null);when(config.monstersTargetExpanded()).thenReturn(true);render();
+        info.tick(null);info.open();when(config.monstersTargetExpanded()).thenReturn(true);render();
         assertEquals(TargetInfoOverlay.BODY,overlay.hit(30,105));assertTrue(overlay.blocksItems(30,100));
         assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(15,100));assertEquals(0,image.getRGB(15,100));assertNotEquals(0,image.getRGB(30,100));
         assertEquals(TargetInfoOverlay.ITEMS,overlay.hit(35,30));
@@ -85,7 +100,7 @@ public class TargetInfoTest
         when(inventory.isHidden()).thenReturn(false);when(client.getDraggedWidget()).thenReturn(mock(Widget.class));render();assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
     }
     @Test public void switchesToItemsAndBackWithoutPassingClicksToHiddenItems(){
-        info.tick(null);render();
+        info.tick(null);info.open();render();
         MouseEvent press=event(MouseEvent.MOUSE_PRESSED,35,30,MouseEvent.BUTTON1);info.mousePressed(press);assertTrue(press.isConsumed());assertFalse(overlay.infoView);
         MouseEvent release=event(MouseEvent.MOUSE_RELEASED,35,30,MouseEvent.BUTTON1);info.mouseReleased(release);assertTrue(release.isConsumed());
         render();assertFalse(overlay.blocksItems(30,100));assertEquals(TargetInfoOverlay.OUTSIDE,overlay.hit(30,100));
@@ -97,7 +112,7 @@ public class TargetInfoTest
     }
     @Test public void detailTogglePreservesSelectionAndClearWaitsForAnotherTarget(){
         info.tick(null);TargetInfo.Snapshot selected=overlay.snapshot;info.configChanged();assertSame(selected,overlay.snapshot);
-        render();info.mousePressed(event(MouseEvent.MOUSE_PRESSED,190,263,MouseEvent.BUTTON1));assertNull(overlay.snapshot);
+        info.open();render();info.mousePressed(event(MouseEvent.MOUSE_PRESSED,190,263,MouseEvent.BUTTON1));assertNull(overlay.snapshot);
         info.tick(null);assertNull(overlay.snapshot);when(player.getInteracting()).thenReturn(null);info.tick(null);
         when(player.getInteracting()).thenReturn(npc);info.tick(null);assertNotNull(overlay.snapshot);
         when(config.monstersTargetInfo()).thenReturn(false);info.configChanged();assertNull(overlay.snapshot);

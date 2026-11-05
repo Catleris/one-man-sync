@@ -39,9 +39,9 @@ final class TargetInfo implements MouseListener
         final String name;final TargetInfoData.Stats stats;
         Snapshot(String name,TargetInfoData.Stats stats){this.name=name;this.stats=stats;}
     }
-    void startUp(){active=true;clear();overlay.infoView=true;overlays.add(overlay);mouseManager.registerMouseListener(0,this);eventBus.register(this);}
+    void startUp(){active=true;clear();overlays.add(overlay);mouseManager.registerMouseListener(0,this);eventBus.register(this);}
     void shutDown(){active=false;clear();overlays.remove(overlay);mouseManager.unregisterMouseListener(this);eventBus.unregister(this);}
-    void clear(){overlay.snapshot=null;overlay.hideHitAreas();blockedTarget=null;}
+    void clear(){overlay.snapshot=null;showItems();blockedTarget=null;}
     void open(){if(active&&config.monstersTargetInfo())overlay.infoView=true;}
     void showItems(){overlay.infoView=false;overlay.hideHitAreas();}
     void configChanged(){if(!config.monstersTargetInfo())clear();}

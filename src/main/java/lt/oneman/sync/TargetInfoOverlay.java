@@ -32,7 +32,7 @@ final class TargetInfoOverlay extends Overlay
     @Inject private OneManSyncConfig config;
     @Inject private ItemManager items;
     volatile TargetInfo.Snapshot snapshot;
-    volatile boolean infoView=true;
+    volatile boolean infoView;
     private volatile HitAreas hitAreas=HitAreas.EMPTY;
     private BufferedImage[] icons;
     TargetInfoOverlay(){setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.ABOVE_WIDGETS);}
@@ -143,7 +143,7 @@ final class TargetInfoOverlay extends Overlay
     private static void centered(Graphics2D g,String text,int x,int width,int y,Color color){g.setColor(color);g.drawString(text,x+(width-g.getFontMetrics().stringWidth(text))/2,y);}
     /** Side dock leaves both the item rectangle and native top/bottom tab rows untouched. */
     static Rectangle sideButtonBounds(Rectangle inventory,int canvasWidth,int canvasHeight){
-        int width=42,height=50,gap=14;
+        int width=32,height=36,gap=14;
         int x=inventory.x-gap-width;
         if(x<2)x=inventory.x+inventory.width+gap;
         int y=Math.max(2,Math.min(inventory.y+(inventory.height-height)/2,canvasHeight-height-2));
@@ -151,15 +151,37 @@ final class TargetInfoOverlay extends Overlay
         return new Rectangle(x,y,width,height);
     }
     private static void sideButton(Graphics2D g,Rectangle r,boolean showingInfo){
-        g.setColor(new Color(0,0,0,95));g.fillRoundRect(r.x+2,r.y+2,r.width,r.height,9,9);
-        g.setPaint(new GradientPaint(r.x,r.y,new Color(80,78,48),r.x,r.y+r.height,new Color(30,41,32)));
-        g.fillRoundRect(r.x,r.y,r.width,r.height,9,9);
-        g.setColor(GOLD);g.drawRoundRect(r.x,r.y,r.width-1,r.height-1,9,9);
-        // Original simple book glyph: no extra bitmap assets or game click zones.
-        int bx=r.x+10,by=r.y+8;
-        g.drawRoundRect(bx,by,22,18,3,3);g.drawLine(bx+11,by+2,bx+11,by+16);
-        g.setColor(MUTED);g.drawLine(bx+3,by+5,bx+8,by+5);g.drawLine(bx+14,by+5,bx+19,by+5);
-        centered(g,showingInfo?"Items":"Info",r.x,r.width,r.y+41,GOLD);
+        g.setColor(new Color(0, 0, 0, 100));
+        g.fillRoundRect(r.x + 1, r.y + 2, r.width, r.height, 10, 10);
+        g.setPaint(new GradientPaint(r.x, r.y,
+            showingInfo ? new Color(100, 84, 46) : new Color(58, 75, 58),
+            r.x, r.y + r.height, new Color(24, 33, 27)));
+        g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
+        g.setColor(showingInfo ? GOLD : new Color(148, 128, 77));
+        g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+
+        int iconX = r.x + (r.width - 16) / 2;
+        int iconY = r.y + (r.height - 14) / 2;
+        g.setColor(GOLD);
+        if (showingInfo)
+        {
+            // Backpack body, carry handle and front pocket.
+            g.drawRoundRect(iconX + 1, iconY + 3, 14, 13, 5, 5);
+            g.drawRoundRect(iconX + 5, iconY, 6, 4, 3, 3);
+            g.drawRoundRect(iconX + 4, iconY + 9, 8, 5, 3, 3);
+        }
+        else
+        {
+            // Open field guide.
+            g.drawRoundRect(iconX, iconY, 16, 14, 4, 4);
+            g.drawLine(iconX + 8, iconY + 1, iconX + 8, iconY + 13);
+            g.setColor(MUTED);
+            for (int lineY = iconY + 4; lineY <= iconY + 8; lineY += 4)
+            {
+                g.drawLine(iconX + 3, lineY, iconX + 5, lineY);
+                g.drawLine(iconX + 11, lineY, iconX + 13, lineY);
+            }
+        }
     }
     private static void button(Graphics2D g,Rectangle r,String text,boolean selected){
         g.setPaint(new GradientPaint(r.x,r.y,selected?new Color(115,94,49):new Color(52,64,49),r.x,r.y+r.height,selected?new Color(72,65,36):new Color(30,40,31)));

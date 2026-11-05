@@ -78,3 +78,7 @@ Owner confirmed the Farming seed menu works. Birdhouse alerts now use a desktop 
 ## Combined hub trial · 2026-11-05
 
 Combined Target Info test.3 with the Farming seed menu and Birdhouse ready notifications in 0.11.4-hubs-test.1. Combined CI and in-game checks pending.
+
+## Target Info manual opening · 2026-11-05
+
+Owner verified the combined test.1 inventory view with Blue dragon and reported that it covered the inventory during combat. In test.2, combat updates the target snapshot while the inventory stays on Items until explicitly switched. The side control is a compact 32 × 36 icon with a book for opening and backpack for returning to items. Combined test.1 CI passed in run 42064473731. Test.2 CI and owner game checks pending.
