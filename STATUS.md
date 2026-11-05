@@ -82,3 +82,7 @@ Combined Target Info test.3 with the Farming seed menu and Birdhouse ready notif
 ## Target Info manual opening · 2026-11-05
 
 Owner verified the combined test.1 inventory view with Blue dragon and reported that it covered the inventory during combat. In test.2, combat updates the target snapshot while the inventory stays on Items until explicitly switched. The side control is a compact 32 × 36 icon with a book for opening and backpack for returning to items. Combined test.1 CI passed in run 42064473731. Test.2 CI and owner game checks pending.
+
+## Target Info shield icon · 2026-11-05
+
+Test.2 CI passed in run 42065867080. The owner chose concept C for test.3, a green monster eye in a gold shield. The active shield carries a backpack icon for returning to items. Both states use the existing 32 × 36 dock bounds. Test.3 CI and in-game visual check pending.

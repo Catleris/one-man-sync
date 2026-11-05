@@ -150,39 +150,57 @@ final class TargetInfoOverlay extends Overlay
         if(x<2||x+width>canvasWidth-2||y+height>canvasHeight-2)return new Rectangle();
         return new Rectangle(x,y,width,height);
     }
-    private static void sideButton(Graphics2D g,Rectangle r,boolean showingInfo){
-        g.setColor(new Color(0, 0, 0, 100));
-        g.fillRoundRect(r.x + 1, r.y + 2, r.width, r.height, 10, 10);
-        g.setPaint(new GradientPaint(r.x, r.y,
-            showingInfo ? new Color(100, 84, 46) : new Color(58, 75, 58),
-            r.x, r.y + r.height, new Color(24, 33, 27)));
-        g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
-        g.setColor(showingInfo ? GOLD : new Color(148, 128, 77));
-        g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+    private static void sideButton(Graphics2D g, Rectangle bounds, boolean showingInfo)
+    {
+        Graphics2D icon = (Graphics2D) g.create();
+        try
+        {
+            icon.translate(bounds.x, bounds.y);
+            int[] shieldX = {5, 26, 30, 30, 27, 22, 16, 10, 5, 2, 2};
+            int[] shieldY = {2, 2, 6, 22, 27, 31, 34, 31, 27, 22, 6};
+            icon.setColor(new Color(19, 20, 16));
+            icon.fillPolygon(shieldX, shieldY, shieldX.length);
+            int[] rimX = {6, 25, 29, 29, 26, 21, 16, 11, 6, 3, 3};
+            int[] rimY = {3, 3, 7, 22, 26, 30, 33, 30, 26, 22, 7};
+            icon.setPaint(new GradientPaint(0, 3, new Color(245, 204, 107),
+                0, 33, new Color(140, 100, 39)));
+            icon.fillPolygon(rimX, rimY, rimX.length);
+            int[] insetX = {7, 24, 27, 27, 24, 20, 16, 12, 8, 5, 5};
+            int[] insetY = {6, 6, 9, 21, 25, 28, 30, 28, 25, 21, 9};
+            icon.setPaint(new GradientPaint(0, 6, showingInfo ? new Color(65, 71, 43) : new Color(37, 70, 62),
+                0, 30, new Color(18, 36, 32)));
+            icon.fillPolygon(insetX, insetY, insetX.length);
 
-        int iconX = r.x + (r.width - 16) / 2;
-        int iconY = r.y + (r.height - 14) / 2;
-        g.setColor(GOLD);
-        if (showingInfo)
-        {
-            // Backpack body, carry handle and front pocket.
-            g.drawRoundRect(iconX + 1, iconY + 3, 14, 13, 5, 5);
-            g.drawRoundRect(iconX + 5, iconY, 6, 4, 3, 3);
-            g.drawRoundRect(iconX + 4, iconY + 9, 8, 5, 3, 3);
-        }
-        else
-        {
-            // Open field guide.
-            g.drawRoundRect(iconX, iconY, 16, 14, 4, 4);
-            g.drawLine(iconX + 8, iconY + 1, iconX + 8, iconY + 13);
-            g.setColor(MUTED);
-            for (int lineY = iconY + 4; lineY <= iconY + 8; lineY += 4)
+            if (showingInfo)
             {
-                g.drawLine(iconX + 3, lineY, iconX + 5, lineY);
-                g.drawLine(iconX + 11, lineY, iconX + 13, lineY);
+                icon.setColor(GOLD);
+                icon.drawRoundRect(10, 13, 12, 13, 4, 4);
+                icon.drawRoundRect(13, 10, 6, 4, 3, 3);
+                icon.drawRoundRect(12, 19, 8, 5, 3, 3);
+                return;
             }
+
+            int[] eyeX = {6, 10, 14, 18, 22, 26, 22, 18, 14, 10};
+            int[] eyeY = {17, 13, 11, 11, 13, 17, 21, 23, 23, 21};
+            icon.setColor(GOLD);
+            icon.fillPolygon(eyeX, eyeY, eyeX.length);
+            int[] lidX = {8, 12, 15, 17, 20, 24, 20, 17, 15, 12};
+            int[] lidY = {17, 14, 13, 13, 14, 17, 20, 21, 21, 20};
+            icon.setColor(new Color(24, 28, 21));
+            icon.fillPolygon(lidX, lidY, lidX.length);
+            icon.setColor(new Color(153, 210, 119));
+            icon.fillOval(12, 13, 9, 9);
+            icon.setColor(new Color(20, 35, 23));
+            icon.fillRect(16, 13, 2, 9);
+            icon.setColor(new Color(213, 244, 169));
+            icon.fillRect(13, 15, 2, 2);
+        }
+        finally
+        {
+            icon.dispose();
         }
     }
+
     private static void button(Graphics2D g,Rectangle r,String text,boolean selected){
         g.setPaint(new GradientPaint(r.x,r.y,selected?new Color(115,94,49):new Color(52,64,49),r.x,r.y+r.height,selected?new Color(72,65,36):new Color(30,40,31)));
         g.fillRoundRect(r.x,r.y,r.width,r.height,5,5);
