@@ -58,3 +58,7 @@ Owner authorized the 0.11.3 release and RuneLite submission. Release-version Jav
 ## Farming seed menu · 2026-11-05
 
 Added an opt-in Farming Hub entry beside Examine for catalogued planting items in inventory and bank. It opens the exact seed in the existing Seeds tab. The development branch starts from master 22f2726, which includes the prior Slayer and Farming release. Changed Java sources compiled with release 11 compatibility against the existing development dependencies. All 12 focused Farming tests passed locally. Owner inventory and bank checks remain pending.
+
+## Birdhouse ready alerts · 2026-11-05
+
+Owner confirmed the Farming seed menu works. Birdhouse alerts now use a desktop notification and optional RuneLite sound, including while focused. Houses that become ready in the same refresh share one notification. The existing enable setting and ready-transition baseline are retained. Changed sources compiled with Java 11 compatibility and 12 focused Farming tests passed locally. Sound and desktop delivery await the owner’s in-game check.

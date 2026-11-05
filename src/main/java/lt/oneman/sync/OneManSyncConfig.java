@@ -197,8 +197,13 @@ public interface OneManSyncConfig extends SlayerLabConfig
         position=24, section=farmingSection)
     default boolean farmingSeedMenu() { return false; }
 
-    @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Optional local notification when an observed birdhouse becomes ready.", position=19, section=farmingSection)
+    @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Show a desktop notification when a tracked birdhouse becomes ready.", position=19, section=farmingSection)
     default boolean notifyBirdhousesReady() { return false; }
+    @ConfigItem(keyName="birdhouseReadySound", name="Birdhouse ready sound",
+        description="Play the RuneLite notification sound when Notify birdhouses ready is enabled.",
+        position=25, section=farmingSection)
+    default boolean birdhouseReadySound() { return true; }
+
     @ConfigItem(keyName="farmingHealthWarnings", name="Farming health & compost hints", description="Show observed disease/death and last reported bottomless bucket amount in Farming Hub.", position=20, section=farmingSection)
     default boolean farmingHealthWarnings() { return true; }
     @ConfigItem(keyName="notifyFarmingDisease", name="Notify diseased/dead patches", description="One local alert per observed unhealthy episode; requires Time Tracking observations.", position=21, section=farmingSection)

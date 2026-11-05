@@ -29,6 +29,8 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.ConfigManager;
 
 @Singleton
@@ -131,12 +133,23 @@ public class FarmingRunTracker {
         String[] birdNames = new String[]{"Mushroom Meadow N", "Mushroom Meadow S", "Verdant Valley NE", "Verdant Valley SW"};
         long now = System.currentTimeMillis() / 1000L;
         List<BirdhouseRun> runs=new ArrayList<>();
+        List<String> newlyReady = new ArrayList<>();
         for(int i=0;i<birdVarps.length;i++){
             String stored=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,TimeTrackingConfig.BIRD_HOUSE+"."+birdVarps[i]);
             BirdhouseRun run=BirdhouseRun.read(i,stored,now);runs.add(run);
             boolean ready=run.status==BirdhouseRun.Status.READY;
-            if(baseline&&ready&&!lastBirdhouseReady[i]&&config.notifyBirdhousesReady())notifier.notify("OneMan: "+birdNames[i]+" ("+run.house+") is ready!");
+            if (baseline && ready && !lastBirdhouseReady[i])
+            {
+                newlyReady.add(birdNames[i]);
+            }
             lastBirdhouseReady[i]=ready;
+        }
+        if (!newlyReady.isEmpty() && config.notifyBirdhousesReady())
+        {
+            Notification alert = Notification.ON.withInitialized(true).withOverride(true)
+                .withTray(true).withSendWhenFocused(true).withTimeout(5).withVolume(100)
+                .withSound(config.birdhouseReadySound() ? NotificationSound.NATIVE : NotificationSound.OFF);
+            notifier.notify(alert, "OneMan: Birdhouse ready — " + String.join(", ", newlyReady));
         }
         baseline = true;
         readBuckets();
