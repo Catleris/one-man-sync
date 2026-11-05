@@ -54,3 +54,7 @@ Owner reported the native Collection Log popup showing behind the custom OneMan 
 ## Collection Log fix release submission · 2026-11-04
 
 Owner authorized the 0.11.3 release and RuneLite submission. Release-version Java 11 clean build/test/shadowJar passed: https://github.com/Catleris/one-man-sync/actions/runs/41788334454 . Source PR #11 merged as 284c81fa90843acf404b329eca070ade7ab6e094. Submitted https://github.com/runelite/plugin-hub/pull/20096 using the owner-authorized browser fallback after the integration returned HTTP 403. The manifest changes only plugins/one-man-sync and pins that merge commit; warning unchanged. PR is open for RuneLite review, not yet approved/distributed. Owner in-game retest remains pending.
+
+## Farming seed menu · 2026-11-05
+
+Added an opt-in Farming Hub entry beside Examine for catalogued planting items in inventory and bank. It opens the exact seed in the existing Seeds tab. The development branch starts from master 22f2726, which includes the prior Slayer and Farming release. Changed Java sources compiled with release 11 compatibility against the existing development dependencies. All 12 focused Farming tests passed locally. Owner inventory and bank checks remain pending.

@@ -192,6 +192,11 @@ public interface OneManSyncConfig extends SlayerLabConfig
             .withFlash(FlashNotification.FLASH_TWO_SECONDS).withFlashColor(new Color(255,0,0,90))
             .withSendWhenFocused(true).withVolume(100).withTimeout(5);
     }
+    @ConfigItem(keyName="farmingSeedMenu", name="Farming Hub seed menu",
+        description="Add Farming Hub next to Examine for recognised seeds in the inventory and bank.",
+        position=24, section=farmingSection)
+    default boolean farmingSeedMenu() { return false; }
+
     @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Optional local notification when an observed birdhouse becomes ready.", position=19, section=farmingSection)
     default boolean notifyBirdhousesReady() { return false; }
     @ConfigItem(keyName="farmingHealthWarnings", name="Farming health & compost hints", description="Show observed disease/death and last reported bottomless bucket amount in Farming Hub.", position=20, section=farmingSection)

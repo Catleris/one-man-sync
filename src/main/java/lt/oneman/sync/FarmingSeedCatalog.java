@@ -50,6 +50,19 @@ final class FarmingSeedCatalog
         }
         seeds.sort(Comparator.comparing(s->s.name));
     }
+    Seed findSeedItem(String itemName)
+    {
+        for (Seed seed : seeds)
+        {
+            if (seed.name.equalsIgnoreCase(itemName)
+                || (seed.produce.name().equals("MUSHROOM") && "Bittercap mushroom spore".equalsIgnoreCase(itemName)))
+            {
+                return seed;
+            }
+        }
+        return null;
+    }
+
     List<Seed> search(String query)
     {
         String q=normal(query);if(q.isEmpty()) return Collections.emptyList();
