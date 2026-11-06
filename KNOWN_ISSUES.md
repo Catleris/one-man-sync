@@ -46,3 +46,7 @@ Development-only 0.11.4-target-test.1 requires owner inventory-layout, switching
 ## Target Info shield click with Stretched Mode · 2026-11-06
 
 A player reported that the visible shield would not open. Target Info previously registered ahead of RuneLite's coordinate translator when enabled after Stretched Mode. The fix registers after the translator and includes a scaled-click regression test. Player retest pending.
+
+## Minimized Gemstone Crab alerts · 2026-11-06
+
+The owner saw the green flash but heard no sound and saw no desktop notification while RuneLite was minimized. The trial replaces the system beep with bundled audio and requests taskbar attention. Minimized playback and Windows toast behavior are awaiting an in-game retest.

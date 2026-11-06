@@ -3,6 +3,11 @@ package lt.oneman.sync;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -12,23 +17,30 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.client.Notifier;
+import net.runelite.client.audio.AudioPlayer;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RequestFocusType;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 final class GemCrabAlert extends Overlay
 {
+    private static final Logger LOG = LoggerFactory.getLogger(GemCrabAlert.class);
     private static final Color FLASH_COLOR = new Color(67, 224, 195, 64);
     private static final Notification ALERT = Notification.ON.withInitialized(true).withOverride(true)
-        .withTray(true).withSendWhenFocused(true).withTimeout(5).withVolume(100)
-        .withSound(NotificationSound.NATIVE);
+        .withTray(true).withSendWhenFocused(true).withTimeout(8)
+        .withRequestFocus(RequestFocusType.TASKBAR).withSound(NotificationSound.OFF);
 
     @Inject private Client client;
     @Inject private OneManSyncConfig config;
     @Inject private Notifier notifier;
+    @Inject private AudioPlayer audioPlayer;
+    @Inject private ScheduledExecutorService executor;
     private NPC crab;
     private WorldPoint nest;
     private int despawnTick;
@@ -85,7 +97,25 @@ final class GemCrabAlert extends Overlay
         lastPress = client.getMouseLastPressedMillis();
         flashStart = System.nanoTime();
         flashing = true;
+        playSound(config.monstersGemCrabSound());
         notifier.notify(ALERT, "OneMan: Gemstone Crab burrowed!");
+    }
+
+    void playSound(GemCrabSound sound)
+    {
+        GemCrabSound selected = sound == null ? GemCrabSound.FANFARE : sound;
+        executor.execute(() ->
+        {
+            try
+            {
+                audioPlayer.play(GemCrabAlert.class, selected.resource, 0f);
+            }
+            catch (IOException | UnsupportedAudioFileException | LineUnavailableException | IllegalArgumentException ex)
+            {
+                LOG.debug("Unable to play Gemstone Crab alert sound", ex);
+                Toolkit.getDefaultToolkit().beep();
+            }
+        });
     }
 
     void reset()

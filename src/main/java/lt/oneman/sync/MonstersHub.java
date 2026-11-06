@@ -221,6 +221,7 @@ final class MonstersHub
         private final JCheckBox targetEnabled = new JCheckBox("Target info in inventory (beta)");
         private final JCheckBox targetExpanded = new JCheckBox("Expanded target stats");
         private final JCheckBox targetSlayer = new JCheckBox("Only my Slayer task monsters");
+        private final JComboBox<GemCrabSound> gemSound = new JComboBox<>(GemCrabSound.values());
         private final JCheckBox gemAlert = new JCheckBox("Gemstone Crab alert");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
         private final JCheckBox pulse = new JCheckBox("Gentle outline pulse");
@@ -260,7 +261,15 @@ final class MonstersHub
                 if (!updating) configs.setConfiguration("one-man-sync", "monstersGemCrabAlert", gemAlert.isSelected());
             });
             crabControls.card(gemAlert);
-            crabControls.card(OneManCards.text("Sound and screen flash when your crab burrows. Click in the game to stop the flash."));
+            gemSound.setName("monstersGemCrabSound");
+            gemSound.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGemCrabSound", gemSound.getSelectedItem());
+            });
+            JButton previewGemSound = new JButton("Preview sound");
+            previewGemSound.addActionListener(event -> gemCrab.playSound((GemCrabSound) gemSound.getSelectedItem()));
+            crabControls.card(gemSound);
+            crabControls.card(previewGemSound);
+            crabControls.card(OneManCards.text("Plays a melody and requests a desktop alert when your crab burrows. Click in the game to stop the green flash."));
             cards.card(crabControls);
             JPanel settings = OneManCards.card();
             OneManCards controls = new OneManCards();
@@ -341,6 +350,7 @@ final class MonstersHub
             updating = true;
             targetEnabled.setSelected(config.monstersTargetInfo());targetExpanded.setSelected(config.monstersTargetExpanded());targetSlayer.setSelected(config.monstersTargetSlayerOnly());
             gemAlert.setSelected(config.monstersGemCrabAlert());
+            gemSound.setSelectedItem(config.monstersGemCrabSound());
             profile.setSelectedItem(config.monstersProfile());
             tiles.setSelected(config.monstersShamanTiles());
             pulse.setSelected(config.monstersShamanPulse());

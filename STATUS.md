@@ -98,3 +98,7 @@ Java 11 build and regression tests passed for the feature commit `8cb704a` in [G
 ## Target Info click compatibility · 2026-11-06
 
 Target Info now receives mouse input after RuneLite's Stretched Mode translation. The regression test registers the real translator before Target Info and checks that a click on a shield rendered at 200% scale opens the page. Verify in-game with Stretched Mode enabled and confirm native item drags still work.
+
+## Gemstone Crab desktop alert and melodies · 2026-11-06
+
+The owner observed a green flash but no audible alert or desktop notification with RuneLite minimized. The trial uses RuneLite's audio player for four bundled melodies, with a preview in Monsters Hub. The desktop alert requests taskbar attention and the existing system toast. Verify each preview and a real burrow with RuneLite minimized on Windows.

@@ -69,6 +69,7 @@ public class OneManPluginBootstrapTest
                 bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
                 bind(WorldMapPointManager.class).toInstance(mock(WorldMapPointManager.class));
                 bind(Notifier.class).toInstance(mock(Notifier.class));
+                bind(java.util.concurrent.ScheduledExecutorService.class).toInstance(mock(java.util.concurrent.ScheduledExecutorService.class));
                 bind(DrawManager.class).toInstance(mock(DrawManager.class));
                 bind(com.google.gson.Gson.class).toInstance(new GsonBuilder().create());
                 bind(OkHttpClient.class).toInstance(new OkHttpClient.Builder().build());
