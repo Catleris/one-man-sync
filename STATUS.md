@@ -94,3 +94,7 @@ The opt-in Monsters Hub alert watches for remains from the crab the player engag
 In-game checks: enable Gemstone Crab alert, attack the crab, and verify one sound and repeated pulses on burrow. Move the mouse, then click to confirm only the click dismisses the pulses. Hold and drag a food item to check that the shield remains visible and the inventory receives the drag.
 
 Java 11 build and regression tests passed for the feature commit `8cb704a` in [GitHub Actions](https://github.com/Catleris/one-man-sync/actions/runs/42074611928). The 0.11.4 release candidate also includes Farming Hub seed lookup from the item menu and the optional birdhouse-ready sound.
+
+## Target Info click compatibility · 2026-11-06
+
+Target Info now receives mouse input after RuneLite's Stretched Mode translation. The regression test registers the real translator before Target Info and checks that a click on a shield rendered at 200% scale opens the page. Verify in-game with Stretched Mode enabled and confirm native item drags still work.

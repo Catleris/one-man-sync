@@ -5,6 +5,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -15,9 +16,11 @@ import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.input.MouseManager;
+import net.runelite.client.plugins.stretchedmode.TranslateMouseListener;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +35,11 @@ public class TargetInfoTest
     private Widget inventory;private BufferedImage image;
     @Before public void setup(){
         client=mock(Client.class);config=mock(OneManSyncConfig.class);player=mock(Player.class);
-        npc=mock(NPC.class);composition=mock(NPCComposition.class);mouse=mock(MouseManager.class);bus=new EventBus();
+        npc=mock(NPC.class);composition=mock(NPCComposition.class);mouse=spy(Guice.createInjector(new AbstractModule(){
+            @Override protected void configure(){
+                bind(RuneLiteConfig.class).toInstance(mock(RuneLiteConfig.class));
+            }
+        }).getInstance(MouseManager.class));bus=new EventBus();
         thread=mock(ClientThread.class);
         doAnswer(call->{((Runnable)call.getArgument(0)).run();return null;}).when(thread).invokeLater(any(Runnable.class));
         when(client.getGameState()).thenReturn(GameState.LOGGED_IN);when(client.getCanvasHeight()).thenReturn(600);when(client.getCanvasWidth()).thenReturn(400);
@@ -91,6 +98,21 @@ public class TargetInfoTest
         info.tick(null);
         assertFalse(overlay.infoView);
     }
+    @Test public void opensTheShieldAfterStretchedModeTranslatesTheClick()
+    {
+        info.shutDown();
+        when(client.getStretchedDimensions()).thenReturn(new Dimension(800, 1200));
+        when(client.getRealDimensions()).thenReturn(new Dimension(400, 600));
+        mouse.registerMouseListener(0, new TranslateMouseListener(client));
+        info.startUp();
+        info.tick(null);
+        render();
+
+        MouseEvent result = mouse.processMousePressed(event(MouseEvent.MOUSE_PRESSED, 480, 300, MouseEvent.BUTTON1));
+        assertTrue(result.isConsumed());
+        assertTrue(overlay.infoView);
+    }
+
     @Test public void drawsInsideInventoryAndBlocksOnlyItsInfoPage(){
         info.tick(null);info.open();when(config.monstersTargetExpanded()).thenReturn(true);render();
         assertEquals(TargetInfoOverlay.BODY,overlay.hit(30,105));assertTrue(overlay.blocksItems(30,100));
