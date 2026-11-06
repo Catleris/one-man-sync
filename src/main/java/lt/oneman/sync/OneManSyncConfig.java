@@ -4,6 +4,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.RequestFocusType;
@@ -49,7 +50,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigSection(name="Clue Hub", description="Clue labels, tier dots and item categories", position=4, closedByDefault=true)
     String clueSection = "clueSection";
 
-    @ConfigSection(name="Monsters / Lizardman Shaman", description="The same Shaman preferences used by Monsters Hub", position=5, closedByDefault=true)
+    @ConfigSection(name="Monsters Hub", description="Monster profiles, fight cards and alerts", position=5, closedByDefault=true)
     String monstersSection = "monstersSection";
 
     @ConfigSection(name="Unlocks Hub", description="Account unlock catalogue and journal visibility", position=6, closedByDefault=true)
@@ -150,6 +151,12 @@ public interface OneManSyncConfig extends SlayerLabConfig
 
     @ConfigItem(keyName="monstersGemCrabSound", name="Gemstone Crab sound", description="Choose the melody played when your crab burrows.", position=106, section=monstersSection)
     default GemCrabSound monstersGemCrabSound() { return GemCrabSound.FANFARE; }
+
+    @ConfigItem(keyName="monstersGuardiansOverlay", name="Guardians fight card", description="Show the manually selected Grotesque Guardians phase in game.", position=111, section=monstersSection)
+    default boolean monstersGuardiansOverlay() { return false; }
+
+    @ConfigItem(keyName="monstersGuardiansNext", name="Guardians next phase key", description="Manually advance the Grotesque Guardians guide to the next phase.", position=112, section=monstersSection)
+    default Keybind monstersGuardiansNext() { return Keybind.NOT_SET; }
 
     @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works without a Slayer task or website sync.", position=90, section=monstersSection)
     default MonstersProfile monstersProfile() { return MonstersProfile.NONE; }

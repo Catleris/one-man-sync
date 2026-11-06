@@ -35,6 +35,9 @@ import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Keybind;
+import net.runelite.client.input.KeyManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /** Client-thread NPC tracking; immutable tracking snapshots are published to the client-thread overlay. */
@@ -50,6 +53,19 @@ final class MonstersHub
     @Inject private ElementalWeaknessOverlay weakness;
     @Inject private CombatInfoPage combatInfo;
     @Inject private GemCrabAlert gemCrab;
+    @Inject private GuardiansFightGuide guardians;
+    @Inject private KeyManager keys;
+    private final HotkeyListener nextGuardianPhase = new HotkeyListener(() -> this.active && guardians.selected() && config.monstersGuardiansOverlay()
+        ? config.monstersGuardiansNext() : Keybind.NOT_SET)
+    {
+        @Override public void hotkeyPressed()
+        {
+            clientThread.invokeLater(() -> {
+                if (client.getGameState() == GameState.LOGGED_IN && config.monstersGuardiansOverlay())
+                    moveGuardians(1);
+            });
+        }
+    };
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
     private volatile boolean active;
@@ -79,6 +95,9 @@ final class MonstersHub
         overlay.setHub(this);
         overlays.add(overlay);
         overlays.add(gemCrab);
+        overlays.add(guardians);
+        guardians.reset();
+        keys.registerKeyListener(nextGuardianPhase);
         lastStatus = "";
     }
 
@@ -94,6 +113,8 @@ final class MonstersHub
         slayerState = null;
         overlays.remove(overlay);
         overlays.remove(gemCrab);
+        overlays.remove(guardians);
+        keys.unregisterKeyListener(nextGuardianPhase);
         gemCrab.reset();
         overlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
@@ -190,6 +211,7 @@ final class MonstersHub
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
         gemCrab.tick();
+        guardians.updateSupplies();
         suggestion = suggestsShaman(task)
             ? "Suggested for your task: Lizardman Shaman."
             : "Choose a profile above.";
@@ -235,16 +257,29 @@ final class MonstersHub
 
     JPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }
 
+    private void moveGuardians(int step)
+    {
+        if (!active || !guardians.selected()) return;
+        if (step == 0) guardians.reset();
+        else guardians.move(step);
+        refresh();
+    }
+
     private void refresh()
     {
         String status = suggestion + (markers.isEmpty()?"":"\nSpawns: "+markers.size());
-        if (status.equals(lastStatus)) return;
-        lastStatus = status;
+        String key = guardians.selected() ? status + guardians.phase().title() + guardians.hammer() : status;
+        if (key.equals(lastStatus)) return;
+        lastStatus = key;
         SwingUtilities.invokeLater(() -> { if (active && panel != null) panel.refresh(status); });
     }
 
     private final class Panel extends JPanel
     {
+        private final OneManCards guardiansCard = new OneManCards();
+        private final OneManCards shamanCard = new OneManCards();
+        private final JTextArea phaseText = OneManCards.text("");
+        private final JCheckBox guardiansOverlay = new JCheckBox("Show fight card in game");
         private final JCheckBox targetEnabled = new JCheckBox("Elemental weakness checker");
         private final JComboBox<GemCrabSound> gemSound = new JComboBox<>(GemCrabSound.values());
         private final JCheckBox gemAlert = new JCheckBox("Gemstone Crab alert");
@@ -298,6 +333,24 @@ final class MonstersHub
             tiles.setName("monstersShamanTiles");
             tiles.setOpaque(false);
             controls.card(profile);
+            guardiansCard.card(phaseText);
+            JPanel phaseButtons = new JPanel(new java.awt.GridLayout(1, 3, 4, 0));
+            String[] labels = {"Previous", "Reset", "Next"};
+            for (int step = -1; step <= 1; step++)
+            {
+                int direction = step;
+                JButton button = new JButton(labels[step + 1]);
+                button.addActionListener(event -> clientThread.invokeLater(() -> moveGuardians(direction)));
+                phaseButtons.add(button);
+            }
+            guardiansCard.card(phaseButtons);
+            guardiansOverlay.setOpaque(false);
+            guardiansOverlay.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGuardiansOverlay", guardiansOverlay.isSelected());
+            });
+            guardiansCard.card(guardiansOverlay);
+            guardiansCard.card(OneManCards.text("Select phases manually. Set the optional next-phase hotkey in OneMan Sync settings."));
+            controls.card(guardiansCard);
             JPanel looks = new JPanel(new BorderLayout(0,4)); looks.setOpaque(false);
             JToggleButton expandLooks = new JToggleButton("Appearance presets");
             expandLooks.setName("monstersAppearanceToggle");
@@ -317,17 +370,18 @@ final class MonstersHub
             });
             pulse.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanPulse", pulse.isSelected()); });
             looks.add(expandLooks, BorderLayout.NORTH); looks.add(lookControls, BorderLayout.CENTER);
-            controls.card(looks);
+            shamanCard.card(looks);
             OneManCards tileControls=new OneManCards();tileControls.card(tiles);tileControls.card(color);
             tileControls.card(opacity("Tile visibility",tileOpacity,"monstersShamanTileOpacity"));
-            controls.card(OneManTheme.collapsible("Tile markers",tileControls));
+            shamanCard.card(OneManTheme.collapsible("Tile markers",tileControls));
             OneManCards modelControls=new OneManCards();
             for(JCheckBox box:new JCheckBox[]{outline,fill,label}){box.setOpaque(false);modelControls.card(box);}
             outline.setName("monstersShamanOutline");fill.setName("monstersShamanFill");label.setName("monstersShamanLabel");
             modelControls.card(modelColor);
             modelControls.card(opacity("Outline / label visibility",modelOpacity,"monstersShamanModelOpacity"));
             modelControls.card(opacity("Fill visibility",fillOpacity,"monstersShamanFillOpacity"));
-            controls.card(OneManTheme.collapsible("Spawn appearance",modelControls));
+            shamanCard.card(OneManTheme.collapsible("Spawn appearance",modelControls));
+            controls.card(shamanCard);
             settings.add(controls, BorderLayout.NORTH);
             settings.add(status, BorderLayout.CENTER);
             cards.card(settings);
@@ -372,6 +426,12 @@ final class MonstersHub
             gemAlert.setSelected(config.monstersGemCrabAlert());
             gemSound.setSelectedItem(config.monstersGemCrabSound());
             profile.setSelectedItem(config.monstersProfile());
+            guardiansCard.setVisible(guardians.selected());
+            shamanCard.setVisible(!guardians.selected());
+            guardiansOverlay.setSelected(config.monstersGuardiansOverlay());
+            GuardiansFightGuide.Phase phase = guardians.phase();
+            phaseText.setText(phase.title() + "\n" + phase.style + "\n\n" + phase.reminder
+                + (phase.diagram.isEmpty() ? "" : "\n" + phase.diagram) + "\n\n" + guardians.hammer());
             tiles.setSelected(config.monstersShamanTiles());
             pulse.setSelected(config.monstersShamanPulse());
             outline.setSelected(config.monstersShamanOutline());

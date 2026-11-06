@@ -62,6 +62,7 @@ public class MonstersHubTest
                 bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
                 bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
                 bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
+                bind(net.runelite.client.input.KeyManager.class).toInstance(mock(net.runelite.client.input.KeyManager.class));
             }
         }).getInstance(MonstersHub.class);
         hub.startUp(JsonObject::new);

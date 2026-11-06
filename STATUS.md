@@ -118,3 +118,7 @@ The Info page draws a lightened copy of the native Magic book sprite while open 
 ## Explicit Slayer preparation item names · 2026-11-06
 
 The Slayer item overlay and preparation panel now name the item that matched the equipment, inventory or last bank snapshot. When no match is known they list concrete catalog options rather than generic categories. The requirements and bank highlighting rules stay as previously defined.
+
+## Grotesque Guardians fight guide · 2026-11-06
+
+Monsters Hub now has a Grotesque Guardians profile with four manually selected phases, a prominent phase-three sphere reminder, hammer readiness, and an optional movable fight card and next-phase hotkey. The guide does not track live mechanics or mark arena tiles. In-game checks: switch between profiles, cycle and reset phases, test the optional hotkey and check that a stored or carried hammer is named correctly.

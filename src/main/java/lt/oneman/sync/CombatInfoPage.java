@@ -105,6 +105,8 @@ final class CombatInfoPage extends Overlay
 
     void close() { pageAnchor = null; }
 
+    boolean bankHas(int itemId) { return bankWeapons.contains(itemId); }
+
     void clearBank()
     {
         bankWeapons.clear();
