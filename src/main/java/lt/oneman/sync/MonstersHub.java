@@ -48,6 +48,7 @@ final class MonstersHub
     @Inject private OverlayManager overlays;
     @Inject private ShamanMinionOverlay overlay;
     @Inject private ElementalWeaknessOverlay weakness;
+    @Inject private CombatInfoPage combatInfo;
     @Inject private GemCrabAlert gemCrab;
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
@@ -70,6 +71,7 @@ final class MonstersHub
     {
         this.slayerState = slayerState;
         overlays.add(weakness);
+        overlays.add(combatInfo);
         active = true;
         scanPending = true;
         minions.clear();
@@ -84,6 +86,9 @@ final class MonstersHub
     {
         active = false;
         overlays.remove(weakness);
+        overlays.remove(combatInfo);
+        combatInfo.close();
+        combatInfo.clearBank();
         weakness.clear();
         clear();
         slayerState = null;
@@ -143,6 +148,8 @@ final class MonstersHub
     void onGameStateChanged(GameStateChanged event)
     {
         weakness.clear();
+        combatInfo.close();
+        if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) combatInfo.clearBank();
         gemCrab.reset();
         clear();
         scanPending = true;
@@ -163,7 +170,19 @@ final class MonstersHub
 
     void onMenuOpened(net.runelite.api.events.MenuOpened event)
     {
-        if (active) weakness.onMenuOpened(event);
+        if (!active) return;
+        weakness.onMenuOpened(event);
+        combatInfo.onMenuOpened(event);
+    }
+
+    void onBankChanged(net.runelite.api.Item[] items)
+    {
+        if (active) combatInfo.bankChanged(items);
+    }
+
+    void onPostMenuSort()
+    {
+        if (active && combatInfo.coversPointer()) client.getMenu().setMenuEntries(new net.runelite.api.MenuEntry[0]);
     }
 
     void onGameTick()
@@ -254,7 +273,7 @@ final class MonstersHub
                 if (!updating) configs.setConfiguration("one-man-sync", "monstersTargetInfo", targetEnabled.isSelected());
             });
             cards.card(targetEnabled);
-            cards.card(OneManCards.text("Right-click a monster and select Check weakness. Rune, chat and duration options are in OneMan Sync settings."));
+            cards.card(OneManCards.text("Right-click a monster and select Check weakness. Right-click the Magic book for Info. Set duration to 0 to keep the marker across respawns."));
             OneManCards crabControls = new OneManCards();
             gemAlert.setName("monstersGemCrabAlert");
             gemAlert.setOpaque(false);

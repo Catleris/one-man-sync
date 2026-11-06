@@ -106,3 +106,7 @@ The owner observed a green flash but no audible alert or desktop notification wi
 ## Manual elemental weakness overlay · 2026-11-06
 
 The Monsters Hub checker now adds a manual Check weakness entry to the NPC context menu. It renders elemental rune and percentage above the selected NPC from the bundled exact-variant dataset. The inventory shield, page and custom mouse listener were removed. The existing enable setting carries over. In-game checks: inspect Gargoyle, confirm 40% Earth and the rune, then verify the overlay clears on despawn and inventory input stays native.
+
+## Persistent weakness and Magic Info page · 2026-11-06
+
+A zero-second setting keeps tracking the selected NPC variant through same-scene respawns. Positive durations expire from the manual check. NPCs without an elemental weakness show the lowest distinct melee and ranged defence bonuses when present. The Magic book context menu opens a panel over the inventory or spellbook and draws a pale book marker. Optional bank weapon hints use observed local bank items and melee accuracy bonuses. Verify fixed and resizable layouts, respawns and bank hints in-game.

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 public class ElementalWeaknessOverlayTest
 {
-    @Test public void menuClickMarksExactNpcUntilDespawn()
+    @Test public void menuClickMarksExactNpcAndReattachesToItsRespawn()
     {
         Client client = mock(Client.class);
         ItemManager items = mock(ItemManager.class);
@@ -74,6 +74,14 @@ public class ElementalWeaknessOverlayTest
             overlay.despawned(npc);
             overlay.render(graphics);
             verify(items).getImage(ItemID.EARTHRUNE);
+
+            NPC respawn = mock(NPC.class);
+            when(respawn.getName()).thenReturn("Gargoyle");
+            when(respawn.getTransformedComposition()).thenReturn(composition);
+            when(respawn.getCanvasTextLocation(any(), eq("40% Earth"), anyInt())).thenReturn(new Point(10, 60));
+            overlay.appeared(respawn);
+            overlay.render(graphics);
+            verify(items, times(2)).getImage(ItemID.EARTHRUNE);
         }
         finally
         {

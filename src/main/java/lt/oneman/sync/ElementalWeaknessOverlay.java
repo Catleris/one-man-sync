@@ -37,6 +37,9 @@ final class ElementalWeaknessOverlay extends Overlay
     @Inject private OneManSyncConfig config;
     @Inject private ItemManager items;
     private NPC selected;
+    private int selectedVariant;
+    private TargetInfoData.Stats lastStats;
+    private String lastName;
     private WorldView world;
     private String selectedName;
     private long selectedAt;
@@ -72,12 +75,15 @@ final class ElementalWeaknessOverlay extends Overlay
     void check(NPC npc)
     {
         if (!config.monstersTargetInfo() || npc.isDead() || client.getGameState() != GameState.LOGGED_IN) return;
-        clear();
-        TargetInfoData.Stats stats = weakness(npc);
+        clearSelection();
+        TargetInfoData.Stats stats = stats(npc);
         String name = npc.getName();
+        lastStats = stats;
+        lastName = name;
         if (stats != null && name != null)
         {
             selected = npc;
+            selectedVariant = npc.getTransformedComposition().getId();
             world = npc.getWorldView();
             selectedName = name;
             selectedAt = System.nanoTime();
@@ -86,24 +92,38 @@ final class ElementalWeaknessOverlay extends Overlay
         }
         if (config.monstersWeaknessChat())
         {
-            String message = stats == null ? "No listed elemental weakness." : label(stats) + " weakness.";
+            String message = stats == null ? "No listed combat data." : label(stats);
+            if (stats != null && elemental(stats) != null) message += " weakness.";
             client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", (name == null ? "NPC" : name) + ": " + message, null);
         }
     }
 
     void appeared(NPC npc)
     {
-        if (selected != null && npc != selected && npc.getWorldView() == world && selectedName.equals(npc.getName()))
-            nearby.add(npc);
+        if (selectedName == null || npc.getWorldView() != world || !selectedName.equals(npc.getName()) || npc.isDead()) return;
+        NPCComposition variant = npc.getTransformedComposition();
+        if ((selected == null || selected.isDead()) && variant != null && variant.getId() == selectedVariant)
+        {
+            selected = npc;
+            nearby.remove(npc);
+        }
+        else if (npc != selected) nearby.add(npc);
     }
 
     void despawned(NPC npc)
     {
-        if (npc == selected) clear();
-        else nearby.remove(npc);
+        if (npc == selected) selected = null;
+        nearby.remove(npc);
     }
 
     void clear()
+    {
+        clearSelection();
+        lastStats = null;
+        lastName = null;
+    }
+
+    private void clearSelection()
     {
         selected = null;
         world = null;
@@ -111,16 +131,30 @@ final class ElementalWeaknessOverlay extends Overlay
         nearby.clear();
     }
 
-    private TargetInfoData.Stats weakness(NPC npc)
+    TargetInfoData.Stats lastStats() { return lastStats; }
+    String lastName() { return lastName; }
+
+    private TargetInfoData.Stats stats(NPC npc)
     {
         NPCComposition variant = npc.getTransformedComposition();
-        TargetInfoData.Stats stats = variant == null ? null : data.find(variant.getId());
-        return stats != null && stats.percent != null && stats.percent > 0 && runeId(stats.element) != -1 ? stats : null;
+        return variant == null ? null : data.find(variant.getId());
+    }
+
+    static String elemental(TargetInfoData.Stats stats)
+    {
+        return stats.percent != null && stats.percent > 0 && runeId(stats.element) != -1
+            ? stats.percent + "% " + stats.element : null;
     }
 
     private static String label(TargetInfoData.Stats stats)
     {
-        return stats.percent + "% " + stats.element;
+        String elemental = elemental(stats);
+        if (elemental != null) return elemental;
+        String melee = stats.melee();
+        String ranged = stats.ranged();
+        if (melee == null && ranged == null) return "No clear weakness";
+        if (melee == null) return "Range: " + ranged;
+        return ranged == null ? melee : melee + " | Range: " + ranged;
     }
 
     private static int runeId(String element)
@@ -138,14 +172,14 @@ final class ElementalWeaknessOverlay extends Overlay
     @Override
     public Dimension render(Graphics2D graphics)
     {
-        if (selected == null || !config.monstersTargetInfo() || client.getGameState() != GameState.LOGGED_IN) return null;
+        if (selectedName == null || !config.monstersTargetInfo() || client.getGameState() != GameState.LOGGED_IN) return null;
         int duration = config.monstersWeaknessDuration();
-        if (selected.isDead() || (duration > 0 && System.nanoTime() - selectedAt >= TimeUnit.SECONDS.toNanos(duration)))
+        if (duration > 0 && System.nanoTime() - selectedAt >= TimeUnit.SECONDS.toNanos(duration))
         {
-            clear();
+            clearSelection();
             return null;
         }
-        draw(graphics, selected);
+        if (selected != null && !selected.isDead()) draw(graphics, selected);
         if (config.monstersWeaknessSameName())
             for (NPC npc : nearby)
                 if (!npc.isDead() && selectedName.equals(npc.getName())) draw(graphics, npc);
@@ -154,14 +188,14 @@ final class ElementalWeaknessOverlay extends Overlay
 
     private void draw(Graphics2D graphics, NPC npc)
     {
-        TargetInfoData.Stats stats = weakness(npc);
+        TargetInfoData.Stats stats = stats(npc);
         if (stats == null) return;
         String text = label(stats);
         Point point = npc.getCanvasTextLocation(graphics, text, npc.getLogicalHeight() + 24);
         if (point == null) return;
         Color color = config.monstersWeaknessColor();
         OverlayUtil.renderTextLocation(graphics, point, text, color == null ? Color.WHITE : color);
-        if (config.monstersWeaknessRune())
+        if (config.monstersWeaknessRune() && elemental(stats) != null)
         {
             BufferedImage rune = items.getImage(runeId(stats.element));
             int x = point.getX() + graphics.getFontMetrics().stringWidth(text) / 2;

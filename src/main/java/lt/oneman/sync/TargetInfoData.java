@@ -16,11 +16,32 @@ final class TargetInfoData
     {
         final String element;
         final Integer percent;
+        final Integer stab, slash, crush, light, standard, heavy;
+
+        String melee() { return lowest(stab, slash, crush, "Stab", "Slash", "Crush"); }
+        String ranged() { return lowest(light, standard, heavy, "Light", "Standard", "Heavy"); }
+
+        private static String lowest(Integer first, Integer second, Integer third, String a, String b, String c)
+        {
+            if (first == null || second == null || third == null || (first.equals(second) && first.equals(third))) return null;
+            int min = Math.min(first, Math.min(second, third));
+            java.util.StringJoiner styles = new java.util.StringJoiner("/");
+            if (first == min) styles.add(a);
+            if (second == min) styles.add(b);
+            if (third == min) styles.add(c);
+            return styles + " " + min;
+        }
 
         Stats(String[] cells)
         {
             element = cells[2];
             percent = number(cells[3]);
+            stab = number(cells[4]);
+            slash = number(cells[5]);
+            crush = number(cells[6]);
+            standard = number(cells[8]);
+            heavy = number(cells[9]);
+            light = number(cells[10]);
         }
     }
 

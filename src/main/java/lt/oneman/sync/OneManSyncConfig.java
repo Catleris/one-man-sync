@@ -135,12 +135,15 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="monstersWeaknessChat", name="Show weakness in chat", description="Print the result of Check weakness in game chat.", position=104, section=monstersSection)
     default boolean monstersWeaknessChat() { return true; }
     @Range(min=0, max=120)
-    @ConfigItem(keyName="monstersWeaknessDuration", name="Weakness duration (seconds)", description="Time to display the weakness. Zero keeps it until the monster is gone or you check another NPC.", position=107, section=monstersSection)
+    @ConfigItem(keyName="monstersWeaknessDuration", name="Weakness duration (seconds)", description="Time to display the weakness. Zero keeps it across respawns in the current scene until you check another NPC.", position=107, section=monstersSection)
     default int monstersWeaknessDuration() { return 0; }
     @ConfigItem(keyName="monstersWeaknessSameName", name="Show on NPCs with the same name", description="Also show weaknesses on nearby NPCs with the same name, using each NPC's own stats.", position=108, section=monstersSection)
     default boolean monstersWeaknessSameName() { return false; }
     @ConfigItem(keyName="monstersWeaknessColor", name="Weakness text colour", description="Colour of the weakness text above the NPC.", position=109, section=monstersSection)
     default Color monstersWeaknessColor() { return Color.WHITE; }
+
+    @ConfigItem(keyName="monstersWeaknessBankGear", name="Show bank weapon hint", description="Show a weapon from your last observed bank by melee accuracy bonus. Does not check usable styles or equipment requirements.", position=110, section=monstersSection)
+    default boolean monstersWeaknessBankGear() { return false; }
 
     @ConfigItem(keyName="monstersGemCrabAlert", name="Gemstone Crab alert", description="Play a sound and flash the screen when your Gemstone Crab burrows. Click in the game to dismiss.", position=105, section=monstersSection)
     default boolean monstersGemCrabAlert() { return false; }

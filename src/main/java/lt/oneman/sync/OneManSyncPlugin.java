@@ -269,6 +269,8 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onMenuOpened(net.runelite.api.events.MenuOpened event) { companion.onMenuOpened(event); monstersHub.onMenuOpened(event); }
     @Subscribe
+    public void onPostMenuSort(net.runelite.api.events.PostMenuSort event) { monstersHub.onPostMenuSort(); }
+    @Subscribe
     public void onBeforeRender(net.runelite.api.events.BeforeRender event){achievementAlarms.beforeRender();}
     @Subscribe
     public void onWidgetLoaded(net.runelite.api.events.WidgetLoaded event){achievementAlarms.onWidgetLoaded(event);}
@@ -417,6 +419,9 @@ public class OneManSyncPlugin extends Plugin
         clueHub.onItemContainerChanged(event);
         slayerHelper.onItemContainerChanged(event);
         companion.onFarmingItems(event);
+        if (event.getContainerId() == InventoryID.BANK && event.getItemContainer() != null
+            && client.getGameState() == GameState.LOGGED_IN)
+            monstersHub.onBankChanged(event.getItemContainer().getItems());
         if(!config.enabled() || client.getGameState()!=GameState.LOGGED_IN) return;
 
         ItemContainer container=event.getItemContainer();
