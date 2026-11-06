@@ -16,7 +16,7 @@ final class TargetInfoData
     {
         final String element;
         final Integer percent;
-        final Integer stab, slash, crush, light, standard, heavy;
+        final Integer stab, slash, crush, light, standard, heavy, magic, hp, defence, magicLevel, speed;
 
         String melee() { return lowest(stab, slash, crush, "Stab", "Slash", "Crush"); }
         String ranged() { return lowest(light, standard, heavy, "Light", "Standard", "Heavy"); }
@@ -42,6 +42,11 @@ final class TargetInfoData
             standard = number(cells[8]);
             heavy = number(cells[9]);
             light = number(cells[10]);
+            magic = number(cells[7]);
+            hp = number(cells[11]);
+            defence = number(cells[12]);
+            magicLevel = number(cells[13]);
+            speed = number(cells[14]);
         }
     }
 

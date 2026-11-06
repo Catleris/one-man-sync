@@ -50,6 +50,7 @@ public class ShamanMinionOverlayTest
                 bind(java.util.concurrent.ScheduledExecutorService.class).toInstance(mock(java.util.concurrent.ScheduledExecutorService.class));
                 bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
                 bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
+                bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
                 bind(ModelOutlineRenderer.class).toInstance(outlines);
             }
         });

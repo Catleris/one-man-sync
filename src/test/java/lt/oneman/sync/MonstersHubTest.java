@@ -60,6 +60,7 @@ public class MonstersHubTest
                 bind(ScheduledExecutorService.class).toInstance(executor);
                 bind(AudioPlayer.class).toInstance(audioPlayer);
                 bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
+                bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
                 bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
             }
         }).getInstance(MonstersHub.class);

@@ -110,3 +110,7 @@ The Monsters Hub checker now adds a manual Check weakness entry to the NPC conte
 ## Persistent weakness and Magic Info page · 2026-11-06
 
 A zero-second setting keeps tracking the selected NPC variant through same-scene respawns. Positive durations expire from the manual check. NPCs without an elemental weakness show the lowest distinct melee and ranged defence bonuses when present. The Magic book context menu opens a panel over the inventory or spellbook and draws a pale book marker. Optional bank weapon hints use observed local bank items and melee accuracy bonuses. Verify fixed and resizable layouts, respawns and bank hints in-game.
+
+## Magic Info visual restoration · 2026-11-06
+
+The Info page draws a lightened copy of the native Magic book sprite while open and reuses the previous green and gold Target Info design, with the combat tiles and base stat rows. Verify the native silhouette and closed state in fixed and resizable clients.

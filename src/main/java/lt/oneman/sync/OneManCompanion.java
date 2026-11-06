@@ -27,7 +27,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.11.5-test.3";
+    static final String VERSION = "0.11.5-test.4";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
