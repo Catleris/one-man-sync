@@ -177,6 +177,6 @@ Test build `0.9.0-unlocks-test` adds a searchable, collapsible account unlock re
 
 ### Development trial: target info in inventory
 
-Enable Target Info in Monsters Hub to view an NPC reference page in the inventory. It retains the last NPC after combat and opens on demand from the hub or the shield beside the inventory. The shield stays visible while dragging items. Stats are static and matched by NPC variant. Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).
+Enable Elemental weakness checker in Monsters Hub, then right-click an NPC and choose **Check weakness**. The rune and weakness percentage appear above the NPC. Monster data derived from [Koitere/monster-stats](https://github.com/Koitere/monster-stats) / OSRS Wiki; [data attribution and upstream license](src/main/resources/lt/oneman/sync/target-info-LICENSE.txt).
 
 Monsters Hub also offers an opt-in Gemstone Crab alert. A sound plays when the crab you fought burrows, and the screen pulses until you click in the game.

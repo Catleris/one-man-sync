@@ -102,3 +102,7 @@ Target Info now receives mouse input after RuneLite's Stretched Mode translation
 ## Gemstone Crab desktop alert and melodies · 2026-11-06
 
 The owner observed a green flash but no audible alert or desktop notification with RuneLite minimized. The trial uses RuneLite's audio player for four bundled melodies, with a preview in Monsters Hub. The desktop alert requests taskbar attention and the existing system toast. Verify each preview and a real burrow with RuneLite minimized on Windows.
+
+## Manual elemental weakness overlay · 2026-11-06
+
+The Monsters Hub checker now adds a manual Check weakness entry to the NPC context menu. It renders elemental rune and percentage above the selected NPC from the bundled exact-variant dataset. The inventory shield, page and custom mouse listener were removed. The existing enable setting carries over. In-game checks: inspect Gargoyle, confirm 40% Earth and the rune, then verify the overlay clears on despawn and inventory input stays native.

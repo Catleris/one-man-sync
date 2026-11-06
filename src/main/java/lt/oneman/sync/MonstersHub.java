@@ -47,7 +47,7 @@ final class MonstersHub
     @Inject private ConfigManager configs;
     @Inject private OverlayManager overlays;
     @Inject private ShamanMinionOverlay overlay;
-    @Inject private TargetInfo targetInfo;
+    @Inject private ElementalWeaknessOverlay weakness;
     @Inject private GemCrabAlert gemCrab;
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
@@ -69,7 +69,7 @@ final class MonstersHub
     void startUp(Supplier<JsonObject> slayerState)
     {
         this.slayerState = slayerState;
-        targetInfo.startUp();
+        overlays.add(weakness);
         active = true;
         scanPending = true;
         minions.clear();
@@ -83,7 +83,8 @@ final class MonstersHub
     void shutDown()
     {
         active = false;
-        targetInfo.shutDown();
+        overlays.remove(weakness);
+        weakness.clear();
         clear();
         slayerState = null;
         overlays.remove(overlay);
@@ -114,6 +115,7 @@ final class MonstersHub
     void onNpcSpawned(NpcSpawned event)
     {
         gemCrab.appeared(event.getNpc());
+        weakness.appeared(event.getNpc());
         if (enabled() && isMinion(event.getNpc().getId()))
         {
             minions.add(event.getNpc());
@@ -124,6 +126,7 @@ final class MonstersHub
     void onNpcDespawned(NpcDespawned event)
     {
         gemCrab.despawned(event.getNpc());
+        weakness.despawned(event.getNpc());
         if (minions.remove(event.getNpc())) publishMarkers();
     }
 
@@ -131,6 +134,7 @@ final class MonstersHub
     {
         NPC npc = event.getNpc();
         gemCrab.appeared(npc);
+        weakness.appeared(npc);
         if (enabled() && isMinion(npc.getId())) minions.add(npc);
         else minions.remove(npc);
         publishMarkers();
@@ -138,7 +142,7 @@ final class MonstersHub
 
     void onGameStateChanged(GameStateChanged event)
     {
-        targetInfo.gameStateChanged(event.getGameState());
+        weakness.clear();
         gemCrab.reset();
         clear();
         scanPending = true;
@@ -148,7 +152,7 @@ final class MonstersHub
 
     void onConfigChanged()
     {
-        targetInfo.configChanged();
+        if (!config.monstersTargetInfo()) weakness.clear();
         if (!config.monstersGemCrabAlert()) gemCrab.reset();
         if (!active) return;
         clear();
@@ -157,11 +161,15 @@ final class MonstersHub
         refresh();
     }
 
+    void onMenuOpened(net.runelite.api.events.MenuOpened event)
+    {
+        if (active) weakness.onMenuOpened(event);
+    }
+
     void onGameTick()
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
-        targetInfo.tick(task);
         gemCrab.tick();
         suggestion = suggestsShaman(task)
             ? "Suggested for your task: Lizardman Shaman."
@@ -218,9 +226,7 @@ final class MonstersHub
 
     private final class Panel extends JPanel
     {
-        private final JCheckBox targetEnabled = new JCheckBox("Target info in inventory (beta)");
-        private final JCheckBox targetExpanded = new JCheckBox("Expanded target stats");
-        private final JCheckBox targetSlayer = new JCheckBox("Only my Slayer task monsters");
+        private final JCheckBox targetEnabled = new JCheckBox("Elemental weakness checker");
         private final JComboBox<GemCrabSound> gemSound = new JComboBox<>(GemCrabSound.values());
         private final JCheckBox gemAlert = new JCheckBox("Gemstone Crab alert");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
@@ -241,19 +247,14 @@ final class MonstersHub
         {
             super(new BorderLayout());
             OneManCards cards = new OneManCards();
-            cards.card(OneManCards.banner("Monsters Hub", "Target info & monster tools"));
-            OneManCards targetControls = new OneManCards();
-            for(JCheckBox box:new JCheckBox[]{targetEnabled,targetExpanded,targetSlayer}){box.setOpaque(false);targetControls.card(box);}
-            targetEnabled.setName("monstersTargetInfo");targetExpanded.setName("monstersTargetExpanded");targetSlayer.setName("monstersTargetSlayerOnly");
-            targetControls.card(OneManCards.text("Inventory page with Items / Target info tabs. Keeps the last NPC after combat. Use the large side Info button to reopen. Static reference stats."));
-            targetControls.card(OneManCards.text("Data: Monster Stats / OSRS Wiki · 4 Nov 2026"));
-            JButton openTarget=new JButton("Open inventory info");openTarget.setName("monstersOpenTargetInfo");
-            openTarget.addActionListener(event->clientThread.invokeLater(()->{configs.setConfiguration("one-man-sync","monstersTargetInfo",true);targetInfo.open();}));
-            targetControls.card(openTarget);
-            cards.card(targetControls);
-            targetEnabled.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetInfo",targetEnabled.isSelected());});
-            targetExpanded.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetExpanded",targetExpanded.isSelected());});
-            targetSlayer.addActionListener(event->{if(!updating)configs.setConfiguration("one-man-sync","monstersTargetSlayerOnly",targetSlayer.isSelected());});
+            cards.card(OneManCards.banner("Monsters Hub", "Weakness & monster tools"));
+            targetEnabled.setOpaque(false);
+            targetEnabled.setName("monstersTargetInfo");
+            targetEnabled.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersTargetInfo", targetEnabled.isSelected());
+            });
+            cards.card(targetEnabled);
+            cards.card(OneManCards.text("Right-click a monster and select Check weakness. Rune, chat and duration options are in OneMan Sync settings."));
             OneManCards crabControls = new OneManCards();
             gemAlert.setName("monstersGemCrabAlert");
             gemAlert.setOpaque(false);
@@ -348,7 +349,7 @@ final class MonstersHub
         void refresh(String message)
         {
             updating = true;
-            targetEnabled.setSelected(config.monstersTargetInfo());targetExpanded.setSelected(config.monstersTargetExpanded());targetSlayer.setSelected(config.monstersTargetSlayerOnly());
+            targetEnabled.setSelected(config.monstersTargetInfo());
             gemAlert.setSelected(config.monstersGemCrabAlert());
             gemSound.setSelectedItem(config.monstersGemCrabSound());
             profile.setSelectedItem(config.monstersProfile());
