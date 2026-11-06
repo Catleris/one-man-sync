@@ -114,3 +114,7 @@ A zero-second setting keeps tracking the selected NPC variant through same-scene
 ## Magic Info visual restoration · 2026-11-06
 
 The Info page draws a lightened copy of the native Magic book sprite while open and reuses the previous green and gold Target Info design, with the combat tiles and base stat rows. Verify the native silhouette and closed state in fixed and resizable clients.
+
+## Explicit Slayer preparation item names · 2026-11-06
+
+The Slayer item overlay and preparation panel now name the item that matched the equipment, inventory or last bank snapshot. When no match is known they list concrete catalog options rather than generic categories. The requirements and bank highlighting rules stay as previously defined.
