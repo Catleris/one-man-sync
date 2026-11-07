@@ -126,3 +126,7 @@ Monsters Hub now has a Grotesque Guardians profile with four manually selected p
 ## OneMan Hub local-only transition · 2026-11-07
 
 Version 0.12.0 changes the public display name to OneMan Hub and removes the website HTTP client, sync payload/queue collectors, token/interval controls, screenshot upload implementation and unused response diagnostic helper. Local screenshot saving remains optional. The existing one-man-sync internal identifier, config group and data directory retain user settings and profile data. The primary plugin now dispatches local hub events and maintains only its local Slayer cache. The review request will update the existing Plugin Hub manifest and request removal of its network warning. In-game retest pending.
+
+## Roadmap settings cleanup · 2026-11-07
+
+Removed the Companion language setting and fixed roadmap reasons to English. Renamed the Roadmap / Screenshots settings section to Roadmap. The prior local-only Java 11 build/tests passed in run 42354340385. Plugin Hub review #20270 remains open.

@@ -35,7 +35,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="alarmScale", name="Banner scale (%)", description="Notification size; automatically fits narrower viewports", position=133, section=alarmSection)
     default int alarmScale(){return 100;}
 
-    @ConfigSection(name="Roadmap / Screenshots", description="Companion preferences and milestone captures", position=1, closedByDefault=true)
+    @ConfigSection(name="Roadmap", description="Companion preferences and milestone captures", position=1, closedByDefault=true)
     String roadmapSection = "roadmapSection";
 
     @ConfigSection(name="Slayer / Alerts / Supplies", description="Task hints, Superior notifications and supply warnings", position=2, closedByDefault=true)
@@ -64,9 +64,6 @@ public interface OneManSyncConfig extends SlayerLabConfig
 
     @ConfigItem(keyName="highlightGoalItems", name="Highlight goal items", description="Outline curated preparation items in your bank.", position=3, section=roadmapSection)
     default boolean highlightGoalItems(){return true;}
-
-    @ConfigItem(keyName="companionLanguage", name="Companion language", description="Language for roadmap reasons: LT or EN.", position=4, section=roadmapSection)
-    default String companionLanguage(){return "EN";}
 
     @ConfigItem(keyName="milestoneScreenshots", name="Save milestone screenshots", description="Save local 99-level and quest-completion screenshots. Images include the visible game window.", position=5, section=roadmapSection)
     default boolean milestoneScreenshots(){return false;}

@@ -282,7 +282,7 @@ final class OneManCompanion {
         int index=0;for(CompanionPlanner.Step s:visible) {
             if(++index>2)break;next.append(index).append(". ").append(s.name).append("\n")
                 .append(planner.requirements(s,levels,completed,qp)).append("\nWhy now: ")
-                .append(s.why.isEmpty()?"Next in the selected route":s.why.get(config.companionLanguage().equalsIgnoreCase("LT")?0:Math.min(1,s.why.size()-1))).append("\n\n");
+                .append(s.why.isEmpty()?"Next in the selected route":s.why.get(Math.min(1,s.why.size()-1))).append("\n\n");
         }
         String prep=preparation(selectedGoal);
         List<CompanionPlanner.Step> choices=new ArrayList<>(route);for(CompanionPlanner.Step s:planner.ordered)if(choices.stream().noneMatch(n->n.id.equals(s.id)))choices.add(s);
