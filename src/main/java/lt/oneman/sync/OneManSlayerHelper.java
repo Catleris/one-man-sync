@@ -381,7 +381,6 @@ public class OneManSlayerHelper
     }
     private void publish(String view, String url)
     {
-        view = "Website sync: " + (config.enabled() ? "enabled" : "disabled (local tools still work)") + "\n\n" + view;
         if (view.equals(lastView)) return;
         lastView = view;
         final String displayedView = view;

@@ -35,9 +35,6 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="alarmScale", name="Banner scale (%)", description="Notification size; automatically fits narrower viewports", position=133, section=alarmSection)
     default int alarmScale(){return 100;}
 
-    @ConfigSection(name="Sync / Account", description="Website connection and upload interval", position=0, closedByDefault=true)
-    String syncSection = "syncSection";
-
     @ConfigSection(name="Roadmap / Screenshots", description="Companion preferences and milestone captures", position=1, closedByDefault=true)
     String roadmapSection = "roadmapSection";
 
@@ -65,38 +62,6 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="unlocksQuestJournal", name="Include quest journal entries", description="Also include every quest/miniquest milestone exposed by RuneLite. Useful unlock categories remain visible without this.", position=110, section=unlocksSection)
     default boolean unlocksQuestJournal() { return false; }
 
-    @ConfigItem(
-        keyName = "enabled",
-        name = "Enable OneMan Sync",
-        description = "Sends your OSRS display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log events, pet/personal-best/loot events, bank item IDs/names/quantities when you open your bank, Clue Scroll STASH built/filled states, current inventory/equipment and selected storage snapshots, Slayer state, POH feature observations, currencies and daily-account timers to oneman.lt.",
-        warning = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers",
-        position = 0, section=syncSection)
-    default boolean enabled()
-    {
-        return false;
-    }
-
-    @ConfigItem(
-        keyName = "syncKey",
-        name = "Sync Key",
-        description = "Generate this in oneman.lt -> Account -> RuneLite Sync. This is a OneMan API token, not a Jagex credential.",
-        secret = true,
-        position = 1, section=syncSection)
-    default String syncKey()
-    {
-        return "";
-    }
-
-    @Range(min = 2, max = 30)
-    @ConfigItem(
-        keyName = "intervalMinutes",
-        name = "Full sync every",
-        description = "Periodic full sync interval in minutes.",
-        position = 2, section=syncSection)
-    default int intervalMinutes()
-    {
-        return 5;
-    }
     @ConfigItem(keyName="highlightGoalItems", name="Highlight goal items", description="Outline curated preparation items in your bank.", position=3, section=roadmapSection)
     default boolean highlightGoalItems(){return true;}
 
@@ -106,12 +71,10 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="milestoneScreenshots", name="Save milestone screenshots", description="Save local 99-level and quest-completion screenshots. Images include the visible game window.", position=5, section=roadmapSection)
     default boolean milestoneScreenshots(){return false;}
 
-    @ConfigItem(keyName="uploadMilestoneScreenshots", name="Upload milestone screenshots", description="Send captured screenshots to your OneMan account. Requires local capture and OneMan Sync enabled.", warning="This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers", position=6, section=roadmapSection)
-    default boolean uploadMilestoneScreenshots(){return false;}
     @ConfigItem(keyName="slayerRequirementsOverlay", name="Slayer item hints", description="Show task protection and finishing items on the left: red missing, purple in last observed bank, green carried/equipped, grey bank unknown.", position=7, section=slayerSection)
     default boolean slayerRequirementsOverlay(){return true;}
 
-    @ConfigItem(keyName="clueHubEnabled", name="Clue Hub (test)", description="Local clue item tiers and hub. Does not require website sync.", position=80, section=clueSection)
+    @ConfigItem(keyName="clueHubEnabled", name="Clue Hub (test)", description="Local clue item tiers and hub. Works locally.", position=80, section=clueSection)
     default boolean clueHubEnabled() { return true; }
     @ConfigItem(keyName="clueGroundMarkers", name="Clue ground labels", description="Separate ground labels with tier dots after item names. Adjust height if Ground Items overlaps.", position=81, section=clueSection)
     default boolean clueGroundMarkers() { return true; }
@@ -158,7 +121,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="monstersGuardiansNext", name="Guardians next phase key", description="Manually advance the Grotesque Guardians guide to the next phase.", position=112, section=monstersSection)
     default Keybind monstersGuardiansNext() { return Keybind.NOT_SET; }
 
-    @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works without a Slayer task or website sync.", position=90, section=monstersSection)
+    @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works locally without a Slayer task.", position=90, section=monstersSection)
     default MonstersProfile monstersProfile() { return MonstersProfile.NONE; }
     @ConfigItem(keyName="monstersShamanTiles", name="Shaman minion tiles", description="Mark only the current occupied tile of observed Shaman spawns. No explosion radius or prediction.", position=91, section=monstersSection)
     default boolean monstersShamanTiles() { return true; }

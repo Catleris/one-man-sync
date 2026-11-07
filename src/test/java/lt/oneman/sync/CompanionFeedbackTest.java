@@ -41,10 +41,4 @@ public class CompanionFeedbackTest {
         assertNull(p.trainingFromId("TRAIN_Fake_60"));assertNull(p.trainingFromId("TRAIN_Slayer_999"));
         assertTrue(CompanionTraining.achieved(s,Collections.singletonMap("Slayer",60),Collections.emptySet(),Collections.emptySet()));
     }
-    @Test public void syncDiagnosticIsBoundedAndRedactsCredentials(){
-        com.google.gson.Gson g=new com.google.gson.Gson();
-        assertTrue(CompanionSyncError.describe(g,"{\"error\":\"Sync DB klaida: missing column\"}").contains("missing column"));
-        assertFalse(CompanionSyncError.describe(g,"{\"error\":\"Bearer secret-value\"}").contains("secret-value"));
-        assertEquals("",CompanionSyncError.describe(g,"<html>password=secret</html>"));
-    }
 }

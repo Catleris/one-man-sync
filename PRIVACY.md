@@ -1,51 +1,13 @@
-# OneMan Sync — data disclosure
+# OneMan Hub data handling
 
-OneMan Sync is an opt-in RuneLite plugin that sends gameplay progression data to the third-party service `oneman.lt`.
+OneMan Hub version 0.12.0 processes observations locally in RuneLite. It contains no HTTP client, website synchronization endpoint, screenshot uploader or automatic telemetry.
 
-## Destination
+The local tools read relevant game state, including skill/quest progress, Slayer assignments, inventory and equipment, observed bank items, farming timers, clue/STASH requirements and unlock state. They use these observations to display preparation hints, maps, timers, reference information and notifications.
 
-`https://oneman.lt/runelite_sync.php`
+Preferences and selected per-account journals are stored through RuneLite configuration. Some bank observations and session counters are kept in memory or local profile data. The existing configuration group and plugin directory remain in use after the display name changes from OneMan Sync to OneMan Hub.
 
-## Data categories
+Milestone screenshots are disabled by default. If enabled, they capture the visible game window and save PNG files in the plugin's local screenshots directory.
 
-When enabled, the plugin may transmit:
+Explicit Wiki buttons open an external page in your browser. The destination website receives a normal browser visit and applies its own privacy policy.
 
-- IP address (inherent in the HTTPS request)
-- RuneScape display name
-- Skill levels and XP
-- Quest states
-- Achievement Diary states
-- Combat Achievement task/tier state
-- Boss kill counts
-- Collection Log observations/unlock events
-- Pet events
-- Personal-best chat messages
-- Recent tracked boss loot
-- Bank item IDs, names, and quantities when the bank is opened
-- Clue Scroll STASH built/filled state for each STASH unit
-- Current inventory and worn equipment snapshot
-- Selected storage snapshots when the relevant storage is viewed or available (Seed Vault, Looting Bag, Rune Pouch, Group Storage, POH Costume Room)
-- Slayer task/progression state, POH feature observations, selected minigame/progression currencies, Kingdom state, Bird House tracker timestamps, and Farming Contract state
-- OneMan Sync Key used to authenticate the request
-
-## Not collected by this plugin
-
-The plugin does not request or read:
-
-- Jagex passwords
-- Jagex account login credentials
-- Authenticator codes
-- Bank PINs
-
-## Control
-
-Sync is disabled by default. Disabling **Enable OneMan Sync** stops the plugin from sending new data.
-
-OneMan users can revoke RuneLite devices/keys, export their OneMan data, deactivate their account, or delete an eligible member account from the website.
-
-Full website privacy policy and retention periods: https://oneman.lt/privacy.php
-
-Terms and copyright notice: https://oneman.lt/terms.php
-## Test Clue Hub
-
-Clue item classification uses bundled offline data and RuneLite's local clue definitions. Its bounded, in-memory drop/casket history is cleared when changing accounts/worlds or disabling the plugin. Clue Hub adds no network request or new upload fields. Opening the guide explicitly opens the OSRS Wiki in the browser. Existing optional OneMan Sync data collection is controlled separately.
+Previous OneMan Sync versions could send data to oneman.lt when synchronization was enabled. Upgrading to OneMan Hub stops those plugin uploads. It does not delete data already stored in an existing website account.

@@ -27,7 +27,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.11.5-test.6";
+    static final String VERSION = "0.12.0";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -62,7 +62,6 @@ final class OneManCompanion {
     private boolean baseline;
     private List<CompanionPlanner.Step> route = Collections.emptyList();
     private int qp;
-    private String player = "";
 
     void startUp(CompanionScreenshots.Directory directory, Runnable openSettings) {
         ticks=0;loginDelay=10;levels.clear();completed.clear();
@@ -100,10 +99,10 @@ final class OneManCompanion {
                 root.revalidate();
             });
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
-            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(OneManCards.BODY);
+            JLabel buildLabel=new JLabel("OneMan Hub • "+VERSION); buildLabel.setFont(OneManCards.BODY);
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
-            JButton settings=new JButton("OneMan Sync settings");
-            settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
+            JButton settings=new JButton("OneMan Hub settings");
+            settings.setToolTipText("Open the original RuneLite configuration, including all Slayer and notification options");
             settings.addActionListener(event->openSettings.run());
             JPanel navigationActions=new JPanel(new GridLayout(0,1,0,4));
             navigationActions.setOpaque(false);
@@ -204,7 +203,6 @@ final class OneManCompanion {
             focusedGoal=Boolean.parseBoolean(configs.getConfiguration("one-man-sync",profile,"companionFocus"));
             String goal=configs.getConfiguration("one-man-sync",profile,"companionGoal"); if(goal!=null)selected=goal;
         }
-        player=client.getLocalPlayer().getName();
         Map<String,Integer> nextLevels=new LinkedHashMap<>();
         for(Skill skill:Skill.values())if(skill!=Skill.OVERALL)nextLevels.put(skill.getName(),client.getRealSkillLevel(skill));
         Set<String> nextQuests=new HashSet<>();
@@ -214,8 +212,8 @@ final class OneManCompanion {
         }}catch(RuntimeException ignored) { /* Unknown state remains incomplete. */ }
         if(baseline) {
             nextQuests.addAll(completed);
-            for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(player,profile,"Quest: "+planner.nodes.get(q).name);
-            nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(player,profile,skill+" 99"); });
+            for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(profile,"Quest: "+planner.nodes.get(q).name);
+            nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(profile,skill+" 99"); });
         }
         levels=nextLevels;completed=nextQuests;
         baseline=true;

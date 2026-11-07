@@ -349,7 +349,7 @@ final class MonstersHub
                 if (!updating) configs.setConfiguration("one-man-sync", "monstersGuardiansOverlay", guardiansOverlay.isSelected());
             });
             guardiansCard.card(guardiansOverlay);
-            guardiansCard.card(OneManCards.text("Select phases manually. Set the optional next-phase hotkey in OneMan Sync settings."));
+            guardiansCard.card(OneManCards.text("Select phases manually. Set the optional next-phase hotkey in OneMan Hub settings."));
             controls.card(guardiansCard);
             JPanel looks = new JPanel(new BorderLayout(0,4)); looks.setOpaque(false);
             JToggleButton expandLooks = new JToggleButton("Appearance presets");

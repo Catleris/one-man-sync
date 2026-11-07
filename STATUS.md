@@ -122,3 +122,7 @@ The Slayer item overlay and preparation panel now name the item that matched the
 ## Grotesque Guardians fight guide · 2026-11-06
 
 Monsters Hub now has a Grotesque Guardians profile with four manually selected phases, a prominent phase-three sphere reminder, hammer readiness, and an optional movable fight card and next-phase hotkey. The guide does not track live mechanics or mark arena tiles. In-game checks: switch between profiles, cycle and reset phases, test the optional hotkey and check that a stored or carried hammer is named correctly.
+
+## OneMan Hub local-only transition · 2026-11-07
+
+Version 0.12.0 changes the public display name to OneMan Hub and removes the website HTTP client, sync payload/queue collectors, token/interval controls, screenshot upload implementation and unused response diagnostic helper. Local screenshot saving remains optional. The existing one-man-sync internal identifier, config group and data directory retain user settings and profile data. The primary plugin now dispatches local hub events and maintains only its local Slayer cache. The review request will update the existing Plugin Hub manifest and request removal of its network warning. In-game retest pending.

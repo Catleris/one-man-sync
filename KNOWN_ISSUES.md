@@ -50,3 +50,7 @@ A player reported that the visible shield would not open. Target Info previously
 ## Minimized Gemstone Crab alerts · 2026-11-06
 
 The owner saw the green flash but heard no sound and saw no desktop notification while RuneLite was minimized. The trial replaces the system beep with bundled audio and requests taskbar attention. Minimized playback and Windows toast behavior are awaiting an in-game retest.
+
+## OneMan Hub local-only transition · 2026-11-07
+
+Local compilation passed after removing networking. Full Java 11 CI and owner checks are required for migrated settings, Slayer state, bank observations, farming timers, monster references and local sounds. The installed Plugin Hub warning remains until maintainers approve the manifest change.

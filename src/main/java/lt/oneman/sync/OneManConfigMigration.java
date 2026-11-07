@@ -5,7 +5,7 @@ import java.util.function.Function;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Notification;
 
-/** Copies old Lab preferences without replacing existing Sync preferences.
+/** Copies old Lab preferences without replacing existing OneMan preferences.
  * Account journals and bank snapshots deliberately retain their original profile keys. */
 final class OneManConfigMigration
 {
