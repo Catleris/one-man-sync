@@ -28,9 +28,20 @@ final class FarmingSeedPanel extends JPanel
             public void changedUpdate(DocumentEvent event) {search();}
         });search();OneManTheme.apply(this);
     }
+    void showSeed(FarmingSeedCatalog.Seed seed)
+    {
+        query.setText(seed.name);
+        renderMatches(List.of(seed));
+    }
+
     private void search()
     {
-        results.removeAll();List<FarmingSeedCatalog.Seed> matches=catalog.search(query.getText());
+        renderMatches(catalog.search(query.getText()));
+    }
+
+    private void renderMatches(List<FarmingSeedCatalog.Seed> matches)
+    {
+        results.removeAll();
         if(matches.isEmpty()) results.card(OneManCards.text(query.getText().trim().isEmpty()?"Type a name, for example ranarr seed or acorn.":"No known planting match. Check the exact name; this may be a non-Farming item."));
         for(FarmingSeedCatalog.Seed seed:matches) {
             JPanel card=OneManCards.card();card.setName("seedResult:"+seed.produce.name());

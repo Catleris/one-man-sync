@@ -34,3 +34,23 @@ No new runtime issue was resolved or tested by this documentation-only change. A
 Owner reports native and OneMan Collection Log popups overlap. Fix implemented in PR #11 on fix/collection-popup-duplicate; Java 11 clean build/test/shadowJar passed (run 41787835899, source d883124). In-game retest pending. Verify a new real collection entry shows one OneMan banner; disabling OneMan Collection Log keeps the native notification, and preview does not suppress it.
 
 - 2026-11-04 release status: Collection Log duplication fix 0.11.3 merged via source PR #11 (284c81fa90843acf404b329eca070ade7ab6e094); release-version Java 11 build/tests passed (run 41788334454). Plugin Hub PR https://github.com/runelite/plugin-hub/pull/20096 submitted and awaiting review. In-game retest pending.
+
+## Target info trial · 2026-11-04
+
+Development-only 0.11.4-target-test.1 requires owner inventory-layout, switching/death and Slayer-filter checks in docs/TARGET-INFO-TEST.md. Static source bonuses are not live weakness/DPS calculations; scaled/drained/phase stats are not inferred. Missing/conflicting IDs display unavailable. Card defaults beside the inventory and can be Alt-dragged; it does not replace the game's inventory tab. Java 11 clean build/test/shadowJar passed (run 41792634099, source 82cd740); owner game/layout checks pending.
+
+- 2026-11-04 owner trial: test.1 floated beside chatbox and disappeared after combat; rejected layout. Test.2 implements inventory-bound page and last-target retention. Java 11 clean build/test/shadowJar passed, 188 tests (run 41871982510, source 18aea45). Owner must confirm lower-rim i placement, item click protection, tab/bank access and retention on fixed/resizable/stretched layouts before release.
+
+- 2026-11-04 owner screenshot: test.2 lower-rim i overlaps native bottom tab. Fixed in test.3 with larger side dock and geometry checks; nine focused tests passed locally with Java 11-compatible compilation on JDK 17; full Java 11 CI queued (run 41879083630) and owner layout retest pending. If no side fits on the canvas, use Monsters Hub Open inventory info.
+
+## Target Info shield click with Stretched Mode · 2026-11-06
+
+A player reported that the visible shield would not open. Target Info previously registered ahead of RuneLite's coordinate translator when enabled after Stretched Mode. The fix registers after the translator and includes a scaled-click regression test. Player retest pending.
+
+## Minimized Gemstone Crab alerts · 2026-11-06
+
+The owner saw the green flash but heard no sound and saw no desktop notification while RuneLite was minimized. The trial replaces the system beep with bundled audio and requests taskbar attention. Minimized playback and Windows toast behavior are awaiting an in-game retest.
+
+## OneMan Hub local-only transition · 2026-11-07
+
+Local compilation passed after removing networking. Full Java 11 CI and owner checks are required for migrated settings, Slayer state, bank observations, farming timers, monster references and local sounds. The installed Plugin Hub warning remains until maintainers approve the manifest change.

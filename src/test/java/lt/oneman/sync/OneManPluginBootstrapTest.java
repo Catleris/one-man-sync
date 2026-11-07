@@ -28,7 +28,6 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.DrawManager;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
-import okhttp3.OkHttpClient;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -49,6 +48,8 @@ public class OneManPluginBootstrapTest
         Client client=mock(Client.class);
         when(client.getGameState()).thenReturn(GameState.LOGIN_SCREEN);
         ConfigManager configs=mock(ConfigManager.class);
+        // Existing users may still have enabled website sync in an older release.
+        when(configs.getConfiguration("one-man-sync", "enabled")).thenReturn("true");
         when(configs.getConfig(OneManSyncConfig.class)).thenReturn(new OneManSyncConfig(){});
         ClientToolbar toolbar=mock(ClientToolbar.class);
         OverlayManager overlays=mock(OverlayManager.class);
@@ -66,11 +67,13 @@ public class OneManPluginBootstrapTest
                 bind(ClientToolbar.class).toInstance(toolbar);
                 bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(overlays);
+                bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
+                bind(net.runelite.client.input.KeyManager.class).toInstance(mock(net.runelite.client.input.KeyManager.class));
                 bind(WorldMapPointManager.class).toInstance(mock(WorldMapPointManager.class));
                 bind(Notifier.class).toInstance(mock(Notifier.class));
+                bind(java.util.concurrent.ScheduledExecutorService.class).toInstance(mock(java.util.concurrent.ScheduledExecutorService.class));
                 bind(DrawManager.class).toInstance(mock(DrawManager.class));
                 bind(com.google.gson.Gson.class).toInstance(new GsonBuilder().create());
-                bind(OkHttpClient.class).toInstance(new OkHttpClient.Builder().build());
             }
         });
         OneManSyncPlugin plugin=new OneManSyncPlugin();
@@ -97,7 +100,7 @@ public class OneManPluginBootstrapTest
             SwingUtilities.invokeAndWait(()->{
                 Container panel=navigation.getValue().getPanel();
                 JComboBox<?> hubs=findHubSelector(panel);
-                assertNotNull("The real sidebar must expose all hubs and sync settings",hubs);
+                assertNotNull("The real sidebar must expose all hubs and local settings",hubs);
                 assertEquals("Tools",hubs.getItemAt(0));
                 assertEquals("Tools",hubs.getSelectedItem());
                 JButton back=findNamed(panel,"oneManBackToTools",JButton.class);
@@ -214,6 +217,8 @@ public class OneManPluginBootstrapTest
             assertNotNull("The actual settings button must dispatch RuneLite's configuration action", settingsRequests.request);
             assertEquals(MenuAction.RUNELITE_OVERLAY_CONFIG, settingsRequests.request.getEntry().getMenuAction());
             assertSame("The native config action must target the loaded plugin", plugin, settingsRequests.request.getOverlay().getPlugin());
+            verify(configs, never()).getConfiguration("one-man-sync", "enabled");
+            verify(configs, never()).getConfiguration("one-man-sync", "syncKey");
             verify(overlays).add(isA(StashMinimapOverlay.class));
             verify(overlays).add(isA(ClueGroundOverlay.class));
             verify(overlays).add(isA(ClueWidgetOverlay.class));
@@ -259,7 +264,7 @@ public class OneManPluginBootstrapTest
     private static JButton findSettingsButton(Container parent)
     {
         for(Component child:parent.getComponents()) {
-            if(child instanceof JButton && "OneMan Sync settings".equals(((JButton)child).getText())) return (JButton)child;
+            if(child instanceof JButton && "OneMan Hub settings".equals(((JButton)child).getText())) return (JButton)child;
             if(child instanceof Container) { JButton found=findSettingsButton((Container)child); if(found!=null) return found; }
         }
         return null;

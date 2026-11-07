@@ -35,6 +35,9 @@ import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Keybind;
+import net.runelite.client.input.KeyManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /** Client-thread NPC tracking; immutable tracking snapshots are published to the client-thread overlay. */
@@ -47,6 +50,22 @@ final class MonstersHub
     @Inject private ConfigManager configs;
     @Inject private OverlayManager overlays;
     @Inject private ShamanMinionOverlay overlay;
+    @Inject private ElementalWeaknessOverlay weakness;
+    @Inject private CombatInfoPage combatInfo;
+    @Inject private GemCrabAlert gemCrab;
+    @Inject private GuardiansFightGuide guardians;
+    @Inject private KeyManager keys;
+    private final HotkeyListener nextGuardianPhase = new HotkeyListener(() -> this.active && guardians.selected() && config.monstersGuardiansOverlay()
+        ? config.monstersGuardiansNext() : Keybind.NOT_SET)
+    {
+        @Override public void hotkeyPressed()
+        {
+            clientThread.invokeLater(() -> {
+                if (client.getGameState() == GameState.LOGGED_IN && config.monstersGuardiansOverlay())
+                    moveGuardians(1);
+            });
+        }
+    };
     private final Set<NPC> minions = Collections.newSetFromMap(new IdentityHashMap<>());
     private volatile List<Marker> markers = Collections.emptyList();
     private volatile boolean active;
@@ -67,21 +86,36 @@ final class MonstersHub
     void startUp(Supplier<JsonObject> slayerState)
     {
         this.slayerState = slayerState;
+        overlays.add(weakness);
+        overlays.add(combatInfo);
         active = true;
         scanPending = true;
         minions.clear();
         markers = Collections.emptyList();
         overlay.setHub(this);
         overlays.add(overlay);
+        overlays.add(gemCrab);
+        overlays.add(guardians);
+        guardians.reset();
+        keys.registerKeyListener(nextGuardianPhase);
         lastStatus = "";
     }
 
     void shutDown()
     {
         active = false;
+        overlays.remove(weakness);
+        overlays.remove(combatInfo);
+        combatInfo.close();
+        combatInfo.clearBank();
+        weakness.clear();
         clear();
         slayerState = null;
         overlays.remove(overlay);
+        overlays.remove(gemCrab);
+        overlays.remove(guardians);
+        keys.unregisterKeyListener(nextGuardianPhase);
+        gemCrab.reset();
         overlay.setHub(null);
         SwingUtilities.invokeLater(() -> panel = null);
     }
@@ -106,6 +140,8 @@ final class MonstersHub
 
     void onNpcSpawned(NpcSpawned event)
     {
+        gemCrab.appeared(event.getNpc());
+        weakness.appeared(event.getNpc());
         if (enabled() && isMinion(event.getNpc().getId()))
         {
             minions.add(event.getNpc());
@@ -115,12 +151,16 @@ final class MonstersHub
 
     void onNpcDespawned(NpcDespawned event)
     {
+        gemCrab.despawned(event.getNpc());
+        weakness.despawned(event.getNpc());
         if (minions.remove(event.getNpc())) publishMarkers();
     }
 
     void onNpcChanged(NpcChanged event)
     {
         NPC npc = event.getNpc();
+        gemCrab.appeared(npc);
+        weakness.appeared(npc);
         if (enabled() && isMinion(npc.getId())) minions.add(npc);
         else minions.remove(npc);
         publishMarkers();
@@ -128,6 +168,10 @@ final class MonstersHub
 
     void onGameStateChanged(GameStateChanged event)
     {
+        weakness.clear();
+        combatInfo.close();
+        if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) combatInfo.clearBank();
+        gemCrab.reset();
         clear();
         scanPending = true;
         suggestion = "Select a profile to use it without a Slayer task.";
@@ -136,6 +180,8 @@ final class MonstersHub
 
     void onConfigChanged()
     {
+        if (!config.monstersTargetInfo()) weakness.clear();
+        if (!config.monstersGemCrabAlert()) gemCrab.reset();
         if (!active) return;
         clear();
         scanPending = true;
@@ -143,10 +189,29 @@ final class MonstersHub
         refresh();
     }
 
+    void onMenuOpened(net.runelite.api.events.MenuOpened event)
+    {
+        if (!active) return;
+        weakness.onMenuOpened(event);
+        combatInfo.onMenuOpened(event);
+    }
+
+    void onBankChanged(net.runelite.api.Item[] items)
+    {
+        if (active) combatInfo.bankChanged(items);
+    }
+
+    void onPostMenuSort()
+    {
+        if (active && combatInfo.coversPointer()) client.getMenu().setMenuEntries(new net.runelite.api.MenuEntry[0]);
+    }
+
     void onGameTick()
     {
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         OneManSlayerState.LocalTask task = OneManSlayerState.localTask(slayerState.get(), client.getVarpValue(VarPlayerID.SLAYER_COUNT));
+        gemCrab.tick();
+        guardians.updateSupplies();
         suggestion = suggestsShaman(task)
             ? "Suggested for your task: Lizardman Shaman."
             : "Choose a profile above.";
@@ -192,16 +257,32 @@ final class MonstersHub
 
     JPanel companionPanel() { if (panel == null) panel = new Panel(); return panel; }
 
+    private void moveGuardians(int step)
+    {
+        if (!active || !guardians.selected()) return;
+        if (step == 0) guardians.reset();
+        else guardians.move(step);
+        refresh();
+    }
+
     private void refresh()
     {
         String status = suggestion + (markers.isEmpty()?"":"\nSpawns: "+markers.size());
-        if (status.equals(lastStatus)) return;
-        lastStatus = status;
+        String key = guardians.selected() ? status + guardians.phase().title() + guardians.hammer() : status;
+        if (key.equals(lastStatus)) return;
+        lastStatus = key;
         SwingUtilities.invokeLater(() -> { if (active && panel != null) panel.refresh(status); });
     }
 
     private final class Panel extends JPanel
     {
+        private final OneManCards guardiansCard = new OneManCards();
+        private final OneManCards shamanCard = new OneManCards();
+        private final JTextArea phaseText = OneManCards.text("");
+        private final JCheckBox guardiansOverlay = new JCheckBox("Show fight card in game");
+        private final JCheckBox targetEnabled = new JCheckBox("Elemental weakness checker");
+        private final JComboBox<GemCrabSound> gemSound = new JComboBox<>(GemCrabSound.values());
+        private final JCheckBox gemAlert = new JCheckBox("Gemstone Crab alert");
         private final JComboBox<MonstersProfile> profile = new JComboBox<>(MonstersProfile.values());
         private final JCheckBox pulse = new JCheckBox("Gentle outline pulse");
         private final JCheckBox tiles = new JCheckBox("Mark current minion tiles");
@@ -220,7 +301,31 @@ final class MonstersHub
         {
             super(new BorderLayout());
             OneManCards cards = new OneManCards();
-            cards.card(OneManCards.banner("Monsters Hub", "Lizardman Shaman"));
+            cards.card(OneManCards.banner("Monsters Hub", "Weakness & monster tools"));
+            targetEnabled.setOpaque(false);
+            targetEnabled.setName("monstersTargetInfo");
+            targetEnabled.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersTargetInfo", targetEnabled.isSelected());
+            });
+            cards.card(targetEnabled);
+            cards.card(OneManCards.text("Right-click a monster and select Check weakness. Right-click the Magic book for Info. Set duration to 0 to keep the marker across respawns."));
+            OneManCards crabControls = new OneManCards();
+            gemAlert.setName("monstersGemCrabAlert");
+            gemAlert.setOpaque(false);
+            gemAlert.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGemCrabAlert", gemAlert.isSelected());
+            });
+            crabControls.card(gemAlert);
+            gemSound.setName("monstersGemCrabSound");
+            gemSound.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGemCrabSound", gemSound.getSelectedItem());
+            });
+            JButton previewGemSound = new JButton("Preview sound");
+            previewGemSound.addActionListener(event -> gemCrab.playSound((GemCrabSound) gemSound.getSelectedItem()));
+            crabControls.card(gemSound);
+            crabControls.card(previewGemSound);
+            crabControls.card(OneManCards.text("Plays a melody and requests a desktop alert when your crab burrows. Click in the game to stop the green flash."));
+            cards.card(crabControls);
             JPanel settings = OneManCards.card();
             OneManCards controls = new OneManCards();
             controls.setOpaque(false);
@@ -228,6 +333,24 @@ final class MonstersHub
             tiles.setName("monstersShamanTiles");
             tiles.setOpaque(false);
             controls.card(profile);
+            guardiansCard.card(phaseText);
+            JPanel phaseButtons = new JPanel(new java.awt.GridLayout(1, 3, 4, 0));
+            String[] labels = {"Previous", "Reset", "Next"};
+            for (int step = -1; step <= 1; step++)
+            {
+                int direction = step;
+                JButton button = new JButton(labels[step + 1]);
+                button.addActionListener(event -> clientThread.invokeLater(() -> moveGuardians(direction)));
+                phaseButtons.add(button);
+            }
+            guardiansCard.card(phaseButtons);
+            guardiansOverlay.setOpaque(false);
+            guardiansOverlay.addActionListener(event -> {
+                if (!updating) configs.setConfiguration("one-man-sync", "monstersGuardiansOverlay", guardiansOverlay.isSelected());
+            });
+            guardiansCard.card(guardiansOverlay);
+            guardiansCard.card(OneManCards.text("Select phases manually. Set the optional next-phase hotkey in OneMan Hub settings."));
+            controls.card(guardiansCard);
             JPanel looks = new JPanel(new BorderLayout(0,4)); looks.setOpaque(false);
             JToggleButton expandLooks = new JToggleButton("Appearance presets");
             expandLooks.setName("monstersAppearanceToggle");
@@ -247,17 +370,18 @@ final class MonstersHub
             });
             pulse.addActionListener(event -> { if (!updating) configs.setConfiguration("one-man-sync", "monstersShamanPulse", pulse.isSelected()); });
             looks.add(expandLooks, BorderLayout.NORTH); looks.add(lookControls, BorderLayout.CENTER);
-            controls.card(looks);
+            shamanCard.card(looks);
             OneManCards tileControls=new OneManCards();tileControls.card(tiles);tileControls.card(color);
             tileControls.card(opacity("Tile visibility",tileOpacity,"monstersShamanTileOpacity"));
-            controls.card(OneManTheme.collapsible("Tile markers",tileControls));
+            shamanCard.card(OneManTheme.collapsible("Tile markers",tileControls));
             OneManCards modelControls=new OneManCards();
             for(JCheckBox box:new JCheckBox[]{outline,fill,label}){box.setOpaque(false);modelControls.card(box);}
             outline.setName("monstersShamanOutline");fill.setName("monstersShamanFill");label.setName("monstersShamanLabel");
             modelControls.card(modelColor);
             modelControls.card(opacity("Outline / label visibility",modelOpacity,"monstersShamanModelOpacity"));
             modelControls.card(opacity("Fill visibility",fillOpacity,"monstersShamanFillOpacity"));
-            controls.card(OneManTheme.collapsible("Spawn appearance",modelControls));
+            shamanCard.card(OneManTheme.collapsible("Spawn appearance",modelControls));
+            controls.card(shamanCard);
             settings.add(controls, BorderLayout.NORTH);
             settings.add(status, BorderLayout.CENTER);
             cards.card(settings);
@@ -298,7 +422,16 @@ final class MonstersHub
         void refresh(String message)
         {
             updating = true;
+            targetEnabled.setSelected(config.monstersTargetInfo());
+            gemAlert.setSelected(config.monstersGemCrabAlert());
+            gemSound.setSelectedItem(config.monstersGemCrabSound());
             profile.setSelectedItem(config.monstersProfile());
+            guardiansCard.setVisible(guardians.selected());
+            shamanCard.setVisible(!guardians.selected());
+            guardiansOverlay.setSelected(config.monstersGuardiansOverlay());
+            GuardiansFightGuide.Phase phase = guardians.phase();
+            phaseText.setText(phase.title() + "\n" + phase.style + "\n\n" + phase.reminder
+                + (phase.diagram.isEmpty() ? "" : "\n" + phase.diagram) + "\n\n" + guardians.hammer());
             tiles.setSelected(config.monstersShamanTiles());
             pulse.setSelected(config.monstersShamanPulse());
             outline.setSelected(config.monstersShamanOutline());

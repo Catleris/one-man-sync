@@ -52,7 +52,7 @@ final class LegendaryAlarmArt
                 text(g,"NEW ITEM",335,132,16,new Color(249,211,131),100);
                 if(notice.preview)text(g,"PREVIEW",335,154,11,new Color(197,182,152),180);
             }
-            text(g,notice.preview?"OneMan Sync • Preview":"OneMan Sync",260,notice.combat?174:181,11,new Color(225,210,178),106);
+            text(g,notice.preview?"OneMan Hub • Preview":"OneMan Hub",260,notice.combat?174:181,11,new Color(225,210,178),106);
         }finally{g.dispose();}
     }
     private static void text(Graphics2D g,String text,int cx,int baseline,int size,Color color,int maxWidth) {

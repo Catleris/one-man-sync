@@ -6,6 +6,14 @@ import static org.junit.Assert.*;
 
 public class SlayerTaskItemsTest
 {
+    @Test public void namesTheActualMatchingSlayerItem()
+    {
+        assertEquals("Rock hammer", rows("Gargoyles", items(), items(), Collections.singletonMap("rock hammer", 1), true).get(0).itemName);
+        assertEquals("Granite hammer", rows("Gargoyles", items("granite hammer"), items(), Collections.emptyMap(), false).get(0).itemName);
+        assertEquals("Slayer helmet (i)", rows("Dust devils", items(), items("slayer helmet (i)"), Collections.emptyMap(), false).get(0).itemName);
+        assertEquals("Facemask / Slayer helmet", rows("Dust devils", items(), items(), Collections.emptyMap(), false).get(0).itemName);
+    }
+
     private List<SlayerTaskItems.Row> rows(String task, Set<String> inv, Set<String> worn, Map<String,Integer> bank, boolean known)
     { return SlayerTaskItems.evaluate(SlayerTaskItems.rules(task,false),inv,worn,bank,known); }
     private Set<String> items(String... names) { return new HashSet<>(Arrays.asList(names)); }

@@ -4,10 +4,12 @@ import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import java.util.Arrays;
+import java.util.concurrent.ScheduledExecutorService;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
@@ -16,6 +18,11 @@ import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.Notifier;
+import net.runelite.client.audio.AudioPlayer;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RequestFocusType;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.junit.Before;
@@ -28,6 +35,9 @@ public class MonstersHubTest
     private final Client client = mock(Client.class);
     private final WorldView world = mock(WorldView.class);
     private final OneManSyncConfig config = mock(OneManSyncConfig.class);
+    private final Notifier notifier = mock(Notifier.class);
+    private final AudioPlayer audioPlayer = mock(AudioPlayer.class);
+    private final ScheduledExecutorService executor = mock(ScheduledExecutorService.class);
     private MonstersHub hub;
 
     @Before public void setUp()
@@ -46,9 +56,50 @@ public class MonstersHubTest
                 bind(ConfigManager.class).toInstance(mock(ConfigManager.class));
                 bind(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class).toInstance(mock(net.runelite.client.ui.overlay.outline.ModelOutlineRenderer.class));
                 bind(OverlayManager.class).toInstance(mock(OverlayManager.class));
+                bind(Notifier.class).toInstance(notifier);
+                bind(ScheduledExecutorService.class).toInstance(executor);
+                bind(AudioPlayer.class).toInstance(audioPlayer);
+                bind(net.runelite.client.game.ItemManager.class).toInstance(mock(net.runelite.client.game.ItemManager.class));
+                bind(net.runelite.client.game.SpriteManager.class).toInstance(mock(net.runelite.client.game.SpriteManager.class));
+                bind(net.runelite.client.input.MouseManager.class).toInstance(mock(net.runelite.client.input.MouseManager.class));
+                bind(net.runelite.client.input.KeyManager.class).toInstance(mock(net.runelite.client.input.KeyManager.class));
             }
         }).getInstance(MonstersHub.class);
         hub.startUp(JsonObject::new);
+    }
+
+    @Test public void alertsOnceWhenEngagedCrabLeavesRemains() throws Exception
+    {
+        when(config.monstersShamanTiles()).thenReturn(false);
+        when(config.monstersGemCrabAlert()).thenReturn(true);
+        when(config.monstersGemCrabSound()).thenReturn(GemCrabSound.CRYSTAL_CHIME);
+        doAnswer(call -> {
+            call.<Runnable>getArgument(0).run();
+            return null;
+        }).when(executor).execute(any(Runnable.class));
+        Player player = mock(Player.class);
+        NPC crab = mock(NPC.class);
+        NPC shell = mock(NPC.class);
+        WorldPoint nest = new WorldPoint(1400, 3100, 0);
+        when(client.getLocalPlayer()).thenReturn(player);
+        when(player.getWorldLocation()).thenReturn(nest);
+        when(crab.getId()).thenReturn(NpcID.GEMSTONE_CRAB);
+        when(crab.getWorldLocation()).thenReturn(nest);
+        when(shell.getId()).thenReturn(NpcID.GEMSTONE_CRAB_REMAINS);
+        when(shell.getWorldLocation()).thenReturn(nest);
+
+        hub.onNpcSpawned(new NpcSpawned(shell));
+        verifyNoInteractions(notifier);
+        when(player.getInteracting()).thenReturn(crab);
+        hub.onGameTick();
+        hub.onNpcDespawned(new NpcDespawned(crab));
+        verifyNoInteractions(notifier);
+        hub.onNpcSpawned(new NpcSpawned(shell));
+        hub.onNpcSpawned(new NpcSpawned(shell));
+        verify(notifier).notify(argThat((Notification alert) -> alert.isTray()
+            && alert.getRequestFocus() == RequestFocusType.TASKBAR
+            && alert.getSound() == NotificationSound.OFF), eq("OneMan: Gemstone Crab burrowed!"));
+        verify(audioPlayer).play(GemCrabAlert.class, GemCrabSound.CRYSTAL_CHIME.resource, 0f);
     }
 
     private NPC minion(int tile)

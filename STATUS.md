@@ -54,3 +54,79 @@ Owner reported the native Collection Log popup showing behind the custom OneMan 
 ## Collection Log fix release submission · 2026-11-04
 
 Owner authorized the 0.11.3 release and RuneLite submission. Release-version Java 11 clean build/test/shadowJar passed: https://github.com/Catleris/one-man-sync/actions/runs/41788334454 . Source PR #11 merged as 284c81fa90843acf404b329eca070ade7ab6e094. Submitted https://github.com/runelite/plugin-hub/pull/20096 using the owner-authorized browser fallback after the integration returned HTTP 403. The manifest changes only plugins/one-man-sync and pins that merge commit; warning unchanged. PR is open for RuneLite review, not yet approved/distributed. Owner in-game retest remains pending.
+
+## Target info inventory-side trial · 2026-11-04
+
+Implemented on dev/target-info from master 22f2726, version 0.11.4-target-test.1. Opt-in movable compact/expanded reference card by open inventory, current NPC interaction only, optional active-Slayer-match filter. No network calls, live combat calculations or mechanics predictions. Exact transformed NPC IDs from a bundled Monster Stats snapshot; 3,974 unique IDs retained and 74 conflicting IDs omitted. Data attribution/upstream BSD license preserved in target-info-LICENSE.txt. Unknown/non-scalar fields remain unknown; tied melee bonuses are explicit. Existing 0.11.3 Plugin Hub submission is unchanged. Added focused controller/catalog/rendering tests and docs/TARGET-INFO-TEST.md. Java 11 `./gradlew clean build shadowJar` passed on 82cd74074860c9bb69fb778d236bf790410e4f99, run https://github.com/Catleris/one-man-sync/actions/runs/41792634099, including all six new target-info tests and existing regression checks. Development JAR and source artifact uploaded. Draft PR: https://github.com/Catleris/one-man-sync/pull/12. Owner game verification pending.
+
+## Inventory target info redesign · 2026-11-04
+
+Owner screenshot rejected the floating test.1 card and confirmed it disappears after combat. Test.2 replaces it with an inventory-bound Items / Target info page, four stat icons, Details/Less, Clear, and a small reopening i below the native item grid plus a Monsters Hub Open inventory info button. The last NPC snapshot persists after interaction end, death and loading/teleport; session end and disable clear it. Item grid/widgets are not moved or resized; local mouse hooks block only clicks on the information page and its controls. Underlying item menus are suppressed only within that page. Hooks are removed on shutdown. Updated regression tests cover retention, tab switching, inventory bounds, lifecycle and click protection. Java 11 clean build/test/shadowJar passed on 18aea45a2dde411b26f0b42f474e2b28f10ee460 (run https://github.com/Catleris/one-man-sync/actions/runs/41871982510), all 188 tests passed and development source/JAR artifact uploaded. Initial CI exposed missing test-service bindings; those fixtures were corrected. Owner fixed/resizable/stretched layout and click-protection checks remain pending. Still a draft development trial, separate from Plugin Hub 0.11.3.
+
+## Target info appearance and side dock · 2026-11-04
+
+Owner test.2 screenshots confirm the inventory page renders; reported the tiny lower-rim i overlaps a native tab and requested a larger side control and better styling. Test.3 replaces it with a 42x50 book/Info dock at the inventory side (left preferred, right fallback, hidden if neither fits). Native item rectangle and top/bottom tab rows stay untouched. Refined green/gold gradients, grouped target header, larger regular-font primary values, framed stat tiles, alternating detail rows and larger footer controls. Last-target retention and click protection preserved. Added dock geometry regression checks. Changed sources compiled with Java 11 release compatibility using local JDK 17 compiler; all nine focused target-info/rendering/dock tests passed locally on JDK 17. Full Java 11 GitHub Actions run 41879083630 is queued; owner appearance/layout confirmation pending.
+
+## Farming seed menu · 2026-11-05
+
+Added an opt-in Farming Hub entry beside Examine for catalogued planting items in inventory and bank. It opens the exact seed in the existing Seeds tab. The development branch starts from master 22f2726, which includes the prior Slayer and Farming release. Changed Java sources compiled with release 11 compatibility against the existing development dependencies. All 12 focused Farming tests passed locally. Owner inventory and bank checks remain pending.
+
+## Birdhouse ready alerts · 2026-11-05
+
+Owner confirmed the Farming seed menu works. Birdhouse alerts now use a desktop notification and optional RuneLite sound, including while focused. Houses that become ready in the same refresh share one notification. The existing enable setting and ready-transition baseline are retained. Changed sources compiled with Java 11 compatibility and 12 focused Farming tests passed locally. Sound and desktop delivery await the owner’s in-game check.
+
+## Combined hub trial · 2026-11-05
+
+Combined Target Info test.3 with the Farming seed menu and Birdhouse ready notifications in 0.11.4-hubs-test.1. Combined CI and in-game checks pending.
+
+## Target Info manual opening · 2026-11-05
+
+Owner verified the combined test.1 inventory view with Blue dragon and reported that it covered the inventory during combat. In test.2, combat updates the target snapshot while the inventory stays on Items until explicitly switched. The side control is a compact 32 × 36 icon with a book for opening and backpack for returning to items. Combined test.1 CI passed in run 42064473731. Test.2 CI and owner game checks pending.
+
+## Target Info shield icon · 2026-11-05
+
+Test.2 CI passed in run 42065867080. The owner chose concept C for test.3, a green monster eye in a gold shield. The active shield carries a backpack icon for returning to items. Both states use the existing 32 × 36 dock bounds. Test.3 CI and in-game visual check pending.
+
+## Gemstone Crab alert and inventory shield · 2026-11-05
+
+The opt-in Monsters Hub alert watches for remains from the crab the player engaged. It plays a RuneLite notification and pulses the game canvas until a mouse press. The inventory Target Info shield stays visible during native item drags, with its click area disabled during the drag.
+
+In-game checks: enable Gemstone Crab alert, attack the crab, and verify one sound and repeated pulses on burrow. Move the mouse, then click to confirm only the click dismisses the pulses. Hold and drag a food item to check that the shield remains visible and the inventory receives the drag.
+
+Java 11 build and regression tests passed for the feature commit `8cb704a` in [GitHub Actions](https://github.com/Catleris/one-man-sync/actions/runs/42074611928). The 0.11.4 release candidate also includes Farming Hub seed lookup from the item menu and the optional birdhouse-ready sound.
+
+## Target Info click compatibility · 2026-11-06
+
+Target Info now receives mouse input after RuneLite's Stretched Mode translation. The regression test registers the real translator before Target Info and checks that a click on a shield rendered at 200% scale opens the page. Verify in-game with Stretched Mode enabled and confirm native item drags still work.
+
+## Gemstone Crab desktop alert and melodies · 2026-11-06
+
+The owner observed a green flash but no audible alert or desktop notification with RuneLite minimized. The trial uses RuneLite's audio player for four bundled melodies, with a preview in Monsters Hub. The desktop alert requests taskbar attention and the existing system toast. Verify each preview and a real burrow with RuneLite minimized on Windows.
+
+## Manual elemental weakness overlay · 2026-11-06
+
+The Monsters Hub checker now adds a manual Check weakness entry to the NPC context menu. It renders elemental rune and percentage above the selected NPC from the bundled exact-variant dataset. The inventory shield, page and custom mouse listener were removed. The existing enable setting carries over. In-game checks: inspect Gargoyle, confirm 40% Earth and the rune, then verify the overlay clears on despawn and inventory input stays native.
+
+## Persistent weakness and Magic Info page · 2026-11-06
+
+A zero-second setting keeps tracking the selected NPC variant through same-scene respawns. Positive durations expire from the manual check. NPCs without an elemental weakness show the lowest distinct melee and ranged defence bonuses when present. The Magic book context menu opens a panel over the inventory or spellbook and draws a pale book marker. Optional bank weapon hints use observed local bank items and melee accuracy bonuses. Verify fixed and resizable layouts, respawns and bank hints in-game.
+
+## Magic Info visual restoration · 2026-11-06
+
+The Info page draws a lightened copy of the native Magic book sprite while open and reuses the previous green and gold Target Info design, with the combat tiles and base stat rows. Verify the native silhouette and closed state in fixed and resizable clients.
+
+## Explicit Slayer preparation item names · 2026-11-06
+
+The Slayer item overlay and preparation panel now name the item that matched the equipment, inventory or last bank snapshot. When no match is known they list concrete catalog options rather than generic categories. The requirements and bank highlighting rules stay as previously defined.
+
+## Grotesque Guardians fight guide · 2026-11-06
+
+Monsters Hub now has a Grotesque Guardians profile with four manually selected phases, a prominent phase-three sphere reminder, hammer readiness, and an optional movable fight card and next-phase hotkey. The guide does not track live mechanics or mark arena tiles. In-game checks: switch between profiles, cycle and reset phases, test the optional hotkey and check that a stored or carried hammer is named correctly.
+
+## OneMan Hub local-only transition · 2026-11-07
+
+Version 0.12.0 changes the public display name to OneMan Hub and removes the website HTTP client, sync payload/queue collectors, token/interval controls, screenshot upload implementation and unused response diagnostic helper. Local screenshot saving remains optional. The existing one-man-sync internal identifier, config group and data directory retain user settings and profile data. The primary plugin now dispatches local hub events and maintains only its local Slayer cache. The review request will update the existing Plugin Hub manifest and request removal of its network warning. In-game retest pending.
+
+## Roadmap settings cleanup · 2026-11-07
+
+Removed the Companion language setting and fixed roadmap reasons to English. Renamed the Roadmap / Screenshots settings section to Roadmap. The prior local-only Java 11 build/tests passed in run 42354340385. Plugin Hub review #20270 remains open.

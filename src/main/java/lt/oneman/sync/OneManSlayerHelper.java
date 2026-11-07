@@ -308,8 +308,8 @@ public class OneManSlayerHelper
         taskItemRows=rows;
         java.util.List<SlayerRequirementOverlay.Row> overlayRows=new ArrayList<>();
         for(SlayerTaskItems.Row row:rows)
-            overlayRows.add(new SlayerRequirementOverlay.Row(row.rule.item.label,
-                row.status==SlayerTaskItems.Status.CARRIED ? "Carried — check item notes" : row.text().substring(row.rule.item.label.length()+3),row.color()));
+            overlayRows.add(new SlayerRequirementOverlay.Row(row.itemName,
+                row.status==SlayerTaskItems.Status.CARRIED ? "Carried — check item notes" : row.statusText(),row.color()));
         requirementOverlay.rows=Collections.unmodifiableList(overlayRows);
         Map<Integer,Color> highlights=new HashMap<>();
         ItemContainer bank=client.getItemContainer(InventoryID.BANK);
@@ -381,7 +381,6 @@ public class OneManSlayerHelper
     }
     private void publish(String view, String url)
     {
-        view = "Website sync: " + (config.enabled() ? "enabled" : "disabled (local tools still work)") + "\n\n" + view;
         if (view.equals(lastView)) return;
         lastView = view;
         final String displayedView = view;

@@ -4,6 +4,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.RequestFocusType;
@@ -34,10 +35,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="alarmScale", name="Banner scale (%)", description="Notification size; automatically fits narrower viewports", position=133, section=alarmSection)
     default int alarmScale(){return 100;}
 
-    @ConfigSection(name="Sync / Account", description="Website connection and upload interval", position=0, closedByDefault=true)
-    String syncSection = "syncSection";
-
-    @ConfigSection(name="Roadmap / Screenshots", description="Companion preferences and milestone captures", position=1, closedByDefault=true)
+    @ConfigSection(name="Roadmap", description="Companion preferences and milestone captures", position=1, closedByDefault=true)
     String roadmapSection = "roadmapSection";
 
     @ConfigSection(name="Slayer / Alerts / Supplies", description="Task hints, Superior notifications and supply warnings", position=2, closedByDefault=true)
@@ -49,7 +47,7 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigSection(name="Clue Hub", description="Clue labels, tier dots and item categories", position=4, closedByDefault=true)
     String clueSection = "clueSection";
 
-    @ConfigSection(name="Monsters / Lizardman Shaman", description="The same Shaman preferences used by Monsters Hub", position=5, closedByDefault=true)
+    @ConfigSection(name="Monsters Hub", description="Monster profiles, fight cards and alerts", position=5, closedByDefault=true)
     String monstersSection = "monstersSection";
 
     @ConfigSection(name="Unlocks Hub", description="Account unlock catalogue and journal visibility", position=6, closedByDefault=true)
@@ -64,53 +62,16 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="unlocksQuestJournal", name="Include quest journal entries", description="Also include every quest/miniquest milestone exposed by RuneLite. Useful unlock categories remain visible without this.", position=110, section=unlocksSection)
     default boolean unlocksQuestJournal() { return false; }
 
-    @ConfigItem(
-        keyName = "enabled",
-        name = "Enable OneMan Sync",
-        description = "Sends your OSRS display name, skill levels/XP, quest states, Achievement Diaries, Combat Achievements, boss kill counts, Collection Log events, pet/personal-best/loot events, bank item IDs/names/quantities when you open your bank, Clue Scroll STASH built/filled states, current inventory/equipment and selected storage snapshots, Slayer state, POH feature observations, currencies and daily-account timers to oneman.lt.",
-        warning = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers",
-        position = 0, section=syncSection)
-    default boolean enabled()
-    {
-        return false;
-    }
-
-    @ConfigItem(
-        keyName = "syncKey",
-        name = "Sync Key",
-        description = "Generate this in oneman.lt -> Account -> RuneLite Sync. This is a OneMan API token, not a Jagex credential.",
-        secret = true,
-        position = 1, section=syncSection)
-    default String syncKey()
-    {
-        return "";
-    }
-
-    @Range(min = 2, max = 30)
-    @ConfigItem(
-        keyName = "intervalMinutes",
-        name = "Full sync every",
-        description = "Periodic full sync interval in minutes.",
-        position = 2, section=syncSection)
-    default int intervalMinutes()
-    {
-        return 5;
-    }
     @ConfigItem(keyName="highlightGoalItems", name="Highlight goal items", description="Outline curated preparation items in your bank.", position=3, section=roadmapSection)
     default boolean highlightGoalItems(){return true;}
-
-    @ConfigItem(keyName="companionLanguage", name="Companion language", description="Language for roadmap reasons: LT or EN.", position=4, section=roadmapSection)
-    default String companionLanguage(){return "EN";}
 
     @ConfigItem(keyName="milestoneScreenshots", name="Save milestone screenshots", description="Save local 99-level and quest-completion screenshots. Images include the visible game window.", position=5, section=roadmapSection)
     default boolean milestoneScreenshots(){return false;}
 
-    @ConfigItem(keyName="uploadMilestoneScreenshots", name="Upload milestone screenshots", description="Send captured screenshots to your OneMan account. Requires local capture and OneMan Sync enabled.", warning="This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers", position=6, section=roadmapSection)
-    default boolean uploadMilestoneScreenshots(){return false;}
     @ConfigItem(keyName="slayerRequirementsOverlay", name="Slayer item hints", description="Show task protection and finishing items on the left: red missing, purple in last observed bank, green carried/equipped, grey bank unknown.", position=7, section=slayerSection)
     default boolean slayerRequirementsOverlay(){return true;}
 
-    @ConfigItem(keyName="clueHubEnabled", name="Clue Hub (test)", description="Local clue item tiers and hub. Does not require website sync.", position=80, section=clueSection)
+    @ConfigItem(keyName="clueHubEnabled", name="Clue Hub (test)", description="Local clue item tiers and hub. Works locally.", position=80, section=clueSection)
     default boolean clueHubEnabled() { return true; }
     @ConfigItem(keyName="clueGroundMarkers", name="Clue ground labels", description="Separate ground labels with tier dots after item names. Adjust height if Ground Items overlaps.", position=81, section=clueSection)
     default boolean clueGroundMarkers() { return true; }
@@ -128,7 +89,36 @@ public interface OneManSyncConfig extends SlayerLabConfig
     @ConfigItem(keyName="clueGroundLabelHeight", name="Clue ground label height", description="Height above a ground item's layer; adjust to separate from Ground Items labels.", position=87, section=clueSection)
     default int clueGroundLabelHeight() { return 70; }
 
-    @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works without a Slayer task or website sync.", position=90, section=monstersSection)
+    @ConfigItem(keyName="monstersTargetInfo", name="Elemental weakness checker", description="Add Check weakness to the NPC right-click menu.", position=102, section=monstersSection)
+    default boolean monstersTargetInfo() { return false; }
+    @ConfigItem(keyName="monstersWeaknessRune", name="Show weakness rune", description="Show the elemental rune above the weakness percentage.", position=103, section=monstersSection)
+    default boolean monstersWeaknessRune() { return true; }
+    @ConfigItem(keyName="monstersWeaknessChat", name="Show weakness in chat", description="Print the result of Check weakness in game chat.", position=104, section=monstersSection)
+    default boolean monstersWeaknessChat() { return true; }
+    @Range(min=0, max=120)
+    @ConfigItem(keyName="monstersWeaknessDuration", name="Weakness duration (seconds)", description="Time to display the weakness. Zero keeps it across respawns in the current scene until you check another NPC.", position=107, section=monstersSection)
+    default int monstersWeaknessDuration() { return 0; }
+    @ConfigItem(keyName="monstersWeaknessSameName", name="Show on NPCs with the same name", description="Also show weaknesses on nearby NPCs with the same name, using each NPC's own stats.", position=108, section=monstersSection)
+    default boolean monstersWeaknessSameName() { return false; }
+    @ConfigItem(keyName="monstersWeaknessColor", name="Weakness text colour", description="Colour of the weakness text above the NPC.", position=109, section=monstersSection)
+    default Color monstersWeaknessColor() { return Color.WHITE; }
+
+    @ConfigItem(keyName="monstersWeaknessBankGear", name="Show bank weapon hint", description="Show a weapon from your last observed bank by melee accuracy bonus. Does not check usable styles or equipment requirements.", position=110, section=monstersSection)
+    default boolean monstersWeaknessBankGear() { return false; }
+
+    @ConfigItem(keyName="monstersGemCrabAlert", name="Gemstone Crab alert", description="Play a sound and flash the screen when your Gemstone Crab burrows. Click in the game to dismiss.", position=105, section=monstersSection)
+    default boolean monstersGemCrabAlert() { return false; }
+
+    @ConfigItem(keyName="monstersGemCrabSound", name="Gemstone Crab sound", description="Choose the melody played when your crab burrows.", position=106, section=monstersSection)
+    default GemCrabSound monstersGemCrabSound() { return GemCrabSound.FANFARE; }
+
+    @ConfigItem(keyName="monstersGuardiansOverlay", name="Guardians fight card", description="Show the manually selected Grotesque Guardians phase in game.", position=111, section=monstersSection)
+    default boolean monstersGuardiansOverlay() { return false; }
+
+    @ConfigItem(keyName="monstersGuardiansNext", name="Guardians next phase key", description="Manually advance the Grotesque Guardians guide to the next phase.", position=112, section=monstersSection)
+    default Keybind monstersGuardiansNext() { return Keybind.NOT_SET; }
+
+    @ConfigItem(keyName="monstersProfile", name="Monsters Hub profile", description="Select a local monster helper. Works locally without a Slayer task.", position=90, section=monstersSection)
     default MonstersProfile monstersProfile() { return MonstersProfile.NONE; }
     @ConfigItem(keyName="monstersShamanTiles", name="Shaman minion tiles", description="Mark only the current occupied tile of observed Shaman spawns. No explosion radius or prediction.", position=91, section=monstersSection)
     default boolean monstersShamanTiles() { return true; }
@@ -192,8 +182,18 @@ public interface OneManSyncConfig extends SlayerLabConfig
             .withFlash(FlashNotification.FLASH_TWO_SECONDS).withFlashColor(new Color(255,0,0,90))
             .withSendWhenFocused(true).withVolume(100).withTimeout(5);
     }
-    @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Optional local notification when an observed birdhouse becomes ready.", position=19, section=farmingSection)
+    @ConfigItem(keyName="farmingSeedMenu", name="Farming Hub seed menu",
+        description="Add Farming Hub next to Examine for recognised seeds in the inventory and bank.",
+        position=24, section=farmingSection)
+    default boolean farmingSeedMenu() { return false; }
+
+    @ConfigItem(keyName="notifyBirdhousesReady", name="Notify birdhouses ready", description="Show a desktop notification when a tracked birdhouse becomes ready.", position=19, section=farmingSection)
     default boolean notifyBirdhousesReady() { return false; }
+    @ConfigItem(keyName="birdhouseReadySound", name="Birdhouse ready sound",
+        description="Play the RuneLite notification sound when Notify birdhouses ready is enabled.",
+        position=25, section=farmingSection)
+    default boolean birdhouseReadySound() { return true; }
+
     @ConfigItem(keyName="farmingHealthWarnings", name="Farming health & compost hints", description="Show observed disease/death and last reported bottomless bucket amount in Farming Hub.", position=20, section=farmingSection)
     default boolean farmingHealthWarnings() { return true; }
     @ConfigItem(keyName="notifyFarmingDisease", name="Notify diseased/dead patches", description="One local alert per observed unhealthy episode; requires Time Tracking observations.", position=21, section=farmingSection)

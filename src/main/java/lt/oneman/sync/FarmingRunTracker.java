@@ -29,6 +29,8 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.ConfigManager;
 
 @Singleton
@@ -85,6 +87,15 @@ public class FarmingRunTracker {
         return this.panel;
     }
 
+    void showSeed(FarmingSeedCatalog.Seed seed)
+    {
+        if (panel != null)
+        {
+            panel.seeds.showSeed(seed);
+            panel.tabs.setSelectedComponent(panel.seeds);
+        }
+    }
+
     void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN) {
             this.baseline = false; this.profile = "";health.reset();
@@ -122,12 +133,23 @@ public class FarmingRunTracker {
         String[] birdNames = new String[]{"Mushroom Meadow N", "Mushroom Meadow S", "Verdant Valley NE", "Verdant Valley SW"};
         long now = System.currentTimeMillis() / 1000L;
         List<BirdhouseRun> runs=new ArrayList<>();
+        List<String> newlyReady = new ArrayList<>();
         for(int i=0;i<birdVarps.length;i++){
             String stored=configManager.getRSProfileConfiguration(TimeTrackingConfig.CONFIG_GROUP,TimeTrackingConfig.BIRD_HOUSE+"."+birdVarps[i]);
             BirdhouseRun run=BirdhouseRun.read(i,stored,now);runs.add(run);
             boolean ready=run.status==BirdhouseRun.Status.READY;
-            if(baseline&&ready&&!lastBirdhouseReady[i]&&config.notifyBirdhousesReady())notifier.notify("OneMan: "+birdNames[i]+" ("+run.house+") is ready!");
+            if (baseline && ready && !lastBirdhouseReady[i])
+            {
+                newlyReady.add(birdNames[i]);
+            }
             lastBirdhouseReady[i]=ready;
+        }
+        if (!newlyReady.isEmpty() && config.notifyBirdhousesReady())
+        {
+            Notification alert = Notification.ON.withInitialized(true).withOverride(true)
+                .withTray(true).withSendWhenFocused(true).withTimeout(5).withVolume(100)
+                .withSound(config.birdhouseReadySound() ? NotificationSound.NATIVE : NotificationSound.OFF);
+            notifier.notify(alert, "OneMan: Birdhouse ready — " + String.join(", ", newlyReady));
         }
         baseline = true;
         readBuckets();
@@ -219,11 +241,18 @@ public class FarmingRunTracker {
         private final BirdhouseRunsPanel runs=new BirdhouseRunsPanel(items,()->clientThread.invokeLater(()->nextFarmingRefresh=0));
         private final OneManMapPanel patches=new OneManMapPanel(mapLocations,OneManMapCatalog.Group.FARMING);
 
+        private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        private final FarmingSeedPanel seeds = new FarmingSeedPanel(mapLocations, category -> {
+            patches.chooseCategory(category);
+            tabs.setSelectedComponent(patches);
+        });
+
         FarmingPanel() {
             this.setLayout(new BorderLayout(0, 6));
             this.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-            JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP,JTabbedPane.SCROLL_TAB_LAYOUT);tabs.setFont(OneManCards.BODY);tabs.addTab("Patches",patches);
-            tabs.addTab("Seeds",new FarmingSeedPanel(mapLocations,category->{patches.chooseCategory(category);tabs.setSelectedIndex(0);}));
+            tabs.setFont(OneManCards.BODY);
+            tabs.addTab("Patches", patches);
+            tabs.addTab("Seeds", seeds);
             tabs.addTab("Runs",runs);
             JPanel alerts=new JPanel();alerts.setLayout(new javax.swing.BoxLayout(alerts,javax.swing.BoxLayout.Y_AXIS));
             alerts.add(disease);alerts.add(bucket);this.add(alerts,BorderLayout.NORTH);

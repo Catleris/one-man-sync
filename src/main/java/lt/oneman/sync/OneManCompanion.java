@@ -13,6 +13,9 @@ import javax.swing.*;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -24,7 +27,7 @@ import net.runelite.client.util.LinkBrowser;
 /** Passive, profile-scoped companion. All game reads are on the client thread. */
 @Singleton
 final class OneManCompanion {
-    static final String VERSION = "0.11.3";
+    static final String VERSION = "0.12.0";
     @Inject private Client client;
     @Inject private ClientThread clientThread;
     @Inject private ConfigManager configs;
@@ -43,6 +46,7 @@ final class OneManCompanion {
     @Inject private AchievementAlarms achievementAlarms;
     @Inject private OneManSyncConfig config;
     @Inject private CompanionScreenshots screenshots;
+    private final FarmingSeedCatalog seedCatalog = new FarmingSeedCatalog();
     private CompanionPlanner planner;
     private Panel panel;
     private NavigationButton navigation;
@@ -58,7 +62,6 @@ final class OneManCompanion {
     private boolean baseline;
     private List<CompanionPlanner.Step> route = Collections.emptyList();
     private int qp;
-    private String player = "";
 
     void startUp(CompanionScreenshots.Directory directory, Runnable openSettings) {
         ticks=0;loginDelay=10;levels.clear();completed.clear();
@@ -96,10 +99,10 @@ final class OneManCompanion {
                 root.revalidate();
             });
             JPanel hubNavigation=new JPanel(new BorderLayout(0,4));
-            JLabel buildLabel=new JLabel("OneMan • "+VERSION); buildLabel.setFont(OneManCards.BODY);
+            JLabel buildLabel=new JLabel("OneMan Hub • "+VERSION); buildLabel.setFont(OneManCards.BODY);
             hubNavigation.add(buildLabel,BorderLayout.NORTH); hubNavigation.add(sections,BorderLayout.CENTER);
-            JButton settings=new JButton("OneMan Sync settings");
-            settings.setToolTipText("Open the original RuneLite configuration, including Sync Key and all Slayer options");
+            JButton settings=new JButton("OneMan Hub settings");
+            settings.setToolTipText("Open the original RuneLite configuration, including all Slayer and notification options");
             settings.addActionListener(event->openSettings.run());
             JPanel navigationActions=new JPanel(new GridLayout(0,1,0,4));
             navigationActions.setOpaque(false);
@@ -121,6 +124,68 @@ final class OneManCompanion {
         if(e.getGameState()==GameState.LOGGED_IN)loginDelay=10;
         if(e.getGameState()==GameState.LOGIN_SCREEN) { baseline=false; overlay.needed=Collections.emptySet(); baseline=false; levels.clear();completed.clear(); showLoggedOut(); }
     }
+    void onMenuOpened(MenuOpened event)
+    {
+        if (!active || !config.farmingSeedMenu() || client.getGameState() != GameState.LOGGED_IN)
+        {
+            return;
+        }
+
+        MenuEntry[] entries = event.getMenuEntries();
+        for (int index = entries.length - 1; index >= 0; index--)
+        {
+            MenuEntry examine = entries[index];
+            MenuAction action = examine.getType();
+            if (!"Examine".equals(examine.getOption())
+                || (action != MenuAction.CC_OP && action != MenuAction.CC_OP_LOW_PRIORITY))
+            {
+                continue;
+            }
+            int group = WidgetUtil.componentToInterface(examine.getParam1());
+            if (group != InterfaceID.INVENTORY && group != InterfaceID.BANKMAIN && group != InterfaceID.BANKSIDE)
+            {
+                continue;
+            }
+
+            int itemId = examine.getItemId();
+            if (itemId <= 0)
+            {
+                Widget parent = client.getWidget(examine.getParam1());
+                Widget slot = parent == null || examine.getParam0() < 0 ? null : parent.getChild(examine.getParam0());
+                if (slot == null || slot.getItemId() <= 0)
+                {
+                    continue;
+                }
+                itemId = slot.getItemId();
+            }
+            itemId = items.canonicalize(itemId);
+            FarmingSeedCatalog.Seed seed = seedCatalog.findSeedItem(items.getItemComposition(itemId).getName());
+            if (seed == null)
+            {
+                continue;
+            }
+
+            net.runelite.api.Menu menu = client.getMenu();
+            menu.createMenuEntry(index + 1)
+                .setOption("Farming Hub")
+                .setTarget(examine.getTarget())
+                .setType(MenuAction.RUNELITE)
+                .onClick(ignored -> SwingUtilities.invokeLater(() -> openFarmingSeed(seed)));
+            event.setMenuEntries(menu.getMenuEntries());
+            return;
+        }
+    }
+
+    private void openFarmingSeed(FarmingSeedCatalog.Seed seed)
+    {
+        if (active && config.farmingSeedMenu() && navigation != null && hubSelector != null)
+        {
+            hubSelector.setSelectedItem("Farming Hub");
+            farmingTracker.showSeed(seed);
+            toolbar.openPanel(navigation);
+        }
+    }
+
     void onFarmingChat(ChatMessage e) { farmingTracker.onChatMessage(e); }
     void onFarmingItems(ItemContainerChanged e) { farmingTracker.onItemContainerChanged(e); }
     void onGameTick(GameTick e) {
@@ -138,7 +203,6 @@ final class OneManCompanion {
             focusedGoal=Boolean.parseBoolean(configs.getConfiguration("one-man-sync",profile,"companionFocus"));
             String goal=configs.getConfiguration("one-man-sync",profile,"companionGoal"); if(goal!=null)selected=goal;
         }
-        player=client.getLocalPlayer().getName();
         Map<String,Integer> nextLevels=new LinkedHashMap<>();
         for(Skill skill:Skill.values())if(skill!=Skill.OVERALL)nextLevels.put(skill.getName(),client.getRealSkillLevel(skill));
         Set<String> nextQuests=new HashSet<>();
@@ -148,8 +212,8 @@ final class OneManCompanion {
         }}catch(RuntimeException ignored) { /* Unknown state remains incomplete. */ }
         if(baseline) {
             nextQuests.addAll(completed);
-            for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(player,profile,"Quest: "+planner.nodes.get(q).name);
-            nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(player,profile,skill+" 99"); });
+            for(String q:nextQuests)if(!completed.contains(q)&&planner.nodes.containsKey(q))screenshots.capture(profile,"Quest: "+planner.nodes.get(q).name);
+            nextLevels.forEach((skill,level)-> { if(level>=99 && levels.getOrDefault(skill,99)<99)screenshots.capture(profile,skill+" 99"); });
         }
         levels=nextLevels;completed=nextQuests;
         baseline=true;
@@ -218,7 +282,7 @@ final class OneManCompanion {
         int index=0;for(CompanionPlanner.Step s:visible) {
             if(++index>2)break;next.append(index).append(". ").append(s.name).append("\n")
                 .append(planner.requirements(s,levels,completed,qp)).append("\nWhy now: ")
-                .append(s.why.isEmpty()?"Next in the selected route":s.why.get(config.companionLanguage().equalsIgnoreCase("LT")?0:Math.min(1,s.why.size()-1))).append("\n\n");
+                .append(s.why.isEmpty()?"Next in the selected route":s.why.get(Math.min(1,s.why.size()-1))).append("\n\n");
         }
         String prep=preparation(selectedGoal);
         List<CompanionPlanner.Step> choices=new ArrayList<>(route);for(CompanionPlanner.Step s:planner.ordered)if(choices.stream().noneMatch(n->n.id.equals(s.id)))choices.add(s);
