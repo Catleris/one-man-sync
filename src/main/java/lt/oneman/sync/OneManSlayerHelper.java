@@ -310,6 +310,7 @@ public class OneManSlayerHelper
         for(SlayerTaskItems.Row row:rows)
             overlayRows.add(new SlayerRequirementOverlay.Row(row.itemName,
                 row.status==SlayerTaskItems.Status.CARRIED ? "Carried — check item notes" : row.statusText(),row.color()));
+        requirementOverlay.taskName=task.name;
         requirementOverlay.rows=Collections.unmodifiableList(overlayRows);
         Map<Integer,Color> highlights=new HashMap<>();
         ItemContainer bank=client.getItemContainer(InventoryID.BANK);

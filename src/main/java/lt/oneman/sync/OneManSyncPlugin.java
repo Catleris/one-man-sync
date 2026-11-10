@@ -123,6 +123,9 @@ public class OneManSyncPlugin extends Plugin
     @Subscribe
     public void onItemDespawned(ItemDespawned event) { clueHub.onItemDespawned(event); }
     @Subscribe
+    public void onMenuOptionClicked(net.runelite.api.events.MenuOptionClicked event) { clueHub.onMenuOptionClicked(event); }
+
+    @Subscribe
     public void onMenuEntryAdded(MenuEntryAdded event) { clueHub.onMenuEntryAdded(event); }
     @Subscribe
     public void onMenuOpened(net.runelite.api.events.MenuOpened event) { companion.onMenuOpened(event); monstersHub.onMenuOpened(event); }

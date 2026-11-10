@@ -17,6 +17,8 @@ final class SlayerRequirementOverlay extends OverlayPanel
         Row(String label, String status, Color color) { this.label=label;this.status=status;this.color=color; }
     }
     @Inject private OneManSyncConfig config;
+    @Inject private net.runelite.api.Client client;
+    volatile String taskName="";
     volatile List<Row> rows=Collections.emptyList();
     SlayerRequirementOverlay() { setPosition(OverlayPosition.TOP_LEFT); }
     static Row row(SlayerLabCatalog.Requirement requirement, Set<String> inventory, Set<String> equipment,
@@ -28,7 +30,14 @@ final class SlayerRequirementOverlay extends OverlayPanel
         return new Row(requirement.label,bankKnown?"Missing":"Bank unknown",bankKnown?new Color(255,90,90):Color.GRAY);
     }
     @Override public Dimension render(Graphics2D graphics) {
-        if(!config.slayerRequirementsOverlay()||rows.isEmpty())return null;
+        if(!config.slayerRequirementsOverlay()||rows.isEmpty() || client.getGameState()!=net.runelite.api.GameState.LOGGED_IN
+            || client.getVarpValue(net.runelite.api.gameval.VarPlayerID.SLAYER_COUNT)<=0) return null;
+        net.runelite.api.Player player=client.getLocalPlayer();
+        net.runelite.api.Actor target=player==null?null:player.getInteracting();
+        SlayerLabKnowledge.Entry entry=SlayerLabKnowledge.find(taskName);
+        boolean fighting=target instanceof net.runelite.api.NPC && entry!=null && entry.matchesNpc(target.getName());
+        net.runelite.api.widgets.Widget bank=client.getWidget(net.runelite.api.gameval.InterfaceID.Bankmain.ITEMS);
+        if(!fighting && (bank==null || bank.isHidden())) return null;
         panelComponent.getChildren().add(TitleComponent.builder().text("Slayer items").build());
         for(Row row:rows) {
             panelComponent.getChildren().add(LineComponent.builder().left(row.label).leftColor(row.color).build());

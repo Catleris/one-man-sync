@@ -130,3 +130,9 @@ Version 0.12.0 changes the public display name to OneMan Hub and removes the web
 ## Roadmap settings cleanup · 2026-11-07
 
 Removed the Companion language setting and fixed roadmap reasons to English. Renamed the Roadmap / Screenshots settings section to Roadmap. The prior local-only Java 11 build/tests passed in run 42354340385. Plugin Hub review #20270 remains open.
+
+## Contextual Slayer hints and STASH filled log · 2026-11-10
+
+Slayer item side card now requires a live task and either an open bank or interaction with a matching task NPC; the preparation panel and bank hints remain available. STASH transfers are observed after a matching local object interaction and a complete carried-item transition, with a bounded 12-tick window. Failed clicks and partial item sets do not mark completion. Filled state is a per-RuneLite-profile local log; previously filled units can be marked manually and corrected after unobserved withdrawals. Green stored rows replace false missing rows. Completed world/minimap markers are hidden by default, with a persisted Show completed STASH markers checkbox; all sidebar locations remain selectable.
+
+Validation: local JDK 21 compilation with Java 11 source/target, focused map/profile/requirements tests. Full Java 11 CI required after publication. Owner checks pending: bank vs idle vs matching/unrelated combat; fill/withdraw STASH; manually mark an older fill; toggle completed markers and switch profiles. This does not query server-side storage and remains local-only.

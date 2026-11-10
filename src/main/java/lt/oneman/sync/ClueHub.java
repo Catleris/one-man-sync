@@ -34,6 +34,49 @@ final class ClueHub
     private StashRequirements stashRequirements;
     private volatile Map<String,List<StashRequirements.Row>> stashSnapshot=Collections.emptyMap();
     private boolean stashPending;
+    private String stashInteraction="",stashInteractionProfile="";
+    private int stashInteractionUntil;
+    private boolean stashHadAll;
+    void onMenuOptionClicked(MenuOptionClicked event)
+    {
+        if(!active || client.getGameState()!=GameState.LOGGED_IN) return;
+        MenuAction action=event.getMenuAction();
+        if(action!=MenuAction.GAME_OBJECT_FIRST_OPTION && action!=MenuAction.GAME_OBJECT_SECOND_OPTION
+            && action!=MenuAction.GAME_OBJECT_THIRD_OPTION && action!=MenuAction.GAME_OBJECT_FOURTH_OPTION
+            && action!=MenuAction.GAME_OBJECT_FIFTH_OPTION) return;
+        String option=net.runelite.client.util.Text.removeTags(event.getMenuOption());
+        if(!Arrays.asList("Search","Fill","Empty","Store","Take").contains(option)) return;
+        for(net.runelite.client.plugins.cluescrolls.clues.emote.STASHUnit unit:net.runelite.client.plugins.cluescrolls.clues.emote.STASHUnit.values()) {
+            boolean at=false;
+            for(net.runelite.api.coords.WorldPoint point:unit.getWorldPoints())
+                if(point.getX()==client.getBaseX()+event.getParam0() && point.getY()==client.getBaseY()+event.getParam1()
+                    && point.getPlane()==client.getPlane()) at=true;
+            if(!at) continue;
+            List<StashRequirements.Row> rows=stashRequirements.snapshot(client,Objects.toString(configs.getRSProfileKey(),""),false).get(unit.name());
+            if(rows==null || rows.isEmpty()) return;
+            stashHadAll=rows.stream().allMatch(row->row.state==StashRequirements.State.CARRIED);
+            if(!stashHadAll && rows.stream().anyMatch(row->row.state==StashRequirements.State.CARRIED)) return;
+            // Only observe a complete transfer; clicking or building alone never marks a unit filled.
+            stashInteraction=unit.name();stashInteractionProfile=Objects.toString(configs.getRSProfileKey(),"");
+            stashInteractionUntil=client.getTickCount()+12;return;
+        }
+    }
+    private void observeStashTransfer()
+    {
+        if(stashInteraction.isEmpty()) return;
+        if(client.getTickCount()>stashInteractionUntil || !stashInteractionProfile.equals(configs.getRSProfileKey())) {stashInteraction="";return;}
+        List<StashRequirements.Row> rows=stashRequirements.snapshot(client,stashInteractionProfile,false).get(stashInteraction);
+        if(rows==null || rows.isEmpty()) return;
+        if(completeTransfer(stashHadAll,rows)) {
+            mapLocations.markFilled(stashInteraction,stashHadAll);stashInteraction="";updateStash(false);
+        }
+    }
+    static boolean completeTransfer(boolean hadAll,List<StashRequirements.Row> rows)
+    {
+        return !rows.isEmpty() && (hadAll
+            ? rows.stream().noneMatch(row->row.state==StashRequirements.State.CARRIED)
+            : rows.stream().allMatch(row->row.state==StashRequirements.State.CARRIED));
+    }
     private Panel panel;
     private volatile boolean active;
     private boolean scanPending;
@@ -86,6 +129,7 @@ final class ClueHub
     {
         GameState state = event.getGameState();
         if(state==GameState.LOGGED_IN) stashPending=true;
+        if(state!=GameState.LOGGED_IN) stashInteraction="";
         if(state==GameState.LOGIN_SCREEN) {stashRequirements.clear();publishStash(Collections.emptyMap());}
         if (state != GameState.LOGGED_IN) ground.clear();
         if (state == GameState.LOGGED_IN) scanPending = true;
@@ -100,7 +144,8 @@ final class ClueHub
         if (!active || client.getGameState() != GameState.LOGGED_IN) return;
         String next = Objects.toString(configs.getRSProfileKey(), "");
         if (!next.equals(profile)) { profile = next; recent.clear(); caskets.clear(); ground.clear(); scanPending = true; refresh(); }
-        if(stashPending) {stashPending=false;updateStash(false);}
+        observeStashTransfer();
+        if(stashPending || client.getTickCount()%5==0) {stashPending=false;updateStash(false);}
         caskets.tick(client.getTickCount());
         // Once on enabling/login/region load; never scan the scene each tick or frame.
         if (enabled() && scanPending)

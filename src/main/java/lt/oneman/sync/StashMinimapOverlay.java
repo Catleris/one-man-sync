@@ -37,7 +37,7 @@ final class StashMinimapOverlay extends Overlay
                 LocalPoint local=LocalPoint.fromWorld(client,world);if(local==null) continue;
                 net.runelite.api.Point point=Perspective.localToMinimap(client,local);if(point==null) continue;
                 g.setColor(Color.BLACK);g.fillOval(point.getX()-4,point.getY()-4,8,8);
-                g.setColor(site.color);g.fillOval(point.getX()-3,point.getY()-3,6,6);
+                g.setColor(maps.filled(site.id)?new Color(100,220,135):site.color);g.fillOval(point.getX()-3,point.getY()-3,6,6);
             }
         } finally { g.dispose(); }
         return null;

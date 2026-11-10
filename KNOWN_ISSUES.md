@@ -54,3 +54,7 @@ The owner saw the green flash but heard no sound and saw no desktop notification
 ## OneMan Hub local-only transition · 2026-11-07
 
 Local compilation passed after removing networking. Full Java 11 CI and owner checks are required for migrated settings, Slayer state, bank observations, farming timers, monster references and local sounds. The installed Plugin Hub warning remains until maintainers approve the manifest change.
+
+## Contextual Slayer and STASH completion · 2026-11-10
+
+Owner reports persistent Slayer item card outside Slayer combat and false missing rows after filling STASH. Context gating and a local filled log implemented; in-game verification pending. STASH contents are not globally exposed by the client: earlier/unobserved fills or withdrawals need the explicit local completion checkbox. Observed complete transfers require a matching STASH interaction and carried-item change within 12 ticks.

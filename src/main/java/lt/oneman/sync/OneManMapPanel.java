@@ -36,7 +36,12 @@ final class OneManMapPanel extends JPanel
         JPanel controls=new JPanel(new BorderLayout(0,5));
         JPanel fields=new JPanel(new GridLayout(0,1,0,3));
         JPanel searchRow=new JPanel(new BorderLayout(6,0));JLabel label=new JLabel("Search");label.setForeground(OneManCards.ACCENT);searchRow.add(label,BorderLayout.WEST);searchRow.add(search,BorderLayout.CENTER);
-        fields.add(filter);fields.add(searchRow);fields.add(show);fields.add(count);
+        fields.add(filter);fields.add(searchRow);fields.add(show);
+        if(!farming) {
+            JCheckBox completed=new JCheckBox("Show completed STASH markers",maps.showCompleted());
+            completed.addActionListener(event->maps.showCompleted(completed.isSelected()));fields.add(completed);
+        }
+        fields.add(count);
         controls.add(OneManCards.banner(farming?"Farming patches":"STASH locations", "Choose a location to focus the world map."),BorderLayout.NORTH);
         controls.add(fields,BorderLayout.CENTER);add(controls,BorderLayout.NORTH);add(OneManCards.scroll(cards),BorderLayout.CENTER);
         filter.addActionListener(event->{reload();maps.configure(group,(String)filter.getSelectedItem(),show.isSelected());});
@@ -113,15 +118,19 @@ final class OneManMapPanel extends JPanel
         OneManCards required=requirementPanels.get(category);
         if(required!=null) {
             required.removeAll();
-            JLabel title=new JLabel("Required items");title.setForeground(OneManCards.ACCENT);required.card(title);
+            JCheckBox filled=new JCheckBox("Filled / completed (local log)",maps.filled(site.id));
+            filled.setForeground(maps.filled(site.id)?new Color(100,220,135):OneManCards.MUTED);
+            filled.setToolTipText("Mark previously filled STASH units here; uncheck after withdrawing their items.");
+            filled.addActionListener(event->{maps.markFilled(site.id,filled.isSelected());});required.card(filled);
+            JLabel title=new JLabel(maps.filled(site.id)?"Stored in STASH":"Required items");title.setForeground(OneManCards.ACCENT);required.card(title);
             List<StashRequirements.Row> rows=requirements.get(site.id);
-            if(rows==null) required.card(OneManCards.text("Log in to check items. Items stored inside a STASH are not checked."));
+            if(rows==null) required.card(OneManCards.text("Log in to check items. Log previously filled units above."));
             else {
                 for(StashRequirements.Row row:rows) {
-                    JTextArea item=OneManCards.text("• "+row.name+"\n"+row.state.label);
-                    item.setForeground(row.state.color);required.card(item);
+                    JTextArea item=OneManCards.text("• "+row.name+"\n"+(maps.filled(site.id)?"Stored (local log)":row.state.label));
+                    item.setForeground(maps.filled(site.id)?new Color(100,220,135):row.state.color);required.card(item);
                 }
-                required.card(OneManCards.text("Bank = last observed contents. Open your bank to refresh. Items inside the STASH are not checked."));
+                required.card(OneManCards.text("Bank = last observed contents. Open your bank to refresh. Filled status is a local log. Mark earlier fills above."));
             }
             required.finish();
         }

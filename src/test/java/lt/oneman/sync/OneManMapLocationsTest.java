@@ -92,9 +92,27 @@ public class OneManMapLocationsTest
         f.maps.shutDown();
     }
 
+    @Test public void filledLogHidesOnlyCompletedPinsAndClearsAcrossProfiles()
+    {
+        Fixture f=new Fixture();when(f.client.getGameState()).thenReturn(GameState.LOGGED_IN);
+        when(f.configs.getRSProfileKey()).thenReturn("account-a");
+        f.maps.startUp();f.maps.tick();f.maps.configure(OneManMapCatalog.Group.STASH,"Beginner",true);
+        String id=f.maps.minimapStashes().get(0).id;
+        f.maps.markFilled(id,true);
+        assertTrue(f.maps.filled(id));assertEquals(2,f.maps.minimapStashes().size());
+        verify(f.configs).setRSProfileConfiguration("one-man-sync","stashFilled",id);
+        f.maps.showCompleted(true);assertEquals(3,f.maps.minimapStashes().size());
+        f.maps.markFilled(id,false);assertFalse(f.maps.filled(id));
+        f.maps.markFilled(id,true);
+        when(f.configs.getRSProfileKey()).thenReturn("account-b");f.maps.tick();
+        assertFalse(f.maps.filled(id));assertEquals(3,f.maps.minimapStashes().size());
+        f.maps.shutDown();
+    }
+
     private static final class Fixture
     {
         final Client client=mock(Client.class);
+        final ConfigManager configs=mock(ConfigManager.class);
         final WorldMapPoint foreign=new WorldMapPoint(new WorldPoint(1,1,0),null);
         final Set<WorldMapPoint> points=new HashSet<>(Collections.singleton(foreign));
         final Map<String,String> saved=new HashMap<>();
@@ -108,7 +126,7 @@ public class OneManMapLocationsTest
             WorldMapPointManager manager=mock(WorldMapPointManager.class);
             doAnswer(call->{points.add(call.getArgument(0));return null;}).when(manager).add(any(WorldMapPoint.class));
             doAnswer(call->{points.remove(call.getArgument(0));return null;}).when(manager).remove(any(WorldMapPoint.class));
-            ConfigManager configs=mock(ConfigManager.class);
+
             when(configs.getConfiguration(anyString(),anyString())).thenAnswer(call->saved.get(call.getArgument(1)));
             doAnswer(call->{saved.put(call.getArgument(1),String.valueOf((Object)call.getArgument(2)));return null;})
                 .when(configs).setConfiguration(anyString(),anyString(),any(Object.class));

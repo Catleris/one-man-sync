@@ -11,6 +11,16 @@ import static org.mockito.Mockito.*;
 
 public class StashRequirementsTest
 {
+    @Test public void onlyCompleteObservedTransfersChangeTheLocalLog()
+    {
+        StashRequirements.Row carried=new StashRequirements.Row("Gloves",StashRequirements.State.CARRIED);
+        StashRequirements.Row missing=new StashRequirements.Row("Shield",StashRequirements.State.MISSING);
+        assertFalse(ClueHub.completeTransfer(true,Collections.emptyList()));
+        assertFalse(ClueHub.completeTransfer(true,Arrays.asList(carried,missing)));
+        assertFalse(ClueHub.completeTransfer(false,Arrays.asList(carried,missing)));
+        assertTrue(ClueHub.completeTransfer(true,Collections.singletonList(missing)));
+        assertTrue(ClueHub.completeTransfer(false,Collections.singletonList(carried)));
+    }
     @Test public void prioritisesCarriedThenBankAndDoesNotGuessAnUnseenBank()
     {
         ItemRequirement requirement=mock(ItemRequirement.class);

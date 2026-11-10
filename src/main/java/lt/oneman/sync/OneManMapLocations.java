@@ -33,6 +33,33 @@ final class OneManMapLocations
     private volatile List<OneManMapCatalog.Site> minimapStashes=Collections.emptyList();
     private WorldPoint pendingFocus;
     private String selected="";
+    private volatile Set<String> filledStashes=Collections.emptySet();
+    private volatile boolean showCompleted;
+    private String stashProfile="";
+    boolean showCompleted() {return showCompleted;}
+    boolean filled(String id) {return filledStashes.contains(id);}
+    void showCompleted(boolean show) {
+        clientThread.invokeLater(()->{showCompleted=show;configs.setConfiguration("one-man-sync","mapStashCompleted",show);rebuild(OneManMapCatalog.Group.STASH);});
+    }
+    void markFilled(String id,boolean filled) {
+        String expected=stashProfile;
+        clientThread.invokeLater(()->{
+            if(!active || expected.isEmpty() || !expected.equals(configs.getRSProfileKey())) return;
+            Set<String> next=new HashSet<>(filledStashes);
+            if(filled) next.add(id); else next.remove(id);
+            filledStashes=Collections.unmodifiableSet(next);
+            configs.setRSProfileConfiguration("one-man-sync","stashFilled",String.join(",",new TreeSet<>(next)));
+            rebuild(OneManMapCatalog.Group.STASH);
+        });
+    }
+    void refreshStashProfile() {
+        String profile=client.getGameState()==GameState.LOGGED_IN?Objects.toString(configs.getRSProfileKey(),""):"";
+        if(profile.equals(stashProfile)) return;
+        stashProfile=profile;
+        String saved=profile.isEmpty()?null:configs.getRSProfileConfiguration("one-man-sync","stashFilled");
+        filledStashes=saved==null||saved.isEmpty()?Collections.emptySet():Collections.unmodifiableSet(new HashSet<>(Arrays.asList(saved.split(","))));
+        rebuild(OneManMapCatalog.Group.STASH);
+    }
 
     synchronized void startUp()
     {
@@ -44,6 +71,8 @@ final class OneManMapLocations
             categories.put(group,category);
             visible.put(group,!"false".equals(configs.getConfiguration("one-man-sync",key(group,"Pins"))));
         }
+        showCompleted="true".equals(configs.getConfiguration("one-man-sync","mapStashCompleted"));
+        stashProfile="";filledStashes=Collections.emptySet();
         selected=""; pendingFocus=null; active=true;
         clientThread.invokeLater(() -> { if(active) for(OneManMapCatalog.Group group:OneManMapCatalog.Group.values()) rebuild(group); });
     }
@@ -98,6 +127,7 @@ final class OneManMapLocations
     }
     void tick()
     {
+        refreshStashProfile();
         WorldPoint target=pendingFocus;
         if(!active || target==null || client.getGameState()!=GameState.LOGGED_IN) return;
         Widget map=client.getWidget(InterfaceID.Worldmap.MAP_DISPLAY);
@@ -115,10 +145,14 @@ final class OneManMapLocations
         if(!active) return;
         clear(group);
         List<OneManMapCatalog.Site> sites=visible(group)?sites(group,categories.get(group)):Collections.emptyList();
-        if(group==OneManMapCatalog.Group.STASH) minimapStashes=sites;
+        if(group==OneManMapCatalog.Group.STASH) {
+            List<OneManMapCatalog.Site> filtered=new ArrayList<>();
+            for(OneManMapCatalog.Site site:sites) if(showCompleted || !filled(site.id)) filtered.add(site);
+            sites=filtered;minimapStashes=Collections.unmodifiableList(filtered);
+        }
         List<WorldMapPoint> points=new ArrayList<>();
         for(OneManMapCatalog.Site site:sites) for(WorldPoint location:site.points) {
-            WorldMapPoint point=new WorldMapPoint(location,icon(site.color,group==OneManMapCatalog.Group.STASH?"S":"F",site.id.equals(selected)));
+            WorldMapPoint point=new WorldMapPoint(location,icon(group==OneManMapCatalog.Group.STASH && filled(site.id)?new Color(100,220,135):site.color,group==OneManMapCatalog.Group.STASH?"S":"F",site.id.equals(selected)));
             point.setImagePoint(new net.runelite.api.Point(11,25));
             point.setName("OneMan "+site.category+": "+site.name);
             point.setTooltip(tooltip(group,site,location.getPlane()));
